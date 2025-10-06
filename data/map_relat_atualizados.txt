@@ -1,0 +1,3597 @@
+MAPEAMENTO DOS RELATORIOS BANCARIOS
+
+
+AVERBAI
+
+📄 Operações (1).xlsx (218 registros)
+
+Colunas e Estrutura
+Id
+Tipo: int64 | Valores únicos: 218 | Nulos: 0
+Exemplos: 3356792, 3356731, 3357189, 3355914, 3356210
+
+IdTableComissao
+Tipo: int64 | Valores únicos: 12 | Nulos: 0
+Exemplos: 939, 632, 961, 963, 1005
+
+Data
+Tipo: object | Valores únicos: 14 | Nulos: 0
+Exemplos: 17/09/2025, 16/09/2025, 15/09/2025, 13/09/2025, 12/09/2025
+
+DataFinalização
+Tipo: object | Valores únicos: 15 | Nulos: 31
+Exemplos: 17/09/2025, 16/09/2025, 15/09/2025, 13/09/2025, 12/09/2025
+
+Status
+Tipo: object | Valores únicos: 8 | Nulos: 0
+Exemplos: DIGITADA / AGUARDANDO FORMALIZAÇÃO, FINALIZADA / PAGA, ENVIADO PARA PAGAMENTO, AGUARDANDO PORTABILIDADE, EMITIDO/AGUARDANDO AVERBAÇÃO
+
+SubStatus
+Tipo: object | Valores únicos: 8 | Nulos: 151
+Exemplos: REFAZER FORMALIZAÇÃO, AGUARDANDO AVERBAÇÂO, SEM AUTORIZAÇÃO, ERRO AO GERAR CONTRATO, POLÍTICA DE CRÉDITO
+
+CpfCliente
+Tipo: int64 | Valores únicos: 141 | Nulos: 0
+Exemplos: 32079297880, 31519056842, 17169294826, 9613335889, 14748396814
+
+NomeCliente
+Tipo: object | Valores únicos: 141 | Nulos: 0
+Exemplos: TANIA LIMA GONCALVES, DIEGO GONCALVES AMADOR, MARCELO CORREIA DOS SANTOS, EDUARDO MASSANOBU MIASHIRO, ELAINE CRISTINA DIAS
+
+DataNascimento
+Tipo: object | Valores únicos: 140 | Nulos: 0
+Exemplos: 1985-07-09, 1982-09-29, 1972-08-10, 1961-03-18, 1972-04-07
+
+CelularCliente
+Tipo: int64 | Valores únicos: 141 | Nulos: 0
+Exemplos: 11961737753, 11989621607, 14981295150, 14991560063, 14991058776
+
+IdFintech
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 4029232
+
+NomeFintech
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: ind.Promotora Q-faz
+
+IdCorban
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 4077649
+
+NomeCorban
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Q-Faz
+
+NomeGerente
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Q-Faz
+
+NomeSupervisor
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Q-Faz
+
+NomeConsultor
+Tipo: object | Valores únicos: 16 | Nulos: 0
+Exemplos: ANDRESSA SABRINA ALVES, JESSUEL ALISSON PITON RODRIGUES, GUILHERME AUGUSTO LEANDRO LIMA, LUANA FERNANDA MANHANINI, LARIANA PITON RODRIGUES
+
+LoginConsultor
+Tipo: object | Valores únicos: 16 | Nulos: 0
+Exemplos: 5918.ASA, 3889.JAPR, 7057.GALL, 5911.LFM, 8277.LPRG
+
+CpfConsultor
+Tipo: int64 | Valores únicos: 16 | Nulos: 0
+Exemplos: 2579846158, 44812678870, 47703835846, 48012267870, 33838978854
+
+Prazo
+Tipo: int64 | Valores únicos: 22 | Nulos: 0
+Exemplos: 9, 10, 12, 5, 96
+
+ValorLiquido
+Tipo: float64 | Valores únicos: 156 | Nulos: 0
+Exemplos: 207.13, 192.69, 567.53, 91.53, 84.72
+
+ValorOperacao
+Tipo: float64 | Valores únicos: 153 | Nulos: 0
+Exemplos: 291.63, 276.98, 689.88, 136.69, 147.45
+
+Tabela
+Tipo: object | Valores únicos: 12 | Nulos: 0
+Exemplos:  TX 1,80 - INOVACAO,  TX 1,80 - NORMAL, FIXO 30, FIXO 25, PORT + REFIN - 1,80
+
+TipoProduto
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: Saque FGTS, Refin Portabilidade, Portabilidade, Inss
+
+ValorTotal
+Tipo: float64 | Valores únicos: 152 | Nulos: 0
+Exemplos: 525.09, 528.88, 1441.77, 264.14, 284.82
+
+EntranteInss
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Não
+
+FACTA92
+
+ RelatorioVista (34).xlsx (580 registros)
+
+Colunas e Estrutura
+CODIGO
+Tipo: int64 | Valores únicos: 580 | Nulos: 0
+Exemplos: 110254557, 110031604, 109678228, 109521323, 109649532
+
+DATA_CADASTRO
+Tipo: object | Valores únicos: 18 | Nulos: 0
+Exemplos: 12/09/2025, 09/09/2025, 03/09/2025, 01/09/2025, 02/09/2025
+
+DATA_REGISTRO
+Tipo: object | Valores únicos: 18 | Nulos: 0
+Exemplos: 12/09/2025, 09/09/2025, 03/09/2025, 01/09/2025, 02/09/2025
+
+DATA_PAGAMENTO_CLIENTE
+Tipo: object | Valores únicos: 16 | Nulos: 0
+Exemplos: 15/09/2025, 09/09/2025, 03/09/2025, 01/09/2025, 02/09/2025
+
+NUMERO_CONTRATO
+Tipo: float64 | Valores únicos: 577 | Nulos: 3
+Exemplos: 110254557.0, 110031604.0, 109678228.0, 109521323.0, 109649532.0
+
+PROPOSTA
+Tipo: float64 | Valores únicos: 577 | Nulos: 3
+Exemplos: 110254557.0, 110031604.0, 109678228.0, 109521323.0, 109649532.0
+
+NUMERO_CONTRATO_SOFTPAR
+Tipo: float64 | Valores únicos: 577 | Nulos: 3
+Exemplos: 231923740000.0, 231194020005.0, 230443890000.0, 230087980007.0, 230380010008.0
+
+PROPOSTA_SOFTPAR
+Tipo: float64 | Valores únicos: 577 | Nulos: 3
+Exemplos: 55443967.0, 55368381.0, 55290943.0, 55254713.0, 55284407.0
+
+CONVENIO
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 3
+
+AVERBADOR
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 3, 10010, 20095
+
+TIPO_OPERACAO
+Tipo: int64 | Valores únicos: 5 | Nulos: 0
+Exemplos: 13, 33, 17, 45, 18
+
+TIPO_TABELA
+Tipo: int64 | Valores únicos: 29 | Nulos: 0
+Exemplos: 113110, 113650, 113577, 110259, 112927
+
+PRODUTO
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: D
+
+VL_LIQUIDO
+Tipo: float64 | Valores únicos: 575 | Nulos: 0
+Exemplos: 18738.36, 9943.28, 8280.91, 8220.99, 6864.27
+
+VL_BRUTO
+Tipo: float64 | Valores únicos: 571 | Nulos: 0
+Exemplos: 18738.36, 9943.28, 8280.91, 8220.99, 6864.27
+
+SALDO_DEVEDOR
+Tipo: float64 | Valores únicos: 12 | Nulos: 0
+Exemplos: 0.0, 6443.35999999999, 3712.38999999999, 2369.05, 16.78
+
+NUMEROPRESTACAO
+Tipo: int64 | Valores únicos: 19 | Nulos: 0
+Exemplos: 96, 36, 12, 24, 18
+
+CORRETOR
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 92296, 92528, 94092, 51430, 53252
+
+CLASSIFICACAO
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 1
+
+ESTADO
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: SP, MG, SC
+
+FRANQUIA
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: N
+
+CD_FILIAL
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 1711, 3403, 2761, 772, 333
+
+NRCOMISS
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 2526247, 39059189, 27794733, 1045628, 652105
+
+NRCLIENT
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 2526247, 39059189, 27794733, 1045628, 652105
+
+CD_CODIGO_MASTER
+Tipo: int64 | Valores únicos: 5 | Nulos: 0
+Exemplos: 92359, 92314, 54531, 92095, 92504
+
+CD_CLIENTE
+Tipo: int64 | Valores únicos: 580 | Nulos: 0
+Exemplos: 110254557, 110031604, 109678228, 109521323, 109649532
+
+CPF
+Tipo: int64 | Valores únicos: 557 | Nulos: 0
+Exemplos: 7445039813, 2037138008, 13246940681, 6275154527, 3405754925
+
+PC_PORCEN
+Tipo: float64 | Valores únicos: 15 | Nulos: 0
+Exemplos: 5.0, 5.8, 4.3, 5.3, 4.8
+
+TIPOCRED
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: C
+
+VL_COMISS
+Tipo: float64 | Valores únicos: 504 | Nulos: 0
+Exemplos: 936.91, 576.71, 480.29, 476.81, 398.12
+
+VL_COMISS_FACTA
+Tipo: float64 | Valores únicos: 0 | Nulos: 580
+Exemplos: ``
+
+VL_COMISS_PG
+Tipo: float64 | Valores únicos: 0 | Nulos: 580
+Exemplos: ``
+
+DS_TABCOM
+Tipo: object | Valores únicos: 29 | Nulos: 0
+Exemplos: 60186 - INSS NOVO GOLD MAX PN-S, 61557 - CLT NOVO GOLD PN-S, 61387 - CLT NOVO GOLD PN-S, 53694 - FGTS GOLD PRIME RB, 60119 - FGTS GOLD POWER RB
+
+NR_TABCOM
+Tipo: int64 | Valores únicos: 28 | Nulos: 0
+Exemplos: 60186, 61557, 61387, 53694, 60119
+
+NM_CLIENT
+Tipo: object | Valores únicos: 557 | Nulos: 0
+Exemplos: CLEUSA GUIMARAES CARNEIRO, JOEL MAICON FERREIRA DE SOUZA, RAFAEL DA SILVA LEONE, ANTONIO SANTANA DE OLIVEIRA FIGUEREDO, ANDREIA SOARES
+
+TAXA
+Tipo: float64 | Valores únicos: 13 | Nulos: 0
+Exemplos: 1.85, 4.99, 5.99, 1.8, 5.49
+
+DATAEFETIVACAO
+Tipo: object | Valores únicos: 13 | Nulos: 0
+Exemplos: 15/09/2025, 09/09/2025, 03/09/2025, 01/09/2025, 02/09/2025
+
+NU_COMISSIONADO
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 2526247, 39059189, 27794733, 1045628, 652105
+
+LOTE
+Tipo: int64 | Valores únicos: 121 | Nulos: 0
+Exemplos: 1014607, 1014558, 1014511, 1014493, 1014507
+
+CODIGO_VINCULADO
+Tipo: float64 | Valores únicos: 16 | Nulos: 564
+Exemplos: 109947407.0, 109526504.0, 109133114.0, 109133107.0, 109330876.0
+
+COD_INDICADO
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 92314
+
+LOGIN_CORRETOR
+Tipo: object | Valores únicos: 16 | Nulos: 0
+Exemplos: 92296_DAIANA, 92528_ISABELLE, 92528_FABIANA, 92528_isabelle, 94092_renata
+
+
+DIGIO
+
+📄 arquivoWFSIC (16).xls (98 registros)
+
+Colunas e Estrutura
+Unnamed: 0
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 1
+Tipo: object | Valores únicos: 3 | Nulos: 95
+Exemplos: BANCO DIGIO S/A, RELATÓRIO DE PROPOSTAS CADASTRADAS, Tipo: Por Data de Liberação - Período: 18/08/2025 à 17/09/2025
+
+Unnamed: 2
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: Total:
+
+Unnamed: 3
+Tipo: object | Valores únicos: 76 | Nulos: 22
+Exemplos: PROPOSTA, 403030359, 403030376, 403030464, 403030479
+
+Unnamed: 4
+Tipo: object | Valores únicos: 4 | Nulos: 23
+Exemplos: TIPO_OPERACAO, COMPRA, REFINANCIAMENTO COM MARGEM, MARGEM
+
+Unnamed: 5
+Tipo: object | Valores únicos: 7 | Nulos: 23
+Exemplos: PRODUTO, 000008, 000009, 000002, 005003
+
+Unnamed: 6
+Tipo: object | Valores únicos: 7 | Nulos: 23
+Exemplos: NOME_PRODUTO, PORTABILIDADE INSS, REFIN PORT VINCULADO, REFINANCIAMENTO, REFIN PREFEITURA
+
+Unnamed: 7
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 8
+Tipo: object | Valores únicos: 22 | Nulos: 23
+Exemplos: DATA_CADASTRO, 27/08/2025, 28/08/2025, 29/08/2025, 30/08/2025
+
+Unnamed: 9
+Tipo: object | Valores únicos: 7 | Nulos: 23
+Exemplos: SITUACAO_PROPOSTA, CANCELADA, REPROVADA, INTEGRADA, PENDENTE
+
+Unnamed: 10
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 11
+Tipo: object | Valores únicos: 17 | Nulos: 23
+Exemplos: NOME_ATIVIDADE, CANCELADA, REPROVA, INTEGRADA, REPROVADA P1
+
+Unnamed: 12
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 13
+Tipo: object | Valores únicos: 19 | Nulos: 23
+Exemplos: DATA_LANCAMENTO, 03/09/2025, 28/08/2025, 29/08/2025, 01/09/2025
+
+Unnamed: 14
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 15
+Tipo: object | Valores únicos: 4 | Nulos: 94
+Exemplos: Proc. :  17/09/2025 10:57:20, Sist.: 17/09/2025 Cont.: 15/09/2025, SIC - V.C1077907, MPRLPRCD (39806470800_202902)
+
+Unnamed: 16
+Tipo: object | Valores únicos: 19 | Nulos: 23
+Exemplos: DATA_BASE, 27/08/2025, 28/08/2025, 29/08/2025, 01/09/2025
+
+Unnamed: 17
+Tipo: object | Valores únicos: 6 | Nulos: 23
+Exemplos: COD_EMPREGADOR, 000001, 300032, 300114, 300177
+
+Unnamed: 18
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: Pg. 1
+
+Unnamed: 19
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 20
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 21
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 22
+Tipo: float64 | Valores únicos: 0 | Nulos: 98
+Exemplos: ``
+
+Unnamed: 23
+Tipo: object | Valores únicos: 6 | Nulos: 23
+Exemplos: NOME_EMPREGADOR, INSS, PREF BAURU SP, PREF LINS - SP, PREF SERTAOZINH
+
+Unnamed: 24
+Tipo: object | Valores únicos: 6 | Nulos: 23
+Exemplos: COD_ORGAO, 000001, 400842, 300114, 400636
+
+Unnamed: 25
+Tipo: object | Valores únicos: 6 | Nulos: 23
+Exemplos: NOME_ORGAO, INSS, PREFEITURA DE B, PREFEITURA DE L, PREFEITURA DE S
+
+Unnamed: 26
+Tipo: object | Valores únicos: 4 | Nulos: 23
+Exemplos: CANAL, 203410, 202902, 203630
+
+Unnamed: 27
+Tipo: object | Valores únicos: 3 | Nulos: 23
+Exemplos: CANAL_DESCR, QFZ SOLUCOES E INTER, MARIA CRISTINA MASSA
+
+Unnamed: 28
+Tipo: object | Valores únicos: 10 | Nulos: 23
+Exemplos: COD_USUARIO_DIGITADOR, 13118, 13121, 15618, 37488
+
+Unnamed: 29
+Tipo: object | Valores únicos: 10 | Nulos: 23
+Exemplos: DESCR_USU_DIGITADOR, 02579846158_202902, 33838978854_202902, 02850266825_202902, 39591276850_203630
+
+Unnamed: 30
+Tipo: object | Valores únicos: 10 | Nulos: 23
+Exemplos: CPF_USU_DIGITADOR, 025.798.461-58, 338.389.788-54, 028.502.668-25, 395.912.768-50
+
+Unnamed: 31
+Tipo: object | Valores únicos: 38 | Nulos: 23
+Exemplos: CPF_CLIENTE, 046.433.628-71, 032.948.098-75, 001.940.278-30, 158.972.798-37
+
+Unnamed: 32
+Tipo: object | Valores únicos: 40 | Nulos: 23
+Exemplos: NOMECLI, EDNEIS RODRIGUES DOS SANTOS , ANTENOR RODRIGUES DE FREITAS FILHO, JOSE ROBERTO TASSO, ROSEMARI BARROS DE LIMA
+
+Unnamed: 33
+Tipo: object | Valores únicos: 38 | Nulos: 23
+Exemplos: DATA_NASCIMENTO, 25/08/1963, 30/05/1961, 13/04/1956, 25/02/1967
+
+Unnamed: 34
+Tipo: object | Valores únicos: 43 | Nulos: 23
+Exemplos: RG_CLIENTE, 155116290, 148088491, 156097710, 20955414-9
+
+Unnamed: 35
+Tipo: object | Valores únicos: 40 | Nulos: 23
+Exemplos: END_CLIENTE, RUA ITACURUCA                      , R PATAGONIA                        , R LUIZ G M DA SILVA                , R ELOY STANGHERLIN                 
+
+Unnamed: 36
+Tipo: object | Valores únicos: 39 | Nulos: 23
+Exemplos: NUM_END_CLIENTE, 0555  , 16    , 312   , 301   
+
+Unnamed: 37
+Tipo: object | Valores únicos: 11 | Nulos: 23
+Exemplos: COMPLEMENTO,           , 4         , CS        , CASA      
+
+Unnamed: 38
+Tipo: object | Valores únicos: 34 | Nulos: 23
+Exemplos: BAIRRO, PRQ S JOAO               , JARDIM TERRA BRANCA      , JARDIM BOM VIVER I       , SONHO NOSSO IV           
+
+Unnamed: 39
+Tipo: object | Valores únicos: 11 | Nulos: 23
+Exemplos: CIDADE, BAURU                                   , LINS                                    , BARRA BONITA                            , SAO PAULO                               
+
+Unnamed: 40
+Tipo: object | Valores únicos: 3 | Nulos: 23
+Exemplos: UF_CLIENTE, SP, MG
+
+Unnamed: 41
+Tipo: object | Valores únicos: 39 | Nulos: 23
+Exemplos: CEP_CLIENTE, 17055250, 17054020, 16403425, 17345506
+
+Unnamed: 42
+Tipo: object | Valores únicos: 24 | Nulos: 43
+Exemplos: TEL_CLIENTE, 99695-0502, 99166-7740, 99610-3918, 98147-4709
+
+Unnamed: 43
+Tipo: object | Valores únicos: 38 | Nulos: 23
+Exemplos: CEL_CLIENTE, 99695-0502, 99793-0309, 99899-6660, 99166-7740
+
+Unnamed: 44
+Tipo: object | Valores únicos: 41 | Nulos: 23
+Exemplos: MAE, JOSEFINA RODRIGUES DOS SANTOS , ANTENOR RODRIGUES DE FREITAS, DIRCY DELGADO RODRIGUES FREITAS, CATARINA MATEUS TASSO
+
+Unnamed: 45
+Tipo: object | Valores únicos: 29 | Nulos: 43
+Exemplos: PAI, JULIO RODRIGUES DOS SANTOS , DIRCY DELGADO RODRIGUES FREITAS, ANTENOR RODRIGUES DE FREITAS, OSMAN BARROS DE LIMA
+
+Unnamed: 46
+Tipo: object | Valores únicos: 40 | Nulos: 23
+Exemplos: MATRICULA, 1476924810, 1717487413, 1383012439, 1376021118
+
+Unnamed: 47
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: MATRICULA_INSTITUIDOR
+
+Unnamed: 48
+Tipo: object | Valores únicos: 17 | Nulos: 23
+Exemplos: QTD_PARCELAS, 72, 96, 63, 120
+
+Unnamed: 49
+Tipo: object | Valores únicos: 54 | Nulos: 22
+Exemplos: VALOR_PARCELA, 310.43, 140.05, 319.83, 60
+
+Unnamed: 50
+Tipo: object | Valores únicos: 74 | Nulos: 22
+Exemplos: VLR FINANCIADO, 12212.21, 13796.89, 5509.3, 6224.45
+
+Unnamed: 51
+Tipo: object | Valores únicos: 25 | Nulos: 72
+Exemplos: VALOR_PARCELA_COMPRA, 310.43, 140.05, 171.78, 212.54
+
+Unnamed: 52
+Tipo: object | Valores únicos: 41 | Nulos: 56
+Exemplos: VALOR_PARCELA_REFIN, 310.43, 140.05, 639.66, 180
+
+Unnamed: 53
+Tipo: object | Valores únicos: 23 | Nulos: 23
+Exemplos: COD_CONVENIO, 002035, 002036, 001717, 001718
+
+Unnamed: 54
+Tipo: object | Valores únicos: 23 | Nulos: 23
+Exemplos: NOME_CONVENIO, PORT+REFIN VINCULADO-1-96X-1,39 A 1,85-T, REFIN DA PORT VINCULADO-96X-1,75 A 1,85-, REFIN-96X-1,65-TKT 1000, REFIN-96X-1,60-TKT 1000
+
+Unnamed: 55
+Tipo: object | Valores únicos: 6 | Nulos: 23
+Exemplos: LIB1, PAGTO SALDO PORTAB., REFIN, PREF. LIB. DE TED, PREF. REENVIO DE TED 
+
+Unnamed: 56
+Tipo: object | Valores únicos: 7 | Nulos: 83
+Exemplos: BANCO, 237, 643, 033, 323
+
+Unnamed: 57
+Tipo: object | Valores únicos: 10 | Nulos: 80
+Exemplos: AGENCIA, 0013-0, 0001, 0000, 0013
+
+Unnamed: 58
+Tipo: object | Valores únicos: 10 | Nulos: 83
+Exemplos: CONTA, 0278497-1, 900019-6, 0381272-3, 01026436-2
+
+Unnamed: 59
+Tipo: object | Valores únicos: 51 | Nulos: 22
+Exemplos: VLR_LIB1, 12212.21, 5509.3, 14282.98, 2647.98
+
+Unnamed: 60
+Tipo: object | Valores únicos: 3 | Nulos: 56
+Exemplos: LIB2, LIBERACAO TED/DOC, PREF. LIB. DE TED
+
+Unnamed: 61
+Tipo: object | Valores únicos: 10 | Nulos: 56
+Exemplos: BANCO, 104, 341, 260, 121
+
+Unnamed: 62
+Tipo: object | Valores únicos: 23 | Nulos: 56
+Exemplos: AGENCIA, 0290, 1996, 0318, 0425
+
+Unnamed: 63
+Tipo: object | Valores únicos: 35 | Nulos: 56
+Exemplos: CONTA, 766635567-0, 754846696-0, 767851547-3, 33626-0
+
+Unnamed: 64
+Tipo: object | Valores únicos: 43 | Nulos: 55
+Exemplos: VLR_LIB2, 1536.32, 693.32, 960.25, 260.63
+
+Unnamed: 65
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB3
+
+Unnamed: 66
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 67
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 68
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 69
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB3
+
+Unnamed: 70
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB4
+
+Unnamed: 71
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 72
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 73
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 74
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB4
+
+Unnamed: 75
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB5
+
+Unnamed: 76
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 77
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 78
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 79
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB5
+
+Unnamed: 80
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB6
+
+Unnamed: 81
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 82
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 83
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 84
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB6
+
+Unnamed: 85
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB7
+
+Unnamed: 86
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 87
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 88
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 89
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB7
+
+Unnamed: 90
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB8
+
+Unnamed: 91
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 92
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 93
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 94
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB8
+
+Unnamed: 95
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB9
+
+Unnamed: 96
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 97
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 98
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 99
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB9
+
+Unnamed: 100
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: LIB10
+
+Unnamed: 101
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: BANCO
+
+Unnamed: 102
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: AGENCIA
+
+Unnamed: 103
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: CONTA
+
+Unnamed: 104
+Tipo: object | Valores únicos: 1 | Nulos: 97
+Exemplos: VLR_LIB10
+
+PAULISTA
+
+📄 AF5EEBB7-20E0-4168-B9A7-35FA9732C9AA-89243.xlsx (13 registros)
+
+Colunas e Estrutura
+Unnamed: 0
+Tipo: object | Valores únicos: 10 | Nulos: 3
+Exemplos: Nº Proposta, 651416, 655273, 655284, 655356
+
+Unnamed: 1
+Tipo: object | Valores únicos: 10 | Nulos: 3
+Exemplos: Relação de Propostas - Analítico, Contrato, 3000018305, 3000018369, 3000018371
+
+Unnamed: 2
+Tipo: object | Valores únicos: 10 | Nulos: 3
+Exemplos: Data Captura, 02/09/2025 14:22:22, 05/09/2025 09:20:39, 05/09/2025 09:32:32, 05/09/2025 10:44:24
+
+Unnamed: 3
+Tipo: object | Valores únicos: 10 | Nulos: 3
+Exemplos: Dt Atividade, 02/09/2025 17:29:56, 09/09/2025 13:40:05, 09/09/2025 13:48:18, 09/09/2025 10:10:28
+
+Unnamed: 4
+Tipo: object | Valores únicos: 8 | Nulos: 3
+Exemplos: CPF/CNPJ Proponente, 71012729834   , 00358133858   , 05665674826   , 27161446805   
+
+Unnamed: 5
+Tipo: object | Valores únicos: 8 | Nulos: 3
+Exemplos: Nome do Proponente, NELSON BOLONHA, ANTONIO LUCIANO DOS SANTOS, NEUZA NEVES DA SILVA, SONIA MARIA DA SILVA
+
+Unnamed: 6
+Tipo: object | Valores únicos: 8 | Nulos: 3
+Exemplos: Matrícula, 1672554982, 5708780491, 1409578710, 1676023078
+
+Unnamed: 7
+Tipo: object | Valores únicos: 5 | Nulos: 3
+Exemplos: Espécie Benefício, 41 - Aposentadoria por Idade (LOPS), 32 - Aposentadoria por Invalidez Previdenciária (LOPS), 21 - Pensão por Morte Previdenciária (LOPS), 42 - Aposentadoria por Tempo de Contribuição Previdenciária
+
+Unnamed: 8
+Tipo: object | Valores únicos: 5 | Nulos: 4
+Exemplos: Banco, 104, 756, 341, 001
+
+Unnamed: 9
+Tipo: object | Valores únicos: 6 | Nulos: 4
+Exemplos: Agência, 2785, 3478, 6044, 0
+
+Unnamed: 10
+Tipo: object | Valores únicos: 8 | Nulos: 4
+Exemplos: Conta, 7930715710, 008598419182, 005854664476, 06776442
+
+Unnamed: 11
+Tipo: object | Valores únicos: 9 | Nulos: 3
+Exemplos: Valor Solicitado, 1659.33, 4194.73, 2122.24, 1788.78
+
+Unnamed: 12
+Tipo: object | Valores únicos: 9 | Nulos: 3
+Exemplos: Vl. Liberado, 1639.16, 4152.79, 2101.02, 1770.6
+
+Unnamed: 13
+Tipo: object | Valores únicos: 9 | Nulos: 3
+Exemplos: Vl. Troco, 156.04, 534.1, 270.27, 233.39
+
+Unnamed: 14
+Tipo: object | Valores únicos: 2 | Nulos: 3
+Exemplos: Quant. Parcelas, 96
+
+Unnamed: 15
+Tipo: object | Valores únicos: 9 | Nulos: 3
+Exemplos: Valor Parcela, 38, 87.6, 44.32, 37.35
+
+Unnamed: 16
+Tipo: object | Valores únicos: 5 | Nulos: 3
+Exemplos: Plano, 2060, 2066, 2061, 2062
+
+Unnamed: 17
+Tipo: object | Valores únicos: 3 | Nulos: 3
+Exemplos: 1º Vencimento, 07/10/2025, 06/11/2025
+
+Unnamed: 18
+Tipo: object | Valores únicos: 3 | Nulos: 3
+Exemplos: Produto, INSS DIGITAL - APOSENTADO - REFIN, INSS DIGITAL - PENSIONISTA - REFIN
+
+Unnamed: 19
+Tipo: object | Valores únicos: 4 | Nulos: 3
+Exemplos: Fase, INTEGRAÇÃO, CAPTURA, ASSINATURA DIGITAL
+
+Unnamed: 20
+Tipo: object | Valores únicos: 3 | Nulos: 3
+Exemplos: Status, CONCLUIDO, AGUARDANDO
+
+Unnamed: 21
+Tipo: object | Valores únicos: 8 | Nulos: 5
+Exemplos: Dta. Integração, 02/09/2025 17:29:53, 09/09/2025 13:40:03, 09/09/2025 13:48:16, 09/09/2025 10:10:26
+
+Unnamed: 22
+Tipo: object | Valores únicos: 2 | Nulos: 3
+Exemplos: Loja/Sub, GRUPO ALFACRED
+
+Unnamed: 23
+Tipo: object | Valores únicos: 2 | Nulos: 3
+Exemplos: Lojista/Master, WASHINGTON MOREIRA DIAS NEVES
+
+Unnamed: 24
+Tipo: object | Valores únicos: 4 | Nulos: 3
+Exemplos: Usuário Digitador, 33838978854_88558855, 38172293801_88558855, 02579846158_88558855
+
+17/09/2025
+Tipo: object | Valores únicos: 4 | Nulos: 3
+Exemplos: Nome Digitador, LARIANA PITON RODRIGUES GONÇALVES, MARIA ZELINA GONCALVES DE OLIVEIRA, ANDRESSA SABRINA ALVES
+
+Unnamed: 26
+Tipo: object | Valores únicos: 4 | Nulos: 3
+Exemplos: Prof Certificado, LARIANA PITON RODRIGUES GONCALVES, MARIA ZELINA OLIVEIRA, ANDRESSA SABRINA ALVES
+
+Unnamed: 27
+Tipo: object | Valores únicos: 2 | Nulos: 3
+Exemplos: Elegível Comissão, Sim
+
+Unnamed: 28
+Tipo: object | Valores únicos: 1 | Nulos: 12
+Exemplos: Motivo Elegível Comissão
+
+
+
+BRB
+
+Colunas e Estrutura
+Nome da Origem
+Tipo: object | Valores únicos: 13 | Nulos: 0
+Exemplos: Propostas-202583 (1).xlsx, Propostas-202583 (10).xlsx, Propostas-202583 (11).xlsx, Propostas-202583 (12).xlsx, Propostas-202583 (2).xlsx
+
+ID Card
+Tipo: float64 | Valores únicos: 340 | Nulos: 2
+Exemplos: 2328758.0, 2377292.0, 2374932.0, 2321159.0, 2285593.0
+
+Nome do cliente
+Tipo: object | Valores únicos: 127 | Nulos: 0
+Exemplos: GERALDO ANTONIO, NEUSA APARECIDA SALMIM LOPES, ARY JORGE CARREGAL, NEUZA APARECIDA DA SILVA MIRANDA, JOAO CARLOS MARQUES
+
+Benefício
+Tipo: int64 | Valores únicos: 133 | Nulos: 0
+Exemplos: 7039891728, 1396699438, 1733907979, 1102931800, 675982448
+
+CPF do Beneficiário
+Tipo: int64 | Valores únicos: 127 | Nulos: 0
+Exemplos: 471507857, 5151736817, 25324390763, 28191473801, 294142886
+
+Data da Proposta
+Tipo: datetime64[ns] | Valores únicos: 128 | Nulos: 0
+Exemplos: 2025-08-11 20:17:32.541000, 2025-09-02 17:53:24.280000, 2025-09-02 15:03:29.680000, 2025-06-26 14:30:17.226000, 2025-02-18 20:38:23.486000
+
+Data da PAGAMENTO
+Tipo: datetime64[ns] | Valores únicos: 9 | Nulos: 376
+Exemplos: 2025-09-15 00:00:00, 2025-09-16 00:00:00, 2025-09-02 00:00:00, 2025-09-12 00:00:00, 2025-09-04 00:00:00
+
+Nº Contrato
+Tipo: int64 | Valores únicos: 342 | Nulos: 0
+Exemplos: 1901386501, 1901431476, 1901429250, 1901379370, 1901346680
+
+Qtd. Parcelas
+Tipo: int64 | Valores únicos: 36 | Nulos: 0
+Exemplos: 50, 96, 67, 61, 69
+
+Valor da Parcela
+Tipo: float64 | Valores únicos: 187 | Nulos: 0
+Exemplos: 355.32, 236.36, 143.16, 115.62, 272.94
+
+Valor da Proposta
+Tipo: float64 | Valores únicos: 211 | Nulos: 0
+Exemplos: 15737.05, 10336.45, 6248.21, 4368.75, 12036.84
+
+Valor do Saldo
+Tipo: float64 | Valores únicos: 191 | Nulos: 0
+Exemplos: 0.0, 10336.45, 6248.21, 12036.84, 9458.65
+
+ORGÃO
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: INSS, FEDERAL
+
+TABELA
+Tipo: object | Valores únicos: 8 | Nulos: 0
+Exemplos: DIG103, DIG102, DIG27, DIG21, DIG3
+
+OPERAÇÃO
+Tipo: object | Valores únicos: 5 | Nulos: 0
+Exemplos: Portabilidade + Refin, Refinanciamento da Portabilidade, Margem Livre (Novo), Portabilidade, CARTÃO C/ SAQUE
+
+TAXA
+Tipo: float64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 0.0185, 0.0179, 0.016
+
+Tabela2
+Tipo: int64 | Valores únicos: 5 | Nulos: 0
+Exemplos: 185, 179, 160, 246, 16
+
+Produto
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: Portabilidade e Refinanciamento, Refinanciamento, Novo, Cartão RCC
+
+Status da Proposta
+Tipo: object | Valores únicos: 8 | Nulos: 0
+Exemplos: CANCELADO, Formalização cliente, Nova proposta, Erro de digitação, PAGO
+
+Sub-Status
+Tipo: object | Valores únicos: 12 | Nulos: 199
+Exemplos: Solicitação Retida pela IF Credora, Aguardando formalização da portabilidade, Solicitação Cancelada pelo CTC, Averbação do contrato realizada, Solicitação da IF Proponente Aceita pelo CTC
+
+Observações
+Tipo: object | Valores únicos: 1 | Nulos: 417
+Exemplos: Aguardando formalização de portabilidade
+
+Parceiro
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 70-BRB - Banco de Brasília S.A.
+
+Franquia
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Q-Faz
+
+Equipe Responsável
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Q-FAZ, NG BRB
+
+Agente Responsável
+Tipo: object | Valores únicos: 23 | Nulos: 0
+Exemplos: ANDRESSA SABRINA ALVES, VALERIA CRISTINA GIACOMINI, ARIANE GISELE SARTO, MARJORY ANNE LOPES CUSTODIO, ANDREA COLOVATI DIAS
+
+E-mail Agente Responsável
+Tipo: object | Valores únicos: 23 | Nulos: 0
+Exemplos: a.asalves@outlook.com, valeriacristinagiacomini753@outlook.com, arianegiselesarto@gmail.com, malcustodio@outlook.com, andreacolovatid@gmail.com
+
+Coluna1
+Tipo: object | Valores únicos: 1 | Nulos: 182
+Exemplos: aberto
+
+BANCO CREFAZ
+
+Colunas e Estrutura
+Data Cadastro
+Tipo: object | Valores únicos: 150 | Nulos: 0
+Exemplos: 16/09/2025 16:49:23, 16/09/2025 16:49:15, 16/09/2025 16:15:08, 16/09/2025 15:00:19, 16/09/2025 14:42:08
+
+Hora Cadastro
+Tipo: object | Valores únicos: 132 | Nulos: 0
+Exemplos: 16:49, 16:15, 15:00, 14:42, 14:24
+
+Alteração
+Tipo: object | Valores únicos: 111 | Nulos: 0
+Exemplos: 16/09/2025 16:49:36, 16/09/2025 16:49:22, 16/09/2025 16:16:27, 16/09/2025 15:00:26, 16/09/2025 14:42:19
+
+Hora Alteração
+Tipo: object | Valores únicos: 101 | Nulos: 0
+Exemplos: 16:49, 16:16, 15:00, 14:42, 14:28
+
+Número da Proposta
+Tipo: int64 | Valores únicos: 150 | Nulos: 0
+Exemplos: 1052068314, 1052068300, 1052064627, 1052055338, 1052052558
+
+Produto
+Tipo: object | Valores únicos: 3 | Nulos: 89
+Exemplos: Energia, Boleto, Luz em Dia
+
+Conveniada
+Tipo: object | Valores únicos: 10 | Nulos: 90
+Exemplos: CPFL PAULISTA, COSERN, CPFL PIRATININGA, CELPE, ENEL RJ
+
+CPF
+Tipo: int64 | Valores únicos: 138 | Nulos: 0
+Exemplos: 29477233846, 30696505894, 39041738800, 10159612829, 60113455810
+
+Cliente
+Tipo: object | Valores únicos: 138 | Nulos: 0
+Exemplos: VALDIRENE DE ALCANTARA, FERNANDO CORDEIRO DA SILVA, LUIS HENRIQUE PEREIRA DE SOUZA ORTEGA, APARECIDA LEME DEVELIS, BRENDA FERNANDES DA SILVA
+
+Cidade
+Tipo: object | Valores únicos: 60 | Nulos: 0
+Exemplos: São José do Rio Preto, Promissão, Bauru, Agudos, Lins
+
+UF
+Tipo: object | Valores únicos: 17 | Nulos: 0
+Exemplos: SP, RJ, PB, RN, PR
+
+Telefone
+Tipo: float64 | Valores únicos: 130 | Nulos: 4
+Exemplos: 14996633826.0, 14991678242.0, 14998372422.0, 14997357442.0, 14997155135.0
+
+Telefone Fixo
+Tipo: float64 | Valores únicos: 4 | Nulos: 146
+Exemplos: 8881270592.0, 9183224593.0, 5183094797.0, 6444821258.0
+
+Valor Solicitado
+Tipo: object | Valores únicos: 10 | Nulos: 139
+Exemplos: 1200,00, 1400,00, 2000,00, 1600,00, 1500,00
+
+Valor Liberado
+Tipo: object | Valores únicos: 10 | Nulos: 139
+Exemplos: 1200,00, 1400,00, 2000,00, 1600,00, 1500,00
+
+Prazo
+Tipo: float64 | Valores únicos: 6 | Nulos: 139
+Exemplos: 12.0, 18.0, 15.0, 24.0, 22.0
+
+Valor da Parcela
+Tipo: object | Valores únicos: 11 | Nulos: 139
+Exemplos: 268,00, 240,88, 385,63, 245,48, 253,33
+
+Modalidade
+Tipo: object | Valores únicos: 1 | Nulos: 141
+Exemplos: Digital
+
+Status
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: Seleção Oferta, Negada, Cancelada, Operação Paga
+
+Motivos
+Tipo: object | Valores únicos: 22 | Nulos: 22
+Exemplos: "Cliente possui empréstimo recente","No momento não há ofertas disponíveis para este cliente. ","Perfil não compatível", "No momento não há ofertas disponíveis para este cliente. ","Perfil não compatível","Perfil não compatível", "Cliente com fatura enquadrada em tarifa social", "Cliente deve entrar em contato com o sac: 0800 052 5051","Cliente deve entrar em contato com o sac: 0800 052 5051","No momento não há ofertas disponíveis para este cliente. ", "No momento não há ofertas disponíveis para este cliente. ","Perfil não compatível"
+
+Login Agente
+Tipo: object | Valores únicos: 10 | Nulos: 0
+Exemplos: CC030172171, CC030132607, CC030112436, CC030141499, CC030155439
+
+Agente
+Tipo: object | Valores únicos: 10 | Nulos: 0
+Exemplos: RAFAELA TELES, JESSUEL ALISSON PITON RODRIGUES, ANDRESSA SABRINA ALVES, GUILHERME RIBEIRO HOMEM, ANDRE PRADELA MIRANDA
+
+Matriz
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QFZ SOLUCOES E INTERMEDIACOES
+
+Supervisor
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: SP08 - BOTUCATU, SP02 - ARACATUBA, SP07 - MARILIA, SP13 - CAMPINAS
+
+Cod Operação
+Tipo: float64 | Valores únicos: 6 | Nulos: 144
+Exemplos: 3848642.0, 3845279.0, 3842553.0, 3841586.0, 3840986.0
+
+
+BANCO SANTANDER
+
+Colunas e Estrutura
+COD
+Tipo: int64 | Valores únicos: 56 | Nulos: 0
+Exemplos: 1054588, 1054498, 1054500, 1054505, 1054506
+
+COD. BANCO
+Tipo: object | Valores únicos: 56 | Nulos: 0
+Exemplos: 223517136, 223489621S, 223489946S, 223492298S, 223492682S
+
+CPF
+Tipo: object | Valores únicos: 26 | Nulos: 0
+Exemplos: 134.149.438-16, 369.164.068-01, 355.005.278-27, 389.620.688-50, 061.759.588-70
+
+CLIENTE
+Tipo: object | Valores únicos: 26 | Nulos: 0
+Exemplos: ELIANA APARECIDA DOMINGUES, ANA PAULA ALVES, SUELEN AMANDA MIRANDA, CAMILA SILVA DE LIMA, VERA LUCIA GARCIA
+
+TELEFONE
+Tipo: float64 | Valores únicos: 0 | Nulos: 56
+Exemplos: ``
+
+FILAS
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Proposta na Fila de Digita  o, Proposta Digitada
+
+COD DIGITADOR NO BANCO
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: 37375205850030736, -, 30717504808030736
+
+COD LOJA NO BANCO
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: -
+
+GERENTE
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: RODRIGO SOUZA SANTOS
+
+VALOR BRUTO
+Tipo: float64 | Valores únicos: 53 | Nulos: 0
+Exemplos: 3469.25, 215.68, 323.52, 682.0, 227.33
+
+VALOR LIQUIDO
+Tipo: float64 | Valores únicos: 53 | Nulos: 0
+Exemplos: 3469.25, 215.68, 323.52, 682.0, 227.33
+
+VALOR PARCELA
+Tipo: float64 | Valores únicos: 21 | Nulos: 0
+Exemplos: 99.65, 0.01, 100.0, 150.0, 300.0
+
+VALOR
+Tipo: object | Valores únicos: 53 | Nulos: 0
+Exemplos: 3469.25, 215.68, 323.52, 682.00, 227.33
+
+COMISSAO
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: -
+
+BANCO
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SANTANDER
+
+CONVENIO
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: PREF AGUDOS - 21387, SEGURO - 1, PREF RANCHARIA - 43654
+
+PRODUTO
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: 21387 - 810021387 - 1 OFERTA NOVO COM SEGURO, 1 - 11111111 - SEGURO (TODOS OS CONVENIOS), 21387 - 82721387 - 1 OFERTA REFIN COM SEGURO, 43654 - 810443654 - 1 OFERTA NOVO COM SEGURO
+
+QTDE PARCELAS
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 96, 3, 120, 84, 60
+
+STATUS
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: Em An lise, Averbada, Cancelada
+
+DATA AVERBACAO
+Tipo: object | Valores únicos: 12 | Nulos: 0
+Exemplos: -, 2025-09-16, 2025-09-17, 2025-09-15, 2025-09-12
+
+FISICO
+Tipo: float64 | Valores únicos: 0 | Nulos: 56
+Exemplos: ``
+
+BANCO DA COMPRA DE DIVIDA
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: -
+
+PG. CORRET.
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: N o Paga, Paga, Desbloqueada
+
+DATA PG. CORRETOR
+Tipo: object | Valores únicos: 9 | Nulos: 0
+Exemplos: -, 17/09/2025, 15/09/2025, 16/09/2025, 12/09/2025
+
+DATA
+Tipo: object | Valores únicos: 12 | Nulos: 0
+Exemplos: 17/09/2025, 16/09/2025, 15/09/2025, 12/09/2025, 11/09/2025
+
+PMT
+Tipo: float64 | Valores únicos: 0 | Nulos: 56
+Exemplos: ``
+
+
+BANCO QUERO MAIS CREDITO
+
+📄 Relatorio de Producao por Promotora.xlsx (240 registros)
+
+Colunas e Estrutura
+CAPITAL CONSIG SOCIEDADE DE CRÉDITO DIRETO S.A
+Tipo: object | Valores únicos: 2 | Nulos: 238
+Exemplos: Relatório de Produção por Promotora, Comissionado: Todos - Data Base: 01/09/2025 à 17/09/2025
+
+Unnamed: 1
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: Agencia, 0290, 0612, 6665, 0460
+
+Unnamed: 2
+Tipo: object | Valores únicos: 13 | Nulos: 8
+Exemplos: Bairro, Nuc Hab Mary Dota, Centro (Alfredo Guedes), Centro, Cj Res N Teto
+
+Unnamed: 3
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: CNPJ Promotora, 27.789.914/0001-30
+
+Unnamed: 4
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: Codigo Promotora, 901064
+
+Unnamed: 5
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: Codigo do Agente, 002047
+
+Pg. 1/1
+Tipo: object | Valores únicos: 4 | Nulos: 236
+Exemplos: Proc.:  17/09/2025 13:43:06, Sist.: 17/09/2025 Cont.: 16/09/2025, Versão: C947671, 39891947807_901064 - MPRLPRODO3
+
+Unnamed: 7
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Cod. Banco, 104, 341, 001
+
+Unnamed: 8
+Tipo: float64 | Valores únicos: 0 | Nulos: 240
+Exemplos: ``
+
+Unnamed: 9
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Empregador, 202284, 202290, 202297
+
+Unnamed: 10
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Codigo Orgao, 202284, 202290, 202297
+
+Unnamed: 11
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: CPF Cliente, 213.651.558-62, 141.255.778-03, 104.410.288-88, 308.986.028-74
+
+Unnamed: 12
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: Cep, 17026750, 18688000, 16680027, 16375164
+
+Unnamed: 13
+Tipo: object | Valores únicos: 11 | Nulos: 8
+Exemplos: Cidade, Bauru                                   , Lencois Paulista                        , Avai                                    , Promissao                               
+
+Unnamed: 14
+Tipo: object | Valores únicos: 6 | Nulos: 8
+Exemplos: Complemento,           , CAIXA POST, casa      , CASA      
+
+Unnamed: 15
+Tipo: object | Valores únicos: 15 | Nulos: 8
+Exemplos: Conta corrente, 000840222514-8, 83168-5, 5431-3, 00007761-3
+
+Unnamed: 16
+Tipo: object | Valores únicos: 3 | Nulos: 8
+Exemplos: Primeiro Vencimento, 10/11/2025, 20/11/2025
+
+Unnamed: 17
+Tipo: object | Valores únicos: 1 | Nulos: 239
+Exemplos: Dt. Admissao
+
+Unnamed: 18
+Tipo: object | Valores únicos: 9 | Nulos: 8
+Exemplos: Data Base, 05/09/2025, 09/09/2025, 11/09/2025, 10/09/2025
+
+Unnamed: 19
+Tipo: object | Valores únicos: 8 | Nulos: 8
+Exemplos: Data Cadastro, 03/09/2025, 05/09/2025, 08/09/2025, 09/09/2025
+
+Unnamed: 20
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: Data Nasc., 10/12/1969, 24/10/1958, 06/12/1961, 22/12/1950
+
+Unnamed: 21
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: Descr. Promotora, GRUPO QFZ
+
+Unnamed: 22
+Tipo: object | Valores únicos: 6 | Nulos: 8
+Exemplos: Descr. Tabela, INSS CARTÃO BENEFÍCIO_LOAS_CCC, INSS_RMC_ QUERO MAIS_CCC, INSS CARTÃO BENEFÍCIO_CCC, GOV SP_CB_MC_QUERO_MAIS_CCC
+
+Unnamed: 23
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Descr. Banco, CAIXA ECON FEDERAL, ITAU S/A, BANCO DO BRASIL S/A
+
+Unnamed: 24
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Descr. Empregador, INSS BENEFICIO, INSS RMC, GOV SÃO PAULO
+
+Unnamed: 25
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Descr. Orgao, INSS BENEFICIO, INSS RMC, GOV SÃO PAULO
+
+Unnamed: 26
+Tipo: object | Valores únicos: 15 | Nulos: 8
+Exemplos: Endereco Cliente, Rua Pedro Lipe, Rua 15 de Novembro, Rua Osorio Machado, Rua Capitao  Arlindo Abraao
+
+Unnamed: 27
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Estado, SP, GO, BA
+
+Unnamed: 28
+Tipo: object | Valores únicos: 3 | Nulos: 8
+Exemplos: Estado civil, SOLTEIRO, VIÚVO
+
+Unnamed: 29
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: Fone Cel., (14)99188-4568, (14)99725-0072, (14)99604-0873, (18)99135-7464
+
+Unnamed: 30
+Tipo: object | Valores únicos: 1 | Nulos: 239
+Exemplos: Fone Com.
+
+Unnamed: 31
+Tipo: object | Valores únicos: 2 | Nulos: 217
+Exemplos: Fone Res., (14)99152-3488
+
+Unnamed: 32
+Tipo: object | Valores únicos: 15 | Nulos: 8
+Exemplos: Matricula, 7217201641, 2019715702, 1842820661, 6177327072
+
+Unnamed: 33
+Tipo: object | Valores únicos: 22 | Nulos: 8
+Exemplos: Proposta, 601967573, 601972997, 601978739, 601980781
+
+Unnamed: 34
+Tipo: object | Valores únicos: 15 | Nulos: 8
+Exemplos: Numero Endereco, 451   , 92    , 318   , 286   
+
+Unnamed: 35
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: Nacionalidade, BRASILEIRO
+
+Unnamed: 36
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: Nome da mae, APARECIDA DE LOURDES ANGELICO RANCURA, NAIR TRINDADE DE OLIVEIRA, MARIA BENEDITA DOS SANTOS, MARIA LUIZA DO VALLE
+
+Unnamed: 37
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: Nome do Agente, GRUPO QFZ
+
+Unnamed: 38
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: Cliente, ADRIANA NATALINA RANCURA, MARIA APARECIDA FERREIRA, ISABEL CRISTINA DOS SANTOS CRUAIA, MARIA LOURDES DO VALLE SERAFIM
+
+Unnamed: 39
+Tipo: object | Valores únicos: 7 | Nulos: 149
+Exemplos: Nome do Pai, LAERCIO RANCURA,  PEDRO DOS SANTOS , SILVIO KINOCITA, JOÃO FRANCISCO PIMENTA 
+
+Unnamed: 40
+Tipo: object | Valores únicos: 6 | Nulos: 8
+Exemplos: Nome usu. cad. Proposta, 02579846158_901064, 47703835846_901064, 34472963809_901064, 44812678870_901064
+
+Unnamed: 41
+Tipo: object | Valores únicos: 1 | Nulos: 239
+Exemplos: Profissao
+
+Unnamed: 42
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: Qtd Parcelas, 96
+
+Unnamed: 43
+Tipo: object | Valores únicos: 14 | Nulos: 8
+Exemplos: R.G. Cliente, 216862206, 24346074-0, 06013762314, 15611434-3
+
+Unnamed: 44
+Tipo: object | Valores únicos: 9 | Nulos: 8
+Exemplos: Renda, 9715.20, 39526.52, 1518.00, 1946.06
+
+Unnamed: 45
+Tipo: object | Valores únicos: 3 | Nulos: 8
+Exemplos: Sexo, F, M
+
+Unnamed: 46
+Tipo: object | Valores únicos: 6 | Nulos: 8
+Exemplos: Tabela utilizada, 004713, 006640, 006636, 004092
+
+Unnamed: 47
+Tipo: object | Valores únicos: 3 | Nulos: 8
+Exemplos: Vencimento do contrato, 10/10/2033, 20/10/2033
+
+Unnamed: 48
+Tipo: object | Valores únicos: 9 | Nulos: 8
+Exemplos: Vlr.da parcela, 53.13, 194.36, 68.11, 86.58
+
+Unnamed: 49
+Tipo: object | Valores únicos: 11 | Nulos: 8
+Exemplos: Valor liberacao 1, 1829.79, 1717.23, 6733.61, 1660.95
+
+
+
+BANCO DAYCOVAL
+
+Colunas e Estrutura
+BANCO DAYCOVAL S/A - Consignado
+Tipo: object | Valores únicos: 73 | Nulos: 7
+Exemplos: Propostas Cadastradas Detalhado, NR.PROP. , 828024936, 828024954, 828024978
+
+Unnamed: 1
+Tipo: object | Valores únicos: 5 | Nulos: 8
+Exemplos: Tp. Operação, PORTABILIDADE, REFINANCIAMENTO, REFINANCIAMENTO DE PORTABILIDADE, NOVA
+
+Unnamed: 2
+Tipo: object | Valores únicos: 30 | Nulos: 8
+Exemplos: CLIENTE, JOSE NATAL DE LIMA, VALTER CLARO DE OLIVEIRA, MARIA ELISA CARNEIRO DE SOUZA PORTO, FABIO GOMES DA SILVA
+
+Unnamed: 3
+Tipo: object | Valores únicos: 30 | Nulos: 8
+Exemplos: CPF/CNPJ, 021.166.888-50, 005.588.308-70, 102.136.038-45, 359.367.958-29
+
+Unnamed: 4
+Tipo: object | Valores únicos: 31 | Nulos: 8
+Exemplos: MATRÍCULA, 1487124217, 6268353556, 5359940634, 1481286363
+
+Unnamed: 5
+Tipo: object | Valores únicos: 11 | Nulos: 8
+Exemplos: DT.CAD., 2025-09-01 00:00:00, 2025-09-03 00:00:00, 2025-09-04 00:00:00, 2025-09-05 00:00:00
+
+Unnamed: 6
+Tipo: object | Valores únicos: 13 | Nulos: 8
+Exemplos: DT.BASE, 2025-09-01 00:00:00, 2025-09-05 00:00:00, 2025-09-02 00:00:00, 2025-09-11 00:00:00
+
+Unnamed: 7
+Tipo: object | Valores únicos: 16 | Nulos: 8
+Exemplos: DT.ULT.REC., 2031-01-10 00:00:00, 2033-09-10 00:00:00, 2033-10-10 00:00:00, 2031-06-10 00:00:00
+
+Unnamed: 8
+Tipo: object | Valores únicos: 7 | Nulos: 72
+Exemplos: DT. RET. Saldo, 2025-09-11 07:25:00, 2025-09-11 08:54:00, 2025-09-11 07:27:00, 2025-09-12 06:39:00
+
+Unnamed: 9
+Tipo: object | Valores únicos: 8 | Nulos: 72
+Exemplos: Saldo Portabilidade, 5236.26, 13572.14, 4365.91, 1158.14
+
+Unnamed: 10
+Tipo: object | Valores únicos: 36 | Nulos: 8
+Exemplos: Qtd. De Dias, 1957, 2931, 2957, 2930
+
+Unnamed: 11
+Tipo: object | Valores únicos: 15 | Nulos: 8
+Exemplos: Prz. em Meses, 65, 96, 64, 70
+
+Unnamed: 12
+Tipo: object | Valores únicos: 53 | Nulos: 8
+Exemplos: TX.AM, 1.83353423949024, 1.85, 1.8165356365653, 1.87852294244293
+
+Unnamed: 13
+Tipo: object | Valores únicos: 35 | Nulos: 8
+Exemplos: VLR.LIQ, 1225, 0, 5236.26, 3980
+
+Unnamed: 14
+Tipo: object | Valores únicos: 6 | Nulos: 8
+Exemplos: IOF, 0, 97.27, 97.3, 383.51
+
+Unnamed: 15
+Tipo: object | Valores únicos: 2 | Nulos: 76
+Exemplos: TC, 0
+
+Unnamed: 16
+Tipo: object | Valores únicos: 35 | Nulos: 8
+Exemplos: VLR.OPER, 1225, 0, 5236.26, 3980
+
+Unnamed: 17
+Tipo: object | Valores únicos: 32 | Nulos: 8
+Exemplos: VLR.FINANC, 2080, 0, 8685.44, 6993
+
+Unnamed: 18
+Tipo: object | Valores únicos: 31 | Nulos: 8
+Exemplos: VLR.PARC, 32, 0, 135.71, 99.9
+
+Unnamed: 19
+Tipo: object | Valores únicos: 35 | Nulos: 8
+Exemplos: VLR.CRED, 1225, 0, 5236.26, 3980
+
+Unnamed: 20
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: CÓDIGO PROMOTORA, 006064
+
+Unnamed: 21
+Tipo: object | Valores únicos: 2 | Nulos: 8
+Exemplos: DESCRIÇÃO PROMOTORA, QFZ SOLUCOES
+
+Unnamed: 22
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: CÓDIGO EMPREGADOR, 005106, 001042, 000702
+
+Unnamed: 23
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: DESCRIÇÃO EMPREGADOR, INSS, GOV. SP SEC EDU, GOV. SP SPPREV
+
+Unnamed: 24
+Tipo: object | Valores únicos: 5 | Nulos: 8
+Exemplos: CÓDIGO ORGAO, 002587, 002586, 959033, 953000
+
+Unnamed: 25
+Tipo: object | Valores únicos: 5 | Nulos: 8
+Exemplos: DESCRIÇÃO ORGAO, INSS APOSENTADO, INSS PENSIONIST, SEFAZ, SPPREV
+
+Unnamed: 26
+Tipo: object | Valores únicos: 7 | Nulos: 8
+Exemplos: Fase atual da proposta – Status, REPROVADO, PROPOSTA INTEGRADA, REPROVADA, CANCELA PROPOSTA
+
+Unnamed: 27
+Tipo: object | Valores únicos: 5 | Nulos: 8
+Exemplos: Situação_Atual_da_Proposta, REPROVADA, INTEGRADA, CANCELADA, ANDAMENTO
+
+Unnamed: 28
+Tipo: object | Valores únicos: 8 | Nulos: 62
+Exemplos: Código do motivo, 322-, 264-, 115, 263-
+
+Unnamed: 29
+Tipo: object | Valores únicos: 8 | Nulos: 62
+Exemplos: Motivo de reprovação/cancelamento/Pendência, 322 USUÁRIO CORBA, 264 MARGEM NEGATIV, 115 PORTABILIDADE FORA DOS PADRÕE, 263 FORA DAS REGRAS OPERACIONAIS - BANCO 
+
+Unnamed: 30
+Tipo: object | Valores únicos: 1 | Nulos: 79
+Exemplos: Campo de Observação – (última)
+
+Unnamed: 31
+Tipo: object | Valores únicos: 3 | Nulos: 8
+Exemplos: Sistema Originador da Proposta, Sistema Externo Gené, WebAutorizador .NET
+
+Unnamed: 32
+Tipo: object | Valores únicos: 4 | Nulos: 8
+Exemplos: Forma_de_Liberação_do_Crédito, Transferência Eletrônica, STR, Pix
+
+Unnamed: 33
+Tipo: object | Valores únicos: 19 | Nulos: 8
+Exemplos: Banco, 033, 318, 237, 389
+
+Unnamed: 34
+Tipo: object | Valores únicos: 18 | Nulos: 36
+Exemplos: Agência, 0044, 0013, 0062, 0004
+
+Unnamed: 35
+Tipo: object | Valores únicos: 32 | Nulos: 37
+Exemplos: Conta Corrente, 0063299641, 0006503101, 10084679, 0020006022
+
+Unnamed: 36
+Tipo: object | Valores únicos: 13 | Nulos: 8
+Exemplos: Data da liberação, 2025-09-01 00:00:00, 2025-09-05 00:00:00, 2025-09-02 00:00:00, 2025-09-11 00:00:00
+
+Unnamed: 37
+Tipo: object | Valores únicos: 1 | Nulos: 79
+Exemplos: Motivo da devolução
+
+Unnamed: 38
+Tipo: object | Valores únicos: 19 | Nulos: 8
+Exemplos: Código da tabela, 804140, 803115, 803587, 803459
+
+Unnamed: 39
+Tipo: object | Valores únicos: 19 | Nulos: 8
+Exemplos: Descrição_Tabela, INSS PORTAB 1 TABELAO DIG AOL, RFN - INSS AOL DIG ESP 32/92, RFN - INSS AOL DIG LOAS 87, RFN - INSS 1 AOL DIG
+
+Unnamed: 40
+Tipo: object | Valores únicos: 9 | Nulos: 8
+Exemplos: Usuário_Digitador, DCE-ALFACRED0036, DCE-ALFACRED0063, DCE-QFZ0078, DCE-QFZ0069
+
+Unnamed: 41
+Tipo: float64 | Valores únicos: 0 | Nulos: 80
+Exemplos: ``
+
+Unnamed: 42
+Tipo: float64 | Valores únicos: 0 | Nulos: 80
+Exemplos: ``
+
+Unnamed: 43
+Tipo: object | Valores únicos: 3 | Nulos: 77
+Exemplos: Proc.:  17/09/2025 10:58:06, WFP2010 - C1061015, DCM-ALFACRED01 - MPRLPRCDDT
+
+Pg. 1/1
+Tipo: float64 | Valores únicos: 0 | Nulos: 80
+
+
+BANCO VCTEX
+
+Colunas e Estrutura
+Corban Master
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: IT'S SOLUCOES LTDA
+
+Promotora
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Washington Moreira Dias Neves
+
+Substabelecido
+Tipo: float64 | Valores únicos: 0 | Nulos: 1
+Exemplos: ``
+
+Usuário (acesso login)
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 5079105917
+
+E-mail Usuário
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: acessos@q-faz.com
+
+Convênio
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: INSS
+
+Produto
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Novo
+
+Espécie Benefício
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 21 - Pensão por morte
+
+Tabela
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Tabela INSS Exponencial TX 1,85 - com Seguro Hot
+
+Seguro
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SIM
+
+Tipo De Seguro
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Hot
+
+Data da operação
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 16/09/2025 16:08:46
+
+Número do Contrato
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 0233293477/IAT
+
+Nome do Cliente
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Ivone Aparecida Telles De Oliveira
+
+CPF
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 3326113889
+
+Valor Liberado
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 1259,29
+
+Status
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Pago
+
+Observação
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Desembolso concluído com sucesso
+
+Prazo proposta
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 96
+
+Parcela
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 35,42
+
+Taxa Juros Aplicada
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 1,85
+
+Data pagamento Operação
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 16/09/2025 14:42:43
+
+Telefone Cliente
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 14997254653
+
+CNPJ Corban
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 13029909000114
+
+CNPJ Promotora
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 33238873000196
+
+CNPJ Substabelecido
+Tipo: float64 | Valores únicos: 0 | Nulos: 1
+Exemplos: ``
+
+
+BANCO PAN
+
+Colunas e Estrutura
+Nº Proposta
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 797629199, 797631249
+
+Nº Operação
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 797629199-2, 797631249-1
+
+Tipo de Operação
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Cartão, Saque Complementar
+
+Código do Produto
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 35, 3
+
+Nome do Produto
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: PROPOSTA CARTAO, PROPOSTA CARTAO - INSS
+
+Data do Cadastro
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 16/09/2025
+
+Situação da Proposta
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: PEN, REP
+
+Código da Atividade
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 2707, 998
+
+Nome da Atividade
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Aguardando Fluxo Digital, Proposta Reprovada
+
+Data do Lançamento
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 16/09/2025
+
+Data Base
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 16/09/2025
+
+Código do Empregador
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 543, 7000
+
+Nome do Empregador
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: FUNDO DO REGIME GERAL DE PREVID SOCIAL, INSS
+
+Código do Órgão
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 543000, 501
+
+Nome do Órgão
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: FUNDO DO REGIME GERAL DE PREVID SOCIAL, INSS APOSENTADO
+
+Código da Promotora
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 9885
+
+Nome da Promotora
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QFZ SOLUCOES E INTERMEDIACOES LTDA
+
+Código do Usuário
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 9RDF8, 9RBZT
+
+Nome do Usuário Digitador
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: GUILHERME AUGUSTO LEANDRO LIMA, ARIELLE MARTINS PITON
+
+CPF do Usuário Digitador
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 477.038.358-46, 557.761.058-38
+
+CPF do Cliente
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 120.212.628-63, 277.487.578-10
+
+Nome do Cliente
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: ANTONIO CARLOS BUENO, LUCILEIA FERREIRA
+
+Data de Nascimento
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 11/07/1969, 13/08/1979
+
+Nº RG do Cliente
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 186791744, 351642182
+
+Endereço do Cliente
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: R PEDRO CONEGLIAN, RUA TREZE DE MAIO
+
+Nº Endereço
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 48, 456
+
+Complemento
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+Bairro
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: JD S JOAO, CENTRO
+
+Cidade
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: LENCOIS PAULISTA, VALPARAISO
+
+UF
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SP
+
+CEP
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 18680370, 16880000
+
+Telefone
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 9166-5990, 99185-9698
+
+Celular
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 99166-5990, 99116-6565
+
+Nome da Mãe
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: ZULMIRA PETRONILA DE JESUS BUE, HELENA GUIMARAES FERREIRA
+
+Nome do Pai
+Tipo: object | Valores únicos: 1 | Nulos: 1
+Exemplos: CLOVIS FERREIRA
+
+Nº Matrícula
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 6320426652, 1229475734
+
+Nº Matrícula Instituidora
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+Quantidade de Parcelas
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 1, 0
+
+Valor da Parcela
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 2845, 0,00
+
+Valor Financiado
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 2845, 376,22
+
+Parcelas Compra
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+Parcelas REFIN
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+Código do Convênio
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 888543, 888700
+
+Nome do Convênio
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: INSS_BENEFICIO_CARTAO, INSS_CARTAO
+
+LIB1
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 177
+
+BANCO
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 756
+
+AGENCIA
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 4474, 6044
+
+CONTA
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 000001033-2, 012640087-0
+
+VLR_LIB1
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 1991,5, 376,22
+
+LIB2
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+BANCO.1
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+AGENCIA.1
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+CONTA.1
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+VLR_LIB2
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+LIB3
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+BANCO.2
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+AGENCIA.2
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+CONTA.2
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+VLR_LIB3
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+LIB4
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+BANCO.3
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+AGENCIA.3
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CONTA.3
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+VLR_LIB4
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+LIB5
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+BANCO.4
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+AGENCIA.4
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CONTA.4
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+VLR_LIB5
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+LIB6
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+BANCO.5
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+AGENCIA.5
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CONTA.5
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+VLR_LIB6
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+LIB7
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+BANCO.6
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+AGENCIA.6
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CONTA.6
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+VLR_LIB7
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+LIB8
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+BANCO.7
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+AGENCIA.7
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CONTA.7
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+VLR_LIB8
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+LIB9
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+BANCO.8
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+AGENCIA.8
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CONTA.8
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+VLR_LIB9
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+LIB10
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+BANCO.9
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+AGENCIA.9
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CONTA.9
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+VLR_LIB10
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+SEGURO
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 252, 450
+
+DDD_CLIENTE
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 14, 18
+
+TAXA AP
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+CANAL VENDA
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: PANCRED
+
+TIPO FORMALIZACAO
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Digital
+
+USUARIO INCLUSAO
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 47703835846_009885, 55776105838_009885
+
+Venda Mais Pan
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+Operacao Origem Venda Mais Pan
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+Tipo de Benefício
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 42, 21
+
+Nomenclatura
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: APOSENTADORIA POR TEMPO DE CONTRIBUICAO, PENSAO POR MORTE PREVIDENCIARIA
+
+Unnamed: 104
+Tipo: float64 | Valores únicos: 0 | Nulos: 2
+Exemplos: ``
+
+
+BANCO C6 BANK
+
+Colunas e Estrutura
+Unnamed: 0
+Tipo: int64 | Valores únicos: 342 | Nulos: 0
+Exemplos: 1, 2, 3, 4, 5
+
+Número da Proposta
+Tipo: int64 | Valores únicos: 342 | Nulos: 0
+Exemplos: 600511555, 600511758, 600511861, 600512041, 600513228
+
+Sigla Retorno Data Prev
+Tipo: object | Valores únicos: 1 | Nulos: 279
+Exemplos: BD
+
+CNPJ/CPF do Cliente
+Tipo: object | Valores únicos: 152 | Nulos: 0
+Exemplos: 122.614.497-71, 171.085.337-90, 275.092.168-69, 329.908.278-70, 301.147.268-84
+
+Contrato Origem
+Tipo: float64 | Valores únicos: 0 | Nulos: 342
+Exemplos: ``
+
+Forma Envio
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Balcao
+
+Loja
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 2311
+
+Matrícula
+Tipo: object | Valores únicos: 155 | Nulos: 0
+Exemplos: 00064000008, 04044411777020250114162352, 1896, 4456297, 000005357
+
+Motivo Recusa
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: '-, Recusado Crédito
+
+Nome Entidade
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: CONSIG TRAB, INSS
+
+Nome Cliente
+Tipo: object | Valores únicos: 156 | Nulos: 0
+Exemplos: ADRIELI RODRIGUES DE SOUZA BAZELATO, NATALIA LINHARES DE MELO, ROGERIO FERREIRA DA SILVA, CLAUDINEI LUNA DINIZ, ROBERTO DE SOUZA LIMA
+
+Nome Produto
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: TRAB ML DW, INSS ML DWEB, INSS PORT DWEB, INSS REF PORT DWEB, INSS REFIN DWEB
+
+Nome Serviço
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: NOVO, PORTABILIDADE, REFIN PORTABILIDADE, REFIN
+
+Número Operação
+Tipo: int64 | Valores únicos: 342 | Nulos: 0
+Exemplos: 600511555, 600511758, 600511861, 600512041, 600513228
+
+Razão Social
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QFZ SOLUCOES E INTER
+
+Situação Proposta
+Tipo: object | Valores únicos: 16 | Nulos: 0
+Exemplos: PAGO, CANCELADA, REPROVADA, AGUARDA FORM DIG WEB, ANALISE CORBAN
+
+Status Operação
+Tipo: object | Valores únicos: 5 | Nulos: 0
+Exemplos: INT, CAN, REP, PEN, AND
+
+Tipo Formalização
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Digital, Digital Plus
+
+Usuário
+Tipo: object | Valores únicos: 20 | Nulos: 0
+Exemplos: 32522153811_002311, 02579846158_002311, 37375205850_002311, 40377025844_002311, 22768716871_002311
+
+Data Base
+Tipo: datetime64[ns] | Valores únicos: 10 | Nulos: 0
+Exemplos: 2025-09-04 00:00:00, 2025-09-05 00:00:00, 2025-09-08 00:00:00, 2025-09-09 00:00:00, 2025-09-10 00:00:00
+
+Data Digitação ADE
+Tipo: datetime64[ns] | Valores únicos: 10 | Nulos: 0
+Exemplos: 2025-09-04 00:00:00, 2025-09-05 00:00:00, 2025-09-08 00:00:00, 2025-09-09 00:00:00, 2025-09-10 00:00:00
+
+Data Alteração Situação
+Tipo: datetime64[ns] | Valores únicos: 12 | Nulos: 0
+Exemplos: 2025-09-04 00:00:00, 2025-09-05 00:00:00, 2025-09-14 00:00:00, 2025-09-08 00:00:00, 2025-09-06 00:00:00
+
+Cod Tabela
+Tipo: int64 | Valores únicos: 17 | Nulos: 0
+Exemplos: 800017, 800015, 210180, 230024, 240133
+
+Desc Tabela
+Tipo: object | Valores únicos: 17 | Nulos: 0
+Exemplos: Trabalhador Seguro 4 Parcela, Trabalhador Sem Seguro, INSS ML Normal - Web, INSS Port Tx1,850 ~ 1,75 Normal - Web, INSS RfnPort Tx1,850%~1,780% Normal-Web
+
+Tabela Cod Desc
+Tipo: object | Valores únicos: 17 | Nulos: 0
+Exemplos: 800017 - Trabalhador Seguro 4 Parcela, 800015 - Trabalhador Sem Seguro, 210180 - INSS ML Normal - Web, 230024 - INSS Port Tx1,850 ~ 1,75 Normal - Web, 240133 - INSS RfnPort Tx1,850%~1,780% Normal-Web
+
+Flg Banco Digital
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Nao, Sim
+
+Observação
+Tipo: object | Valores únicos: 4 | Nulos: 252
+Exemplos: Aprovado, Proposta derivada para análise da CCB + documentação do cliente, Reprovado Política Interna 66, CPF do cliente bloqueado para operar com o C6 Consig
+
+Modalidade Negócio
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: CONSIGNADO
+
+Desc Formalização
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: FORMALIZADO, NÃO CONTRATADO, CANCELADO, NÃO INICIADO, CONCLUÍDO
+
+Nome do Usuário
+Tipo: object | Valores únicos: 20 | Nulos: 0
+Exemplos: FILIPE GARCIA MOREIRA COBIANCHI, ANDRESSA SABRINA ALVES, ARIANE GISELE SARTO, MARIA CRISTINA MASSAMBANI, KATE MICHELLE DA COSTA MISSE
+
+Agência Cliente
+Tipo: float64 | Valores únicos: 93 | Nulos: 42
+Exemplos: 1.0, 9115.0, 2220.0, 489.0, 404.0
+
+Banco Cliente
+Tipo: float64 | Valores únicos: 12 | Nulos: 42
+Exemplos: 260.0, 341.0, 237.0, 104.0, 1.0
+
+Conta Cliente
+Tipo: float64 | Valores únicos: 168 | Nulos: 42
+Exemplos: 333961859.0, 35999227.0, 34800.0, 1015340.0, 9996509.0
+
+Fg Conta C6
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Nao
+
+Descrição Retorno Data Prev
+Tipo: float64 | Valores únicos: 0 | Nulos: 342
+Exemplos: ``
+
+Qtd Parcelas Contrato
+Tipo: int64 | Valores únicos: 37 | Nulos: 0
+Exemplos: 6, 12, 18, 96, 65
+
+Saldo Devedor
+Tipo: float64 | Valores únicos: 317 | Nulos: 0
+Exemplos: 1010.51, 2442.01, 1322.53, 3590.18, 4356.89
+
+Taxa
+Tipo: float64 | Valores únicos: 107 | Nulos: 0
+Exemplos: 0.06, 0.05062, 0.059, 0.0594, 0.03681
+
+Valor Liberado
+Tipo: float64 | Valores únicos: 314 | Nulos: 0
+Exemplos: 884.89, 2138.27, 1158.11, 3144.12, 3787.63
+
+Valor Solicitado Pelo Cliente Bruto
+Tipo: float64 | Valores únicos: 317 | Nulos: 0
+Exemplos: 1010.51, 2442.01, 1322.53, 3590.18, 4356.89
+
+Valor Parcela
+Tipo: float64 | Valores únicos: 219 | Nulos: 0
+Exemplos: 230.37, 531.08, 300.0, 814.46, 489.8
+
+Valor Total Empréstimo
+Tipo: float64 | Valores únicos: 314 | Nulos: 0
+Exemplos: 1382.22, 3186.48, 1800.0, 4886.76, 5877.6
+
+Telefone Proposta
+Tipo: int64 | Valores únicos: 154 | Nulos: 0
+Exemplos: 27996977854, 21992469244, 14996762955, 11963109646, 11963441764
+
+Data Nascimento Cliente
+Tipo: datetime64[ns] | Valores únicos: 152 | Nulos: 0
+Exemplos: 1988-01-06 00:00:00, 1998-05-05 00:00:00, 1978-04-03 00:00:00, 1980-07-03 00:00:00, 1981-11-30 00:00:00
+
+Endereço Cliente
+Tipo: object | Valores únicos: 134 | Nulos: 0
+Exemplos: RUA VALENTIM GENTIL - 1     , RUA CLEMENTINO BONI - 01102 , RUA SAO  PAULO - 01    , AVENIDA MAJOR  GASPARINO DE QUADROS - 631   , RUA SAO  GABRIEL - 69    
+
+Complemento Endereço Cliente
+Tipo: object | Valores únicos: 9 | Nulos: 3
+Exemplos:          , CASA      , CASXA     , CASA 14   , NULL     
+
+Bairro Cliente
+Tipo: object | Valores únicos: 93 | Nulos: 0
+Exemplos: VL B ESPERANCA           , JD MARILIA               , CENTRO                   , JD SAO LUIZ              , SETOR COPACABANA         
+
+Cidade Cliente
+Tipo: object | Valores únicos: 43 | Nulos: 0
+Exemplos: OURINHOS                                , BAURU                                   , AVARE                                   , AGUDOS                                  , SAO PAULO                               
+
+UF Cliente
+Tipo: object | Valores únicos: 9 | Nulos: 0
+Exemplos: SP, GO, DF, SC, RS
+
+Possui Pacote/Seguro?
+Tipo: object | Valores únicos: 10 | Nulos: 0
+Exemplos: SEGURO 4 PARCELAS, SEM PACOTE, PACOTE 3 (300), PACOTE 7 (1250), PACOTE 1 (75)
+
+Valor Capital Seguro
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+Valor Pacote
+Tipo: float64 | Valores únicos: 64 | Nulos: 0
+Exemplos: 108.63, 262.52, 142.17, 385.98, 468.37
+
+TaxaCL
+Tipo: float64 | Valores únicos: 96 | Nulos: 0
+Exemplos: 0.059999975, 0.050619979, 0.058999976, 0.036809985, 0.061999974
+
+Status Pre Formalizacao
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: CONTRATO INTEGRADO, CANCELADAS/REPROVADAS, NÃO FORMALIZADO, PRÉ FORMALIZADO
+
+Dispositivo
+Tipo: object | Valores únicos: 8 | Nulos: 137
+Exemplos: Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36, Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Mobile Safari/537.36, Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36, Mozilla/5.0 (iPhone; CPU iPhone OS 18_6_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1, Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1
+
+Geolocalização Latitude
+Tipo: object | Valores únicos: 104 | Nulos: 137
+Exemplos: '-19.3739047, '-20.5369403, '-22.324324324324323, '-23.3213609, '-29.4271075
+
+Geolocalização Longitude
+Tipo: object | Valores únicos: 105 | Nulos: 137
+Exemplos: '-40.0687774, '-43.7771464, '-49.064871065942036, '-46.7039389, '-51.9574646
+
+Geolocalização Altitude
+Tipo: float64 | Valores únicos: 88 | Nulos: 137
+Exemplos: 30.5, 991.0999755859376, 0.0, 796.7000122070312, 51.09999847412109
+
+Possui TC?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NAO POSSUI TC
+
+Contrato Origem Port
+Tipo: float64 | Valores únicos: 0 | Nulos: 342
+Exemplos: ``
+
+Contrato Origem C6
+Tipo: float64 | Valores únicos: 2 | Nulos: 340
+Exemplos: 965975250.0, 845068068.0
+
+Link Formalização
+Tipo: object | Valores únicos: 216 | Nulos: 31
+Exemplos: https://web.c6consig.com.br/pOyOm5gpxuoxRVVX, https://web.c6consig.com.br/0EaEQm93osV512MG, https://web.c6consig.com.br/7gXgbXDLRu7r19Vo, https://web.c6consig.com.br/6ELEOrjrAtk5NPGY, 14/09/2025 22:10:21 - SISTEMA - I
+
+Valor Base Comissão
+Tipo: float64 | Valores únicos: 315 | Nulos: 0
+Exemplos: 993.52, 2400.7900000000004, 1300.28, 3530.1, 4256.0
+
+
+QUALIBANKING
+
+Colunas e Estrutura
+Código
+Tipo: int64 | Valores únicos: 835 | Nulos: 0
+Exemplos: 851575, 845237, 803026, 786201, 843667
+
+Tipo
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Proposta, Contrato
+
+Etapa
+Tipo: object | Valores únicos: 6 | Nulos: 0
+Exemplos: Cancelado, Finalizado, Formalização, Pagamento, Averbação
+
+Código do Produto
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 6, 10, 8
+
+Nome do Produto
+Tipo: object | Valores únicos: 3 | Nulos: 191
+Exemplos: INSS - Novo, INSS - Aumento, INSS - Portabilidade + Refinanciamento
+
+Código da Tabela
+Tipo: int64 | Valores únicos: 31 | Nulos: 0
+Exemplos: 99, 101, 103, 97, 90
+
+Nome da Tabela
+Tipo: object | Valores únicos: 29 | Nulos: 0
+Exemplos: 000099 Entrante Max 96x 1,85%, 000101 Entrante Plus 96x 1,85%, 000103 Novo Max 96x 1,85%, 000097 Loas 88 Entrante Max 96x 1,85%, 000090 Entrante Max 96x 1,80%
+
+Tipo de Produto
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: INSS
+
+Tipo de Operação
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: Novo, Margem Complementar, Portabilidade + Refinanciamento, Refinanciamento da Portabilidade
+
+CPF
+Tipo: int64 | Valores únicos: 164 | Nulos: 0
+Exemplos: 97350850972, 28976355172, 19243634291, 32609124449, 45659567991
+
+Benefício
+Tipo: float64 | Valores únicos: 170 | Nulos: 0
+Exemplos: 2255292771.0, 2279487580.0, 2322610776.0, 2293648766.0, 2104353313.0
+
+Nome
+Tipo: object | Valores únicos: 164 | Nulos: 0
+Exemplos: DANIEL AGOSTINHO DA SILVA, FRANCISCA BATISTA CARLOS DE FARIAS, ANTONIO JORGE DE SOUZA ARANHA, ROSANGELA NUNES SARMENTO, ADJALMA APARECIDO SUMAM
+
+Código do Status
+Tipo: int64 | Valores únicos: 9 | Nulos: 0
+Exemplos: 70, 117, 73, 63, 30
+
+Status
+Tipo: object | Valores únicos: 9 | Nulos: 0
+Exemplos: Cancelado, Proposta Expirada, Reprovado, Integrado, Aguardando Formalização
+
+Data do Status
+Tipo: object | Valores únicos: 279 | Nulos: 0
+Exemplos: 13/07/2025 03:14, 11/07/2025 03:13, 30/05/2025 03:08, 22/05/2025 09:27, 10/07/2025 03:02
+
+Observação do Status
+Tipo: object | Valores únicos: 3 | Nulos: 828
+Exemplos: Retenção do Cliente, Contrato não encontrado, Benefício Bloqueado
+
+Motivo do Status
+Tipo: object | Valores únicos: 12 | Nulos: 775
+Exemplos: Pendente na análise documental, Reprovada na análise documental, DECURSO DE PRAZO, Pendente contato pós venda, SOLICITAÇÃO COMERCIAL
+
+Código do Status do Averbador
+Tipo: object | Valores únicos: 5 | Nulos: 373
+Exemplos: HW, IE, BD, IT, IF
+
+Status do Averbador
+Tipo: object | Valores únicos: 5 | Nulos: 373
+Exemplos: HW - Margem consignável excedida, IE - Benefício bloqueado pelo beneficiário, BD - Inclusão realizada com sucesso, IT - Benefício bloqueado devido à transferência de benefício, IF - Benefício bloqueado durante o processo de concessão
+
+Número do Contrato
+Tipo: object | Valores únicos: 835 | Nulos: 0
+Exemplos: QUA0000851575, QUA0000845237, QUA0000803026, QUA0000786201, QUA0000843667
+
+Data da Proposta
+Tipo: object | Valores únicos: 98 | Nulos: 0
+Exemplos: 13/06/2025, 11/06/2025, 10/05/2025, 02/05/2025, 10/06/2025
+
+Data da Inclusão
+Tipo: object | Valores únicos: 34 | Nulos: 596
+Exemplos: 13/06/2025, 11/06/2025, 09/06/2025, 23/06/2025, 30/05/2025
+
+Data do Contrato
+Tipo: object | Valores únicos: 51 | Nulos: 682
+Exemplos: 01/04/2025, 02/06/2025, 09/04/2025, 20/05/2025, 02/09/2025
+
+Data do Crédito ao Cliente
+Tipo: object | Valores únicos: 64 | Nulos: 664
+Exemplos: 03/04/2025, 02/06/2025, 10/04/2025, 20/05/2025, 02/09/2025
+
+Data de Averbação
+Tipo: object | Valores únicos: 67 | Nulos: 647
+Exemplos: 16/05/2025, 02/04/2025, 02/06/2025, 10/04/2025, 20/05/2025
+
+Data do Desembolso
+Tipo: object | Valores únicos: 99 | Nulos: 8
+Exemplos: 13/06/2025, 11/06/2025, 14/05/2025, 06/05/2025, 10/06/2025
+
+Data do Primeiro Vencimento
+Tipo: object | Valores únicos: 88 | Nulos: 0
+Exemplos: 13/08/2025, 11/08/2025, 10/07/2025, 02/06/2025, 10/08/2025
+
+Data do Último Vencimento
+Tipo: object | Valores únicos: 96 | Nulos: 0
+Exemplos: 13/07/2033, 11/07/2033, 10/06/2033, 02/05/2033, 10/07/2033
+
+Valor da Simulação
+Tipo: object | Valores únicos: 171 | Nulos: 0
+Exemplos: 6505,55, 8703,07, 15225,24, 8863,47, 11782,65
+
+Valor Base
+Tipo: object | Valores únicos: 239 | Nulos: 0
+Exemplos: 5311,45, 7105,61, 12430,49, 7240,71, 10209,07
+
+Valor do Empréstimo
+Tipo: object | Valores únicos: 217 | Nulos: 0
+Exemplos: 6505,55, 8703,07, 15225,24, 8863,47, 11782,65
+
+Valor Líquido ao Cliente
+Tipo: object | Valores únicos: 238 | Nulos: 0
+Exemplos: 5311,45, 7105,61, 12430,49, 7240,71, 10209,07
+
+Prazo
+Tipo: int64 | Valores únicos: 12 | Nulos: 0
+Exemplos: 96, 84, 71, 73, 31
+
+Taxa
+Tipo: object | Valores únicos: 18 | Nulos: 0
+Exemplos: 0,018500000000000003, 0,018, 0,0185, 0,0166, 0,018000000000000002
+
+Valor da Parcela
+Tipo: object | Valores únicos: 140 | Nulos: 0
+Exemplos: 149,5, 200, 350, 270,77, 371,91
+
+Contrato de Origem - Código do Banco
+Tipo: int64 | Valores únicos: 9 | Nulos: 0
+Exemplos: 0, 29, 329, 41, 707
+
+Contrato de Origem - Nome do Banco
+Tipo: object | Valores únicos: 9 | Nulos: 0
+Exemplos: 000 - Balcão B3, 029 - BANCO ITAÚ CONSIGNADO S.A., QI Tech, 041 - BCO DO ESTADO DO RS S.A., 707 - BCO DAYCOVAL S.A
+
+Contrato de Origem - Número do Contrato
+Tipo: object | Valores únicos: 20 | Nulos: 813
+Exemplos: 3211397041, QUA0001052312, 13630715, QUA0001052277, QUA0001013151
+
+Contrato de Origem - Data do Contrato
+Tipo: object | Valores únicos: 8 | Nulos: 827
+Exemplos: 05/07/2024, 04/03/2021, 14/08/2025, 31/07/2025, 19/04/2024
+
+Contrato de Origem - Data do Primeiro Vencimento
+Tipo: object | Valores únicos: 13 | Nulos: 820
+Exemplos: 16/11/2025, 08/08/2025, 01/10/2025, 25/08/2025, 05/11/2025
+
+Contrato de Origem - Data do Último Vencimento
+Tipo: object | Valores únicos: 14 | Nulos: 820
+Exemplos: 16/05/2028, 08/08/2031, 16/08/2028, 01/08/2031, 25/11/2031
+
+Contrato de Origem - Prazo
+Tipo: int64 | Valores únicos: 11 | Nulos: 0
+Exemplos: 0, 84, 31, 34, 71
+
+Contrato de Origem - Taxa
+Tipo: object | Valores únicos: 16 | Nulos: 0
+Exemplos: 0, 0,013286, 0,18634989999999999, 0,01316, 0,013807
+
+Contrato de Origem - Valor do Empréstimo
+Tipo: object | Valores únicos: 10 | Nulos: 0
+Exemplos: 0, 4029, 5930, 10176,01, 13500
+
+Contrato de Origem - Valor da Parcela
+Tipo: object | Valores únicos: 13 | Nulos: 0
+Exemplos: 0, 227,09, 161,98, 996,28, 220,98
+
+Contrato de Origem - Quantidade de Parcelas Pagas
+Tipo: int64 | Valores únicos: 10 | Nulos: 0
+Exemplos: 0, 13, 11, 53, 8
+
+Contrato de Origem - Quantidade de Parcelas Restantes
+Tipo: int64 | Valores únicos: 10 | Nulos: 0
+Exemplos: 0, 71, 31, 73, 34
+
+Contrato de Origem - Quantidade de Parcelas em Atraso
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+Contrato de Origem - Valor do Saldo Devedor
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 0, 10176,01, 45243,89, 4029, 13500
+
+Contrato de Origem - Data do Saldo Devedor
+Tipo: object | Valores únicos: 4 | Nulos: 827
+Exemplos: 07/08/2025, 21/08/2025, 16/09/2025, 15/09/2025
+
+Contrato de Origem - Data esperada para retorno do Saldo Devedor
+Tipo: object | Valores únicos: 7 | Nulos: 827
+Exemplos: 07/08/2025, 23/09/2025, 04/07/2025, 21/08/2025, 08/09/2025
+
+**Contrato de Origem - Saldo Devedor Retornado **
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: NÃO, SIM
+
+Contrato de Origem - Observação
+Tipo: float64 | Valores únicos: 0 | Nulos: 835
+Exemplos: ``
+
+Aprovação - Tipo
+Tipo: object | Valores únicos: 2 | Nulos: 832
+Exemplos: Automático, Manual
+
+Aprovação - Data
+Tipo: object | Valores únicos: 3 | Nulos: 832
+Exemplos: 07/08/2025 10:23, 16/09/2025 09:37, 15/09/2025 11:42
+
+Aprovação - Usuário
+Tipo: object | Valores únicos: 3 | Nulos: 832
+Exemplos: Gabriel Silva Chaves - Qfaz Solucoes, Rafael De Arruda Pereira, Douglas Henrique Nunes
+
+Cancelamento - Tipo
+Tipo: object | Valores únicos: 1 | Nulos: 809
+Exemplos: Manual
+
+Cancelamento - Data
+Tipo: object | Valores únicos: 14 | Nulos: 809
+Exemplos: 21/05/2025 16:12, 17/02/2025 10:58, 21/05/2025 16:45, 19/12/2024 10:27, 19/12/2024 10:56
+
+Cancelamento - Usuário
+Tipo: object | Valores únicos: 10 | Nulos: 809
+Exemplos: Ana Gabrielle Soares, Jaqueline Lopes Tomé, Thais Alves Santos, Rafael De Arruda Pereira, Victor Marinho Rojas
+
+Cancelamento - Observação
+Tipo: float64 | Valores únicos: 0 | Nulos: 835
+Exemplos: ``
+
+Válido
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: SIM, NÃO
+
+Empresa
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QUALICONSIG PROMOTORA DE VENDAS LTDA
+
+Conta
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QUALICONSIG PROMOTORA DE VENDAS LTDA
+
+Parceiro
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QFZ SOLUCOES E INTERMEDIACOES LTDA
+
+Loja
+Tipo: float64 | Valores únicos: 0 | Nulos: 835
+Exemplos: ``
+
+Agente
+Tipo: object | Valores únicos: 18 | Nulos: 0
+Exemplos: Andressa Escobar Arcanjo -Qfaz, Douglas Henrique Nunes, Andressa Sabrina Alves, Lariana Piton Rodrigues Gonçalves, Luiz Fernando Da Silva - Qfz
+
+Usuário
+Tipo: object | Valores únicos: 18 | Nulos: 0
+Exemplos: Andressa Escobar Arcanjo -Qfaz, Douglas Henrique Nunes, Andressa Sabrina Alves, Lariana Piton Rodrigues Gonçalves, Luiz Fernando Da Silva - Qfz
+
+Login
+Tipo: object | Valores únicos: 18 | Nulos: 0
+Exemplos: aearcanjo@q-faz.com, dhnunes@q-faz.com, a.asalves@outlook.com, lalapitonrodrigues@outlook.com, lfsilva@q-faz.com
+
+Data de Cadastro
+Tipo: object | Valores únicos: 225 | Nulos: 0
+Exemplos: 13/06/2025 11:02, 11/06/2025 09:49, 10/05/2025 11:24, 02/05/2025 14:48, 10/06/2025 12:19
+
+Usuário de Cadastro
+Tipo: object | Valores únicos: 19 | Nulos: 0
+Exemplos: Andressa Escobar Arcanjo -Qfaz, Douglas Henrique Nunes, Andressa Sabrina Alves, Lariana Piton Rodrigues Gonçalves, Luiz Fernando Da Silva - Qfz
+
+Data de Alteração
+Tipo: object | Valores únicos: 14 | Nulos: 812
+Exemplos: 21/05/2025 16:12, 17/02/2025 10:58, 21/05/2025 16:45, 19/12/2024 10:27, 19/12/2024 10:56
+
+Usuário de Alteração
+Tipo: object | Valores únicos: 10 | Nulos: 812
+Exemplos: Ana Gabrielle Soares, Jaqueline Lopes Tomé, Thais Alves Santos, Rafael De Arruda Pereira, Victor Marinho Rojas
+
+Refin - Código do Status
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 0, 30, 63, 52, 74
+
+Refin - Status
+Tipo: object | Valores únicos: 5 | Nulos: 824
+Exemplos: Aguardando Formalização, Integrado, Aguardando Portabilidade, Contrato retido pelo banco de origem, Cancelado
+
+Refin - Data do Status
+Tipo: object | Valores únicos: 11 | Nulos: 824
+Exemplos: 15/09/2025 20:08, 07/08/2025 15:22, 16/09/2025 17:25, 04/07/2025 05:45, 07/09/2025 20:16
+
+Refin - Motivo do Status
+Tipo: float64 | Valores únicos: 0 | Nulos: 835
+Exemplos: ``
+
+Refin - Número do Contrato
+Tipo: object | Valores únicos: 11 | Nulos: 824
+Exemplos: QUA0001028580, QUA0000947072, QUA0001052313, QUA0000872981, QUA0001008292
+
+Refin - Data da Proposta
+Tipo: object | Valores únicos: 9 | Nulos: 824
+Exemplos: 05/09/2025, 31/07/2025, 16/09/2025, 27/06/2025, 28/08/2025
+
+Refin - Data da Inclusão
+Tipo: float64 | Valores únicos: 0 | Nulos: 835
+Exemplos: ``
+
+Refin - Data do Contrato
+Tipo: object | Valores únicos: 4 | Nulos: 831
+Exemplos: 31/07/2025, 14/08/2025, 09/09/2025, 08/09/2025
+
+Refin - Data do Crédito ao Cliente
+Tipo: object | Valores únicos: 4 | Nulos: 831
+Exemplos: 07/08/2025, 13/08/2025, 16/09/2025, 17/09/2025
+
+Refin - Data de Averbação
+Tipo: object | Valores únicos: 2 | Nulos: 833
+Exemplos: 07/08/2025, 17/09/2025
+
+Refin - Data do Desembolso
+Tipo: object | Valores únicos: 4 | Nulos: 831
+Exemplos: 07/08/2025, 13/08/2025, 16/09/2025, 17/09/2025
+
+Refin - Data do Primeiro Vencimento
+Tipo: object | Valores únicos: 8 | Nulos: 824
+Exemplos: 05/11/2025, 07/10/2025, 16/11/2025, 25/08/2025, 25/10/2025
+
+Refin - Data do Último Vencimento
+Tipo: object | Valores únicos: 8 | Nulos: 824
+Exemplos: 05/10/2033, 07/09/2033, 16/10/2033, 25/07/2033, 25/09/2033
+
+Refin - Valor do Empréstimo
+Tipo: object | Valores únicos: 12 | Nulos: 0
+Exemplos: 0, 10590,43, 46465,44, 7179,5, 13778,29
+
+Refin - Prazo
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 0, 96
+
+Refin - Taxa
+Tipo: object | Valores únicos: 6 | Nulos: 0
+Exemplos: 0, 0,0166, 0,018000000000000002, 0,0175, 0,018500000000000003
+
+Refin - Valor da Parcela
+Tipo: object | Valores únicos: 12 | Nulos: 0
+Exemplos: 0, 227, 996,27, 161,98, 305,04
+
+Refin - Saldo Devedor
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 0
+
+Refin - Valor Líquido ao Cliente
+Tipo: object | Valores únicos: 12 | Nulos: 0
+Exemplos: 0, 296,96, 1180,67, 3044,91, 268,97
+
+**Refin - Tipo de Crédito ao Cliente **
+Tipo: float64 | Valores únicos: 0 | Nulos: 835
+Exemplos: ``
+
+Refin - Conta Bancária de Crédito - Banco
+Tipo: int64 | Valores únicos: 5 | Nulos: 0
+Exemplos: 0, 104, 237, 341, 1
+
+Refin - Conta Bancária de Crédito - Agência
+Tipo: float64 | Valores únicos: 8 | Nulos: 824
+Exemplos: 962.0, 4377.0, 157.0, 75.0, 292.0
+
+Refin - Conta Bancária de Crédito - Número
+Tipo: float64 | Valores únicos: 8 | Nulos: 824
+Exemplos: 593434656.0, 753782368.0, 1005863.0, 87239.0, 857127096.0
+
+Refin - Conta Bancária de Crédito - Dígito
+Tipo: float64 | Valores únicos: 5 | Nulos: 824
+Exemplos: 0.0, 6.0, 5.0, 7.0, 1.0
+
+Com Seguro
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: SIM, NÃO
+
+Valor do Seguro
+Tipo: object | Valores únicos: 203 | Nulos: 0
+Exemplos: 975,83, 1305,46, 2283,79, 1305,02, 1178,26
+
+Link para Formaloização
+Tipo: object | Valores únicos: 231 | Nulos: 8
+Exemplos: https://app.confia.net.br?chave=339ca72b-adf8-43b5-8fd6-26204239adc6, https://app.confia.net.br?chave=3d6f74d2-b113-4be0-b628-be5260d7b056, https://app.confia.net.br?chave=c65b1b2c-be49-4d1f-9369-d75dbfff7b96, https://app.confia.net.br?chave=683877ab-d6af-48ee-8b57-291a61db5565, https://app.confia.net.br?chave=6698f54c-cdba-4346-b0d3-82d236ab17ef
+
+Valor da Margem do Benefício
+Tipo: object | Valores únicos: 3 | Nulos: 22
+Exemplos: 0, 5,44, 9,85
+
+Código do Tipo de Benefício
+Tipo: int64 | Valores únicos: 10 | Nulos: 0
+Exemplos: 42, 41, 21, 88, 32
+
+Nome do Tipo de Benefício
+Tipo: object | Valores únicos: 14 | Nulos: 31
+Exemplos: Aposentadoria Por Tempo De Contribuição, Aposentadoria Por Idade, 42 - Aposentadoria por tempo de contribuição previdenciária, Pensão Por Morte, Auxílio Contínuo Por Velhice
+
+Unnamed: 102
+Tipo: float64 | Valores únicos: 0 | Nulos: 835
+Exemplos: ``
+
+MERCANTIL
+
+📄 relatorio (38).xlsx (11 registros)
+
+Colunas e Estrutura
+NumeroProposta
+Tipo: int64 | Valores únicos: 11 | Nulos: 0
+Exemplos: 508966575, 508965544, 508961122, 508954062, 508943404
+
+CodigoConvenio
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 161594, 1555251
+
+NomeConvenio
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: F.G.T.S, CREDITO PESSOAL - INSS
+
+CodigoProduto
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 13728077, 500
+
+NomeProduto
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: MERCANTIL FINANC-DIGITAL ANTECIP FGTS NORMAL, BMB - DIGITAL - INSS CREDITO PESSOAL
+
+CodigoCorrespondente
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 999912
+
+NomeCorrespondente
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: CREDFRANCO
+
+CnpjCorrespondente
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 13029909000114
+
+CodigoSubstabelecido
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 1045274
+
+NomeSubstabelecido
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QFZ SOLUCOES E INTERMEDIACOES LTDA
+
+CnpjSubstabelecido
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 27789914000130
+
+CpfAgenteCertificado
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 44812678870, 40935772855, 48223775808
+
+ModalidadeCredito
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: SaqueAniversarioFgts, CreditoPessoal
+
+SituacaoProposta
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: EmAndamento, Integrada, Reprovada
+
+DataCadastro
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 09/09/2025 09:19:18, 08/09/2025 15:58:24, 05/09/2025 16:41:51, 04/09/2025 18:17:54, 03/09/2025 12:37:34
+
+DataPrimeiroVencimento
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: 01/12/2025 00:00:00, 01/03/2026 00:00:00, 01/02/2026 00:00:00, 01/11/2025 00:00:00, 01/01/2026 00:00:00
+
+DataUltimoVencimento
+Tipo: object | Valores únicos: 10 | Nulos: 0
+Exemplos: 01/12/2034 00:00:00, 01/03/2035 00:00:00, 01/02/2035 00:00:00, 01/11/2034 00:00:00, 01/01/2033 00:00:00
+
+QuantidadeParcelas
+Tipo: int64 | Valores únicos: 5 | Nulos: 0
+Exemplos: 10, 8, 7, 6, 12
+
+ValorParcela
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 1367,47, 1062,18, 1537,31, 143,70, 757,10
+
+ValorFinanciado
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 2881,89, 2671,53, 4121,05, 469,67, 2371,20
+
+ValorEmprestimo
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 2812,94, 2593,52, 4002,55, 456,61, 2305,44
+
+TaxaCetMes
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: 1,9400, 1,9000, 1,9200, 1,9100, 1,9600
+
+TaxaJurosMes
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 1,7900, 19,8500
+
+ValorIof
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 68,95, 78,01, 118,50, 13,06, 65,76
+
+ValorTac
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 0,00
+
+ValorTarifaTcc
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 0,00
+
+TipoTabelaFlexivel
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: TabelaPadrao
+
+ValorLiberacaoSimulado
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 2812,94, 2593,52, 4002,55, 456,61, 2305,44
+
+BancoLiberacaoCliente
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 1, 260, 104, 33, 237
+
+AgenciaLiberacaoCliente
+Tipo: int64 | Valores únicos: 8 | Nulos: 0
+Exemplos: 6600, 58, 1, 902, 535
+
+ContaLiberacaoCliente
+Tipo: int64 | Valores únicos: 11 | Nulos: 0
+Exemplos: 33583, 8057, 604746173, 18933, 1051090
+
+DigitoContaLiberacaoCliente
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+UfAverbacao
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: SP, PA
+
+NumeroBeneficio
+Tipo: float64 | Valores únicos: 1 | Nulos: 10
+Exemplos: 753074605.0
+
+EspecieBeneficio
+Tipo: float64 | Valores únicos: 1 | Nulos: 10
+Exemplos: 93.0
+
+Cpf
+Tipo: int64 | Valores únicos: 11 | Nulos: 0
+Exemplos: 44437088808, 46466572870, 17400796801, 13078737829, 39500840880
+
+Nome
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: FELIPE THIAGO ALMEIDA DE ARRUDA, EDUARDO RAMOS DE SOUZA, NEIVA APARECIDA MANSANO, ADEMILSON VICENTE MARTINS, BRUNO HENRIQUE IGNACIO DE PAULA
+
+DataNascimento
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: 08/12/1999 00:00:00, 08/03/1998 00:00:00, 25/02/1973 00:00:00, 01/11/1969 00:00:00, 10/12/1991 00:00:00
+
+DddCelular
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 14, 11, 91
+
+NumeroCelular
+Tipo: int64 | Valores únicos: 11 | Nulos: 0
+Exemplos: 998979680, 991364667, 991522218, 991685848, 968432786
+
+Email
+Tipo: object | Valores únicos: 11 | Nulos: 0
+Exemplos: felipent45@gmail.com, edunet453@gmail.com, mansano@gmail.com, naotem@gmail.com, BRUNONT54@GMAIL.COM
+
+EstadoCliente
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: SP, PE
+
+CidadeCliente
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: Lins, Promissão, PROMISSAO, SAO MANUEL, Barretos
+
+ValorRenda
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: 1412,00, 1518,00
+
+ReferencialCliente
+Tipo: int64 | Valores únicos: 11 | Nulos: 0
+Exemplos: 30759235, 30757371, 21215086, 19162020, 30699062
+
+CodigoEsteira
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 16, 20
+
+NomeEsteira
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: PCB-AntecipacaoSaque-FGTS, PCB-CreditoPessoal-INSS
+
+FaseAtualProposta
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 101, 115, 116
+
+NomeFaseAtualProposta
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: Verifica Documento Anexado, Integra Contrato, Reprovar Proposta
+
+UsuarioDigitador
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: X415536, X415379, X465138
+
+LoginUsuarioDigitador
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: 3889 - J.A.P.R, 3418 - N.M.R.A, 7057 - KARINE
+
+CpfUsuarioDigitador
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 44812678870, 40935772855, 48223775808
+
+ModalidadeCartao
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+PercentualRmc
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+ValorLimiteTotal
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+ValorLimiteSaque
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+ValorSaqueSolicitado
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+ValorParcelaSeguro
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+NumeroControleSeguro
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+DataBaseCalculo
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+UsuarioDigitadorAgencia
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+In100Disponivel
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Não, Sim
+
+StatusFormalizacao
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NaoIniciado
+
+StatusAverbacao
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: NaoIniciado, ReservaSolicitada
+
+DataEnvioAverbacao
+Tipo: object | Valores únicos: 8 | Nulos: 2
+Exemplos: 08/09/2025 16:15:57, 05/09/2025 17:00:31, 04/09/2025 18:56:28, 03/09/2025 15:02:23, 01/09/2025 15:57:42
+
+DataRetornoAverbacao
+Tipo: object | Valores únicos: 8 | Nulos: 2
+Exemplos: 08/09/2025 16:15:57, 05/09/2025 17:00:31, 04/09/2025 18:56:28, 03/09/2025 15:02:23, 01/09/2025 15:57:42
+
+ValorMargemSolicitada
+Tipo: object | Valores únicos: 9 | Nulos: 2
+Exemplos: 1062,18, 1537,31, 143,70, 757,10, 567,09
+
+CodigoOcorrenciaDateprev
+Tipo: object | Valores únicos: 1 | Nulos: 2
+Exemplos: Acatado
+
+StatusAssinaturaContratacao
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Pendente, Concluido
+
+StatusAssinaturaProvaVida
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Pendente, Concluido
+
+StatusAnaliseAntifraude
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NaoIniciado
+
+ScoreAntifraude
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NaoIniciado
+
+DataPagamentoCliente
+Tipo: object | Valores únicos: 9 | Nulos: 2
+Exemplos: 08/09/2025 16:19:17, 08/09/2025 07:02:41, 05/09/2025 07:01:59, 03/09/2025 15:04:26, 01/09/2025 15:59:48
+
+ValorPagamentoCliente
+Tipo: object | Valores únicos: 9 | Nulos: 2
+Exemplos: 2593,52, 4002,55, 456,61, 2305,44, 1150,90
+
+DataIntegracaoContrato
+Tipo: object | Valores únicos: 9 | Nulos: 2
+Exemplos: 08/09/2025 16:20:34, 08/09/2025 07:04:06, 05/09/2025 07:03:06, 03/09/2025 15:05:19, 01/09/2025 16:00:02
+
+UsuarioAprovadorAntifraude
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+SituacaoAberturaConta
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NaoIniciado
+
+DataAberturaConta
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+SituacaoPortabilidadeBeneficio
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NaoIniciado
+
+SolicitacaoPortabilidadeBeneficio
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+RetornoPortabilidadeBeneficio
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+DescricaoSituacaoPortabilidade
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+MotivoRejeicaoPortabilidade
+Tipo: float64 | Valores únicos: 0 | Nulos: 11
+Exemplos: ``
+
+PrimeiroContratoClienteCp
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Indefinido
+
+TempoUltimaFaseEmHoras
+Tipo: int64 | Valores únicos: 10 | Nulos: 0
+Exemplos: 5, 22, 31, 103, 143
+
+
+AMIGOZ
+
+
+📄 relatorio_contratos_2025-09-01_to_2025-09-17.xlsx (6 registros)
+
+Colunas e Estrutura
+Nr Proposta
+Tipo: int64 | Valores únicos: 6 | Nulos: 0
+Exemplos: 1001016, 999318, 998278, 997314, 997313
+
+Id Banksoft
+Tipo: object | Valores únicos: 6 | Nulos: 0
+Exemplos: 1001016-0xf4638, 999318-0xf3f96, 998278-0xf3b86, 997314-0xf37c2, 997313-0xf37c1
+
+Nome Cliente
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: IVANIR DE FATIMA CAMARGO, RITA PEREIRA DE SOUZA DO AMARAL, FLAVIA IVONE MORENO VIZONI
+
+CPF Cliente
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: 166.023.868-40, 171.782.898-13, 295.935.928-30
+
+Vulnerabilidade
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: MODERADA
+
+Aceite cliente vulneravel?
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: SIM, NÃO
+
+Data aceite vulnerabilidade
+Tipo: datetime64[ns] | Valores únicos: 5 | Nulos: 1
+Exemplos: 2025-09-15 20:18:11.415000, 2025-09-15 13:15:52.639000, 2025-09-12 18:02:34.289000, 2025-09-12 13:27:31.633000, 2025-09-01 14:12:27.238000
+
+Idade Cliente
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 67, 59, 46
+
+Grau de escolaridade
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: Ensino Médio
+
+Espécie Cliente
+Tipo: int64 | Valores únicos: 3 | Nulos: 0
+Exemplos: 42, 41, 87
+
+Status Proposta
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Finalizado - Liberação Pagamento Saque, Reprovado - Consulta Dataprev
+
+Contrato Assinado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SIM
+
+Produto
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Cartão Benefício, Cartão Consignado
+
+Tipo de Cartão
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Cartão Benefício, Cartão Consignado
+
+RL?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Convenio
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: INSS
+
+Corban
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QFZ SOLUCOES E INTERMEDIACOES
+
+Identificador do Usuário
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 50305524801
+
+Usuário Digitador
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: MARIA EDUARDA RODRIGUES
+
+Valor Proposta
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: R$ 1.699,62, R$ 1.763,72
+
+Valor Liberado Cliente
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: R$ 1.699,62, R$ 1.763,72
+
+Data Cadastro
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: 2025-09-15, 2025-09-12, 2025-09-01
+
+Data Status
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: 2025-09-16, 2025-09-15, 2025-09-12, 2025-09-03
+
+Data Integração
+Tipo: datetime64[ns] | Valores únicos: 2 | Nulos: 3
+Exemplos: 2025-09-16 00:00:00, 2025-09-12 00:00:00
+
+Qtd Parcelas
+Tipo: int64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 96
+
+Valor Parcela
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: R$ 46,75, R$ 46,87, R$ 49,07
+
+Taxa da Operação
+Tipo: float64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 2.46
+
+Limite pré aprovado
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: R$ 2.428,04
+
+Seguro
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SIM
+
+Valor do seguro
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+Taxa do seguro
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+Plano
+Tipo: object | Valores únicos: 3 | Nulos: 1
+Exemplos: Prata - MAG, Super Diamante INSS - MAG, Super Diamante INSS - MAG, Prata INSS - Generali, Diamante INSS - Generali
+
+NMP Bloqueado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Aceite NMP?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SIM
+
+Data Aceite NMP
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: 2025-09-15, 2025-09-12, 2025-09-01
+
+Documento pessoal enviado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SIM
+
+Documento pessoal pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Campos Pendentes
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Comprovante de residência enviado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SIM
+
+Comprovante de residência pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Selfie enviada?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: SIM
+
+Selfie pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Contracheque enviado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Contracheque pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Adicional enviado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Adicional pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Taxa Recalculada
+Tipo: float64 | Valores únicos: 1 | Nulos: 0
+Exemplos: 2.46
+
+Data Envio CIP
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+Data Retorno Saldo CIP
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+Restricoes
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: Regra Score UNICO, Situação CPF, Documentoscopia, Regra Score UNICO
+
+Observações
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+Observações Front
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+Observações Originação
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Anterior
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Nova
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Saque Anterior
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Saque Nova
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Compra Anterior
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Compra Nova
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Agregada
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Saque Agregada
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Margem Compra Agregada
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Limite Global Anterior
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Limite Global Novo
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Limite Saque Anterior
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Limite Saque Novo
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Limite Compra Anterior
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+A.M. Limite Compra Novo
+Tipo: float64 | Valores únicos: 0 | Nulos: 6
+Exemplos: ``
+
+BANCO TOTALCASH
+
+
+Colunas e Estrutura
+Nr Proposta
+Tipo: int64 | Valores únicos: 18 | Nulos: 0
+Exemplos: 947034, 946473, 946402, 946263, 944657
+
+Nome Cliente
+Tipo: object | Valores únicos: 15 | Nulos: 0
+Exemplos: RICHARD LUAN LIMA, FRANCIEL DA SILVA GOMES, ZILMA GOMES DA SILVA, ERICA REGINA MUNHOZ DA TRINDADE, DEIVID APARECIDO MACEDO PRESTA
+
+CPF Cliente
+Tipo: object | Valores únicos: 15 | Nulos: 0
+Exemplos: 40845113828, 25462410875, 12608666701, 29381544883, 47766087820
+
+Idade Cliente
+Tipo: int64 | Valores únicos: 13 | Nulos: 0
+Exemplos: 34, 49, 47, 44, 26
+
+Grau de escolaridade
+Tipo: object | Valores únicos: 1 | Nulos: 9
+Exemplos: Ensino Médio
+
+Espécie Cliente
+Tipo: float64 | Valores únicos: 4 | Nulos: 9
+Exemplos: 32.0, 21.0, 87.0, 42.0
+
+Status Proposta
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: Formalização, Checagem - Mesa Formalização, Reprovada - Mesa de Formalização, Cancelado, Int - Finalizado
+
+Contrato Assinado?
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: NÃO, SIM
+
+Produto
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: Consignado Privado, Margem Livre, Portabilidade + Refinanciamento
+
+Retenção
+Tipo: object | Valores únicos: 1 | Nulos: 10
+Exemplos: NÃO
+
+RL?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Convenio
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: 1 - INSS
+
+Corban
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: QFZ SOLUCOES E INTERMEDIACOES
+
+Identificador do Usuário
+Tipo: int64 | Valores únicos: 4 | Nulos: 0
+Exemplos: 39591276850, 2579846158, 49184620811, 44812678870
+
+Usuário Digitador
+Tipo: object | Valores únicos: 4 | Nulos: 0
+Exemplos: ANA CAROLINA MOSCA, ANDRESSA SABRINA ALVES, JACYARA GOMES SOUZA, JESSUEL ALISSON PITON RODRIGUES
+
+Valor Proposta
+Tipo: object | Valores únicos: 17 | Nulos: 0
+Exemplos: R$ 4.736,65, R$ 2.213,77, R$ 6.703,96, R$ 7.135,38, R$ 4.136,41
+
+Valor Liberado Cliente
+Tipo: object | Valores únicos: 9 | Nulos: 9
+Exemplos: R$ 2.507,77, R$ 790,20, R$ 275,83, R$ 518,27, R$ 18.187,66
+
+Data Cadastro
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: 2025-09-16, 2025-09-15, 2025-09-12, 2025-09-08, 2025-09-03
+
+Data Status
+Tipo: object | Valores únicos: 7 | Nulos: 0
+Exemplos: 2025-09-16, 2025-09-15, 2025-09-12, 2025-09-08, 2025-09-03
+
+Data Integração
+Tipo: datetime64[ns] | Valores únicos: 2 | Nulos: 15
+Exemplos: 2025-09-12 00:00:00, 2025-09-11 00:00:00
+
+Qtd Parcelas
+Tipo: int64 | Valores únicos: 2 | Nulos: 0
+Exemplos: 36, 96
+
+Valor Parcela
+Tipo: object | Valores únicos: 16 | Nulos: 0
+Exemplos: R$ 327,30, R$ 152,97, R$ 463,24, R$ 493,93, R$ 286,33
+
+Taxa da Operação
+Tipo: float64 | Valores únicos: 4 | Nulos: 0
+Exemplos: 5.49, 1.85, 1.8, 1.71
+
+Limite pré aprovado
+Tipo: float64 | Valores únicos: 0 | Nulos: 18
+Exemplos: ``
+
+Seguro
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Valor do seguro
+Tipo: float64 | Valores únicos: 0 | Nulos: 18
+Exemplos: ``
+
+Taxa do seguro
+Tipo: float64 | Valores únicos: 0 | Nulos: 18
+Exemplos: ``
+
+Plano
+Tipo: float64 | Valores únicos: 0 | Nulos: 18
+Exemplos: ``
+
+Documento pessoal enviado?
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: SIM, NÃO
+
+Documento pessoal pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Campos Pendentes
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Comprovante de residência enviado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Comprovante de residência pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Selfie enviada?
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: NÃO, SIM
+
+Selfie pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Contracheque enviado?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Contracheque pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Adicional enviado?
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: NÃO, SIM
+
+Adicional pendente?
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Saldo Devedor Retornado
+Tipo: object | Valores únicos: 2 | Nulos: 16
+Exemplos: R$ 7.186,53, R$ 21.121,38
+
+Taxa Recalculada
+Tipo: float64 | Valores únicos: 2 | Nulos: 16
+Exemplos: 1.8, 1.85
+
+Taxa de aceite do Refin
+Tipo: float64 | Valores únicos: 2 | Nulos: 16
+Exemplos: 1.8, 1.85
+
+Recusa de Portabilidade CIP
+Tipo: float64 | Valores únicos: 0 | Nulos: 18
+Exemplos: ``
+
+Data Envio CIP
+Tipo: object | Valores únicos: 2 | Nulos: 15
+Exemplos: 2025-09-12, 2025-09-03
+
+Data Retorno Saldo CIP
+Tipo: object | Valores únicos: 1 | Nulos: 16
+Exemplos: 2025-09-10
+
+Valor do Troco
+Tipo: object | Valores únicos: 8 | Nulos: 10
+Exemplos: R$ 790,20, R$ 275,83, R$ 518,27, R$ 18.187,66, R$ 1.662,48
+
+Valor do Troco Recalculado
+Tipo: object | Valores únicos: 2 | Nulos: 16
+Exemplos: R$ 646,38, R$ 20.004,98
+
+Percentual de Comissão
+Tipo: float64 | Valores únicos: 0 | Nulos: 18
+Exemplos: ``
+
+Restricoes
+Tipo: object | Valores únicos: 8 | Nulos: 4
+Exemplos: Regra Score UNICO, Situação CPF, Ações cíveis, Score de Prevenção, Documentoscopia, Regra Score UNICO, Situação CPF, Ações cíveis, Score de Prevenção, Regra Score UNICO, Situação CPF, Ações cíveis, Regra Score UNICO, Limite Minimo Idade (Portabilidade), Limite Maximo de Idade (Portabilidade), Valor Minimo CCB(Portabilidade), Valor Maximo Contrato (Portabilidade), CPFs bloqueados 2, Taxa Mínima Parcela (Portabilidade), Taxa Máxima (Portabilidade), Regra Beneficios Elegiveis (Portabilidade), Situação CPF, Documentoscopia, Idade ao término do contrato 80 anos - Xp, Idade ao término do contrato 80 anos - Mozart, Idade max 39 anos - Byx87, Idade ao término do contrato 80 anos - Mozart87, Tipo do benefício x idade do cliente - Mozart87, Benefício elegível - Mozart87, Taxa min 1,85% - Port+Refin Byx87
+
+Observações
+Tipo: object | Valores únicos: 2 | Nulos: 16
+Exemplos: Redigitar a proposta com telefone e/ou e-mail corretos do cliente para aprovação., 166 - Ações cíveis - Recusado por Politica interna - AC
+
+Seguro aceito
+Tipo: object | Valores únicos: 2 | Nulos: 0
+Exemplos: NÃO, SIM
+
+Seguro obrigatório
+Tipo: object | Valores únicos: 1 | Nulos: 0
+Exemplos: NÃO
+
+Status dos Seguros
+Tipo: object | Valores únicos: 3 | Nulos: 0
+Exemplos: Sem status, Concluido, Cancelado
+
+Nome do Plano
+Tipo: object | Valores únicos: 2 | Nulos: 14
+Exemplos: Seguro de Vida - PRATA, Seguro de Vida - OURO
+
+Porcentual de Prêmio
+Tipo: float64 | Valores únicos: 2 | Nulos: 14
+Exemplos: 10.0, 15.0
