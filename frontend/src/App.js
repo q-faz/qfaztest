@@ -427,7 +427,7 @@ function App() {
         <div className={`${themeClasses.header} rounded-lg shadow-md p-6 mb-8 transition-colors duration-300`}>
           <div className="flex justify-between items-center mb-4">
             <h1 className={`text-3xl font-bold ${themeClasses.text} flex items-center gap-3`}>
-              <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Q=FAZ</span>
+              <span className="bg-gradient-to-r from-[#073c9f] to-[#e8871d] bg-clip-text text-transparent font-bold">Q-FAZ</span>
               Sistema de Processamento de Relatórios Financeiros
               <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">v7.0.0</span>
             </h1>
@@ -508,7 +508,7 @@ function App() {
               Automatize o tratamento de relatórios da Storm e bancos com mapeamento automático
             </p>
             <p className={`text-sm text-${themeClasses.accent}-600 font-medium`}>
-              🔄 V6.12.0 - 17 Bancos: Averbai, Digio, Prata, VCTEX, Daycoval, PAN, C6, Facta92, Santander, Crefaz, Quero Mais, Totalcash, Paulista, BRB, Qualibanking, Mercantil, Amigoz
+              🔄 V7.0.0 - 17 Bancos: Averbai, Digio, Prata, VCTEX, Daycoval, PAN, C6, Facta92, Santander, Crefaz, Quero Mais, Totalcash, Paulista, BRB, Qualibanking, Mercantil, Amigoz
             </p>
             
             {/* Reset Button */}
@@ -868,7 +868,7 @@ function App() {
         <div className={`${themeClasses.cardBg} rounded-lg shadow-md p-6`}>
           <h2 className={`text-xl font-semibold ${themeClasses.text} mb-4 flex items-center`}>
             <span className="mr-2">📖</span>
-            Guia de Utilização - V6.12.0 com 17 Bancos
+            Guia de Utilização - V7.0.0 com 17 Bancos
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -964,7 +964,7 @@ function App() {
             <div className={`p-4 ${currentTheme === 'dark' ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-200'} border rounded-md`}>
               <h4 className={`font-semibold ${currentTheme === 'dark' ? 'text-blue-200' : 'text-blue-800'} mb-2 flex items-center`}>
                 <span className="mr-2">✨</span>
-                Funcionalidades V6.12.0
+                Funcionalidades V7.0.0
               </h4>
               <ul className={`text-sm ${currentTheme === 'dark' ? 'text-blue-300' : 'text-blue-700'} space-y-1`}>
                 <li>• <strong>17 Bancos suportados:</strong> Máxima cobertura do mercado</li>

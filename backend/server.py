@@ -325,12 +325,12 @@ def load_organ_mapping():
         for _, row in df.iterrows():
             banco = ' '.join(str(row.get('BANCO', '')).strip().upper().split())
             # FIX ENCODING: Usar nomes de colunas como o pandas lê (com caracteres corrompidos)
-            orgao = ' '.join(str(row.get('ORG�O STORM', '') or row.get('ÓRGÃO STORM', '')).strip().upper().split())
+            orgao = ' '.join(str(row.get('ORG�O', '') or row.get('ÓRGÃO', '') or row.get('ORG�O STORM', '') or row.get('ÓRGÃO STORM', '')).strip().upper().split())
             # CRÍTICO: Normalizar tabela removendo TODOS os espaços extras (incluindo espaços iniciais)
             tabela_banco_raw = str(row.get('TABELA BANCO', '')).strip()
             tabela_banco = ' '.join(tabela_banco_raw.split())  # Remove espaços extras completamente
             codigo_tabela = str(row.get('CODIGO TABELA STORM', '')).strip()
-            operacao_storm = str(row.get('OPERA��O STORM', '') or row.get('OPERAÇÃO STORM', '')).strip()
+            operacao_storm = str(row.get('OPERA��O STORM', '') or row.get('OPERAÇÃO STORM', '') or row.get('OPERA��O', '') or row.get('OPERAÇÃO', '')).strip()
             taxa_storm = str(row.get('TAXA STORM', '')).strip()
             
             if banco and banco != 'NAN' and codigo_tabela and codigo_tabela != 'NAN':
@@ -345,7 +345,7 @@ def load_organ_mapping():
                             mapping[banco][orgao][operacao_storm] = codigo_tabela
                 
                 # Mapeamento detalhado por BANCO|ORGÃO|OPERAÇÃO (guarda todas as opções)
-                key = f"{banco}|{orgao}|{operacao_storm}"
+                key = f"{banco}|{orgao}|{operacao_storm.upper()}"
                 if key not in detailed_mapping:
                     detailed_mapping[key] = []
                 detailed_mapping[key].append({
@@ -359,7 +359,7 @@ def load_organ_mapping():
                 # Mapeamento por TABELA (mais específico e confiável)
                 if tabela_banco and tabela_banco != 'NAN':
                     # CRÍTICO: Salvar a chave com tabela em UPPERCASE para matching consistente
-                    tabela_key = f"{banco}|{orgao}|{operacao_storm}|{tabela_banco.upper()}"
+                    tabela_key = f"{banco}|{orgao}|{operacao_storm.upper()}|{tabela_banco.upper()}"
                     tabela_mapping[tabela_key] = {
                         'codigo_tabela': codigo_tabela,
                         'tabela_banco': tabela_banco,  # Manter original para exibição
@@ -1478,7 +1478,7 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
         organ_normalized = ' '.join(organ.strip().upper().split()) if organ else ""
         operation_normalized = normalize_operation_for_matching(operation_type)
         
-        # Normalizar tabela (SEM modificações - preservar nomes originais)
+        # Normalizar tabela (UPPER para matching consistente com chaves do CSV)
         tabela_normalized = ' '.join(tabela.strip().upper().split()) if tabela else ""
         
         # CORREÇÃO ESPECÍFICA PARA AVERBAI - usar função especializada
