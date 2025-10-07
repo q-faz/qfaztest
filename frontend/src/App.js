@@ -421,26 +421,41 @@ function App() {
   const themeClasses = getThemeClasses();
 
   return (
-    <div className={`min-h-screen ${themeClasses.bg} py-8 transition-colors duration-300`}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header with Theme Selector */}
-        <div className={`${themeClasses.header} rounded-lg shadow-md p-6 mb-8 transition-colors duration-300`}>
-          <div className="flex justify-between items-center mb-4">
-            <h1 className={`text-3xl font-bold ${themeClasses.text} flex items-center gap-3`}>
-              <span className="bg-gradient-to-r from-[#073c9f] to-[#e8871d] bg-clip-text text-transparent font-bold">Q-FAZ</span>
-              Sistema de Processamento de Relatórios Financeiros
-              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">v7.0.0</span>
-            </h1>
+    <div className={`min-h-screen ${themeClasses.bg} py-4 sm:py-8 transition-colors duration-300`}>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        {/* Header with Theme Selector - Mobile Responsive */}
+        <div className={`${themeClasses.header} rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 transition-colors duration-300`}>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
+            <div className="flex flex-col space-y-3">
+              {/* Título Principal */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center lg:justify-start gap-3">
+                <h1 className={`text-2xl sm:text-4xl font-bold ${themeClasses.text} flex items-center gap-3`}>
+                  <span className="bg-gradient-to-r from-[#073c9f] to-[#e8871d] bg-clip-text text-transparent font-black text-3xl sm:text-5xl">Q-FAZ</span>
+                </h1>
+                <div className="flex items-center gap-3">
+                  <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs sm:text-sm rounded-full font-bold shadow-md">
+                    v7.0.0
+                  </span>
+                </div>
+              </div>
+              
+              {/* Subtítulo */}
+              <div className="text-center sm:text-left">
+                <h2 className={`text-lg sm:text-2xl font-semibold ${themeClasses.text} leading-tight`}>
+                  Sistema de Processamento de Relatórios Financeiros
+                </h2>
+              </div>
+            </div>
             
-            {/* Theme Selector */}
+            {/* Theme Selector - Mobile Responsive */}
             <div className="relative">
               <button
                 onClick={() => setShowThemeSelector(!showThemeSelector)}
-                className={`p-3 rounded-lg ${themeClasses.buttonSecondary} ${themeClasses.text} border ${themeClasses.border} transition-all hover:shadow-md flex items-center space-x-2`}
+                className={`p-2 sm:p-3 rounded-lg ${themeClasses.buttonSecondary} ${themeClasses.text} border ${themeClasses.border} transition-all hover:shadow-md flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base`}
                 title="Alterar tema"
               >
                 <span>🎨</span>
-                <span className="font-medium">Tema</span>
+                <span className="font-medium hidden sm:inline">Tema</span>
               </button>
               
               {showThemeSelector && createPortal(
@@ -453,9 +468,9 @@ function App() {
                   
                   {/* Dropdown de temas */}
                   <div 
-                    className={`fixed top-24 right-8 ${themeClasses.cardBg} rounded-xl shadow-2xl border-2 ${themeClasses.border} p-4 min-w-[300px] max-h-[600px] overflow-y-auto z-[9999]`}
+                    className={`fixed top-20 sm:top-24 right-2 sm:right-8 ${themeClasses.cardBg} rounded-xl shadow-2xl border-2 ${themeClasses.border} p-3 sm:p-4 min-w-[280px] sm:min-w-[300px] max-h-[70vh] sm:max-h-[600px] overflow-y-auto z-[9999]`}
                     style={{ 
-                      maxWidth: 'calc(100vw - 32px)',
+                      maxWidth: 'calc(100vw - 16px)',
                       animation: 'slideIn 0.2s ease-out'
                     }}
                   >
@@ -470,7 +485,7 @@ function App() {
                         </button>
                       </h3>
                     </div>
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 gap-2 sm:gap-3">
                       {THEME_OPTIONS.map((theme) => (
                         <button
                           key={theme.value}
@@ -478,20 +493,20 @@ function App() {
                             setCurrentTheme(theme.value);
                             setShowThemeSelector(false);
                           }}
-                          className={`flex items-center space-x-3 p-4 rounded-lg transition-all ${
+                          className={`flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 rounded-lg transition-all ${
                             currentTheme === theme.value 
-                              ? `${theme.primary} text-white ring-4 ring-${theme.accent}-300 shadow-lg transform scale-105` 
+                              ? `${theme.primary} text-white ring-2 sm:ring-4 ring-${theme.accent}-300 shadow-lg transform scale-105` 
                               : `${themeClasses.hover} ${themeClasses.text} border ${themeClasses.border}`
                           }`}
                         >
                           <div 
-                            className={`w-8 h-8 rounded-full ${theme.bg} border-2 shadow-md ${
+                            className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full ${theme.bg} border-2 shadow-md ${
                               currentTheme === theme.value ? 'border-white' : 'border-gray-400'
                             }`}
                           ></div>
-                          <span className="text-sm font-semibold flex-1 text-left">{theme.name}</span>
+                          <span className="text-xs sm:text-sm font-semibold flex-1 text-left">{theme.name}</span>
                           {currentTheme === theme.value && (
-                            <span className="text-xl">✓</span>
+                            <span className="text-lg sm:text-xl">✓</span>
                           )}
                         </button>
                       ))}
@@ -503,21 +518,46 @@ function App() {
             </div>
           </div>
           
-          <div className="text-center">
-            <p className={`${themeClasses.secondaryText} mb-2`}>
-              Automatize o tratamento de relatórios da Storm e bancos com mapeamento automático
-            </p>
-            <p className={`text-sm text-${themeClasses.accent}-600 font-medium`}>
-              🔄 V7.0.0 - 17 Bancos: Averbai, Digio, Prata, VCTEX, Daycoval, PAN, C6, Facta92, Santander, Crefaz, Quero Mais, Totalcash, Paulista, BRB, Qualibanking, Mercantil, Amigoz
-            </p>
+          <div className="text-center space-y-6">
+            {/* Descrição Principal */}
+            <div className="max-w-3xl mx-auto">
+              <p className={`${themeClasses.secondaryText} text-base sm:text-lg leading-relaxed px-4`}>
+                Automatize o tratamento de relatórios da Storm e bancos com mapeamento automático
+              </p>
+            </div>
+
+            {/* Grid de Bancos */}
+            <div className="flex flex-col items-center space-y-4">
+              {/* Grid de Bancos Melhorado */}
+              <div className="max-w-4xl mx-auto">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-2 sm:gap-3">
+                  {['Averbai', 'Digio', 'Prata', 'VCTEX', 'Daycoval', 'PAN', 'C6', 'Facta92', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'Paulista', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz'].map((bank, index) => (
+                    <div 
+                      key={bank} 
+                      className={`group relative px-3 py-2 ${themeClasses.cardBg} border ${themeClasses.border} rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105`}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <span className={`text-xs sm:text-sm font-medium ${themeClasses.text} block text-center`}>
+                        {bank}
+                      </span>
+                      <div className={`absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity`}></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
             
-            {/* Reset Button */}
-            <button
-              onClick={resetAll}
-              className={`mt-4 inline-flex items-center px-6 py-3 border-2 ${themeClasses.border} ${themeClasses.buttonSecondary} ${themeClasses.text} rounded-lg shadow-md text-sm font-semibold transition-all hover:shadow-lg hover:scale-105`}
-            >
-              🔄 Reiniciar Sistema
-            </button>
+            {/* Botão Reset Melhorado */}
+            <div className="pt-4">
+              <button
+                onClick={resetAll}
+                className={`group relative inline-flex items-center px-8 py-3 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-full shadow-lg text-sm sm:text-base font-semibold transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95`}
+              >
+                <span className="mr-2 group-hover:rotate-180 transition-transform duration-300">🔄</span>
+                <span>Reiniciar Sistema</span>
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full opacity-0 group-hover:opacity-30 transition-opacity"></div>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -540,29 +580,29 @@ function App() {
           </div>
         )}
 
-        {/* Processing Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Step 1: Storm Upload */}
-          <div className={`${themeClasses.cardBg} rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg`}>
+        {/* Processing Steps - Mobile Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          {/* Step 1: Storm Upload - Mobile Responsive */}
+          <div className={`${themeClasses.cardBg} rounded-xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl`}>
             <div className="flex items-center mb-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 transition-colors ${
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 text-sm sm:text-base transition-colors ${
                 stormUploaded ? 'bg-green-500' : `bg-${themeClasses.accent}-500`
               }`}>
                 1
               </div>
-              <h2 className={`text-xl font-semibold ${themeClasses.text}`}>
+              <h2 className={`text-lg sm:text-xl font-semibold ${themeClasses.text}`}>
                 Upload da Storm
               </h2>
               {stormUploaded && <span className="ml-2 text-green-500">✅</span>}
             </div>
             
-            <p className={`${themeClasses.secondaryText} mb-4`}>
+            <p className={`${themeClasses.secondaryText} mb-4 text-sm sm:text-base`}>
               Faça upload do relatório de Contratos Digitados/Pagos da Storm para identificar duplicatas
             </p>
 
-            {/* Drag and Drop Zone */}
+            {/* Drag and Drop Zone - Mobile Responsive */}
             <div
-              className={`border-2 border-dashed rounded-lg p-6 text-center transition-all duration-300 ${
+              className={`border-2 border-dashed rounded-lg p-4 sm:p-6 text-center transition-all duration-300 ${
                 dragOver 
                   ? `border-${themeClasses.accent}-500 bg-${themeClasses.accent}-50 transform scale-105` 
                   : `border-gray-300 hover:border-${themeClasses.accent}-400`
@@ -571,17 +611,18 @@ function App() {
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, true)}
             >
-              <div className="mb-4 text-4xl">
+              <div className="mb-3 text-2xl sm:text-4xl">
                 📁
               </div>
-              <div className={`mb-4 ${themeClasses.secondaryText}`}>
-                Arraste o arquivo da Storm aqui ou clique para selecionar
+              <div className={`mb-4 ${themeClasses.secondaryText} text-xs sm:text-sm`}>
+                <span className="hidden sm:inline">Arraste o arquivo da Storm aqui ou clique para selecionar</span>
+                <span className="sm:hidden">Toque para selecionar arquivo da Storm</span>
               </div>
               <input
                 type="file"
                 accept=".csv,.xlsx,.xls"
                 onChange={handleStormFileChange}
-                className={`block w-full text-sm ${themeClasses.secondaryText} file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-${themeClasses.accent}-50 file:text-${themeClasses.accent}-700 hover:file:bg-${themeClasses.accent}-100 transition-all`}
+                className={`block w-full text-xs sm:text-sm ${themeClasses.secondaryText} file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-${themeClasses.accent}-50 file:text-${themeClasses.accent}-700 hover:file:bg-${themeClasses.accent}-100 transition-all`}
               />
             </div>
 
@@ -598,7 +639,7 @@ function App() {
             <button
               onClick={uploadStormFile}
               disabled={!stormFile || processing}
-              className={`w-full mt-4 py-4 px-6 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 ${
+              className={`w-full mt-4 py-3 sm:py-4 px-4 sm:px-6 rounded-lg font-bold transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 active:scale-95 text-sm sm:text-base ${
                 themeClasses.buttonPrimary
               }`}
             >
@@ -630,15 +671,15 @@ function App() {
             )}
           </div>
 
-          {/* Step 2: Bank Files Upload */}
-          <div className={`${themeClasses.cardBg} rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg`}>
+          {/* Step 2: Bank Files Upload - Mobile Responsive */}
+          <div className={`${themeClasses.cardBg} rounded-xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl`}>
             <div className="flex items-center mb-4">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 transition-colors ${
+              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 text-sm sm:text-base transition-colors ${
                 results ? 'bg-green-500' : stormUploaded ? `bg-${themeClasses.accent}-500` : 'bg-gray-400'
               }`}>
                 2
               </div>
-              <h2 className={`text-xl font-semibold ${themeClasses.text}`}>
+              <h2 className={`text-lg sm:text-xl font-semibold ${themeClasses.text}`}>
                 Upload dos Bancos
               </h2>
               {results && <span className="ml-2 text-green-500">✅</span>}
@@ -648,25 +689,13 @@ function App() {
               Selecione múltiplos arquivos dos bancos com mapeamento automático
             </p>
 
-            {/* Bank Icons */}
-            <div className="flex justify-center space-x-2 mb-4 flex-wrap gap-1">
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Averbai</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>VCTEX</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Digio</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Prata</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Daycoval</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>PAN</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>C6 Bank</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Facta92</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Santander</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Crefaz</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Quero Mais</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Totalcash</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>BRB</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Qualibanking</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Mercantil</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Amigoz</span>
-              <span className={`px-3 py-1.5 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>Paulista</span>
+            {/* Bank Icons - Mobile Responsive Grid */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1 sm:gap-2 mb-4 text-center">
+              {['Averbai', 'VCTEX', 'Digio', 'Prata', 'Daycoval', 'PAN', 'C6 Bank', 'Facta92', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz', 'Paulista'].map(bank => (
+                <span key={bank} className={`px-1 sm:px-2 py-1 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>
+                  {bank}
+                </span>
+              ))}
             </div>
 
             {/* Drag and Drop Zone */}
@@ -752,39 +781,41 @@ function App() {
               Resultados do Processamento
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className={`${currentTheme === 'dark' ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-200'} p-4 rounded-lg border`}>
-                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-blue-200' : 'text-blue-800'} flex items-center mb-2`}>
-                  <span className="mr-2">📊</span>
-                  Total de Registros
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+              <div className={`${currentTheme === 'dark' ? 'bg-blue-900 border-blue-700' : 'bg-blue-50 border-blue-200'} p-3 sm:p-4 rounded-lg border`}>
+                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-blue-200' : 'text-blue-800'} flex items-center mb-2 text-sm sm:text-base`}>
+                  <span className="mr-1 sm:mr-2">📊</span>
+                  <span className="hidden sm:inline">Total de Registros</span>
+                  <span className="sm:hidden">Registros</span>
                 </h3>
-                <p className={`text-2xl font-bold ${currentTheme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>{results.total_records}</p>
+                <p className={`text-xl sm:text-2xl font-bold ${currentTheme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>{results.total_records}</p>
               </div>
               
-              <div className={`${currentTheme === 'dark' ? 'bg-green-900 border-green-700' : 'bg-green-50 border-green-200'} p-4 rounded-lg border`}>
-                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-green-200' : 'text-green-800'} flex items-center mb-2`}>
-                  <span className="mr-2">🏦</span>
-                  Bancos Processados
+              <div className={`${currentTheme === 'dark' ? 'bg-green-900 border-green-700' : 'bg-green-50 border-green-200'} p-3 sm:p-4 rounded-lg border`}>
+                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-green-200' : 'text-green-800'} flex items-center mb-2 text-sm sm:text-base`}>
+                  <span className="mr-1 sm:mr-2">🏦</span>
+                  <span className="hidden sm:inline">Bancos Processados</span>
+                  <span className="sm:hidden">Bancos</span>
                 </h3>
-                <p className={`text-2xl font-bold ${currentTheme === 'dark' ? 'text-green-300' : 'text-green-600'}`}>{results.bank_summaries?.length || 0}</p>
+                <p className={`text-xl sm:text-2xl font-bold ${currentTheme === 'dark' ? 'text-green-300' : 'text-green-600'}`}>{results.bank_summaries?.length || 0}</p>
               </div>
               
-              <div className={`${currentTheme === 'dark' ? 'bg-purple-900 border-purple-700' : 'bg-purple-50 border-purple-200'} p-4 rounded-lg border`}>
-                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-purple-200' : 'text-purple-800'} flex items-center mb-2`}>
-                  <span className="mr-2">🎯</span>
+              <div className={`${currentTheme === 'dark' ? 'bg-purple-900 border-purple-700' : 'bg-purple-50 border-purple-200'} p-3 sm:p-4 rounded-lg border`}>
+                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-purple-200' : 'text-purple-800'} flex items-center mb-2 text-sm sm:text-base`}>
+                  <span className="mr-1 sm:mr-2">🎯</span>
                   Mapeados
                 </h3>
-                <p className={`text-2xl font-bold ${currentTheme === 'dark' ? 'text-purple-300' : 'text-purple-600'}`}>
+                <p className={`text-xl sm:text-2xl font-bold ${currentTheme === 'dark' ? 'text-purple-300' : 'text-purple-600'}`}>
                   {results.bank_summaries?.reduce((sum, bank) => sum + (bank.mapped_records || 0), 0) || 0}
                 </p>
               </div>
               
-              <div className={`${currentTheme === 'dark' ? 'bg-orange-900 border-orange-700' : 'bg-orange-50 border-orange-200'} p-4 rounded-lg border`}>
-                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-orange-200' : 'text-orange-800'} flex items-center mb-2`}>
-                  <span className="mr-2">✅</span>
+              <div className={`${currentTheme === 'dark' ? 'bg-orange-900 border-orange-700' : 'bg-orange-50 border-orange-200'} p-3 sm:p-4 rounded-lg border`}>
+                <h3 className={`font-semibold ${currentTheme === 'dark' ? 'text-orange-200' : 'text-orange-800'} flex items-center mb-2 text-sm sm:text-base`}>
+                  <span className="mr-1 sm:mr-2">✅</span>
                   Status
                 </h3>
-                <p className={`text-lg font-bold ${currentTheme === 'dark' ? 'text-orange-300' : 'text-orange-600'}`}>Concluído</p>
+                <p className={`text-base sm:text-lg font-bold ${currentTheme === 'dark' ? 'text-orange-300' : 'text-orange-600'}`}>Concluído</p>
               </div>
             </div>
 
@@ -843,21 +874,22 @@ function App() {
               </div>
             )}
 
-            {/* Download Button */}
-            <div className="text-center">
+            {/* Download Button - Mobile Responsive */}
+            <div className="text-center px-4">
               <button
                 onClick={downloadResult}
-                className={`py-4 px-8 rounded-lg font-bold text-lg shadow-xl transition-all transform hover:scale-110 active:scale-95 mb-3 ${
+                className={`w-full sm:w-auto py-3 sm:py-4 px-6 sm:px-8 rounded-lg font-bold text-base sm:text-lg shadow-xl transition-all transform hover:scale-110 active:scale-95 mb-3 ${
                   themeClasses.buttonPrimary
                 }`}
               >
                 <span className="mr-2">📥</span>
-                Baixar Relatório Final (CSV)
+                <span className="hidden sm:inline">Baixar Relatório Final (CSV)</span>
+                <span className="sm:hidden">Baixar Relatório</span>
               </button>
-              <p className={`text-sm ${themeClasses.secondaryText}`}>
+              <p className={`text-xs sm:text-sm ${themeClasses.secondaryText} px-2`}>
                 Arquivo formatado e otimizado para importar na Storm
               </p>
-              <p className={`text-xs ${currentTheme === 'dark' ? 'text-green-300' : 'text-green-600'} mt-1`}>
+              <p className={`text-xs ${currentTheme === 'dark' ? 'text-green-300' : 'text-green-600'} mt-1 px-2`}>
                 ✅ Com mapeamento automático de códigos de tabela aplicado
               </p>
             </div>
@@ -1005,9 +1037,9 @@ function App() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 pb-4">
-          <p className={`${themeClasses.secondaryText} text-sm`}>
+        {/* Footer - Mobile Responsive */}
+        <div className="text-center mt-6 sm:mt-8 pb-4 px-4">
+          <p className={`${themeClasses.secondaryText} text-xs sm:text-sm`}>
             Desenvolvido com 💙 para Q-FAZ | Versão 7.0.0
           </p>
         </div>
