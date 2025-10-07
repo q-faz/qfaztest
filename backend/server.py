@@ -767,6 +767,50 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             logging.info(f"✅ SANTANDER detectado por conteúdo da coluna BANCO")
             return "SANTANDER"
     
+    # Verificar se é MERCANTIL (Banco Mercantil do Brasil) - DETECÇÃO MELHORADA
+    # 1. Por nome do arquivo
+    if 'mercantil' in filename_lower or 'bmb' in filename_lower or 'credfranco' in filename_lower:
+        logging.info(f"✅ MERCANTIL detectado por nome do arquivo: {filename}")
+        return "MERCANTIL"
+    
+    # 2. Por estrutura de colunas específicas (FORMATO REAL DO MERCANTIL)
+    # Indicadores principais do formato real
+    mercantil_indicators = ['numeroproposta', 'codigoconvenio', 'nomeconvenio', 'codigoproduto', 'nomeproduto', 'modalidadecredito', 'situacaoproposta']
+    mercantil_matches = sum(1 for indicator in mercantil_indicators if any(indicator in col for col in df_columns))
+    
+    # Indicadores específicos únicos do Mercantil (baseado no arquivo real)
+    mercantil_unique = ['codigocorrespondente', 'nomecorrespondente', 'cnpjcorrespondente', 'codigosubstabelecido', 'nomesubstabelecido', 'cpfagentecertificado']
+    mercantil_unique_matches = sum(1 for indicator in mercantil_unique if any(indicator in col for col in df_columns))
+    
+    # Indicadores de campos extensos típicos do Mercantil
+    mercantil_extended = ['valorliberacaosimulado', 'bancoliberacaocliente', 'agencialiberacaocliente', 'contaliberacaocliente', 'digitacontaliberacaocliente']
+    mercantil_extended_matches = sum(1 for indicator in mercantil_extended if any(indicator in col for col in df_columns))
+    
+    if mercantil_matches >= 4:
+        logging.info(f"✅ MERCANTIL detectado por colunas principais ({mercantil_matches}/7 matches)")
+        return "MERCANTIL"
+    elif mercantil_unique_matches >= 3:
+        logging.info(f"✅ MERCANTIL detectado por colunas únicas ({mercantil_unique_matches}/6 matches)")
+        return "MERCANTIL"
+    elif mercantil_extended_matches >= 2:
+        logging.info(f"✅ MERCANTIL detectado por colunas extensas ({mercantil_extended_matches}/5 matches)")
+        return "MERCANTIL"
+    
+    # 3. Por conteúdo dos dados (mais flexível)
+    if not df.empty:
+        # Verificar nas primeiras 5 linhas por indicadores do Mercantil
+        all_data = ""
+        for i in range(min(5, len(df))):
+            row_data = ' '.join([str(val).lower() for val in df.iloc[i].values if pd.notna(val)])
+            all_data += " " + row_data
+        
+        mercantil_content_indicators = ['mercantil', 'credfranco', 'qfz solucoes', 'bmb', 'banco mercantil']
+        found_content_indicators = [ind for ind in mercantil_content_indicators if ind in all_data]
+        
+        if found_content_indicators:
+            logging.info(f"✅ MERCANTIL detectado por conteúdo: {found_content_indicators}")
+            return "MERCANTIL"
+
     # Verificar se é CREFAZ (melhorada)
     # 1. Por nome do arquivo
     if 'crefaz' in filename_lower:
@@ -959,16 +1003,7 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
         if 'qualibanking' in first_row_data or 'quali' in first_row_data:
             return "QUALIBANKING"
     
-    # Verificar se é MERCANTIL (Banco Mercantil do Brasil)
-    mercantil_indicators = ['numeroproposta', 'codigoconvenio', 'nomeconvenio', 'codigoproduto', 'nomeproduto', 'modalidadecredito', 'situacaoproposta']
-    mercantil_matches = sum(1 for indicator in mercantil_indicators if any(indicator in col for col in df_columns))
-    if mercantil_matches >= 4:
-        # Confirmar com dados
-        if not df.empty:
-            first_row_data = ' '.join([str(val).lower() for val in df.iloc[0].values if pd.notna(val)])
-            if 'mercantil' in first_row_data or 'credfranco' in first_row_data or 'qfz solucoes' in first_row_data:
-                return "MERCANTIL"
-    
+
     # Verificar se é AMIGOZ
     amigoz_indicators = ['nr proposta', 'id banksoft', 'vulnerabilidade', 'aceite cliente vulneravel', 'grau de escolaridade', 'tipo de cartão']
     amigoz_matches = sum(1 for indicator in amigoz_indicators if any(indicator in col for col in df_columns))
@@ -3581,7 +3616,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('Cpf', '')).strip(),
                 "NOME": str(row.get('Nome', '')).strip(),
                 "DATA_NASCIMENTO": str(row.get('DataNascimento', '')).strip(),
-                "CODIGO_TABELA": str(row.get('NomeProduto', '')).strip(),
+                "CODIGO_TABELA": str(row.get('CodigoProduto', '')).strip(),
                 "VALOR_PARCELAS": str(row.get('ValorParcela', '')).strip(),
                 "TAXA": str(row.get('TaxaJurosMes', '')).strip(),
                 "OBSERVACOES": ""

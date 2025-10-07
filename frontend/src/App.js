@@ -130,6 +130,27 @@ const THEME_OPTIONS = [
 ];
 
 function App() {
+  // Links dos bancos para redirecionamento
+  const bankLinks = {
+    'Averbai': 'https://fintechdocorban.nossafintech.com.br/session/login',
+    'VCTEX': 'https://www.appvctex.com.br/login',
+    'C6': 'https://c6.c6consig.com.br/WebAutorizador/?FISession=792239cfb4b1',
+    'Crefaz': 'https://crefazon.com.br/login',
+    'BRB': 'https://q-faz.consig360.com.br/',
+    'Digio': 'https://funcaoconsig.digio.com.br/FIMENU/Login/AC.UI.LOGIN.aspx?FISession=1e30f0e19730',
+    'Paulista': 'https://creditmanager.bancopaulista.com.br/Login.aspx?ReturnUrl=%2fDefault.aspx',
+    'Totalcash': 'https://totalcash.net.br',
+    'Prata': 'https://admin.bancoprata.com.br/',
+    'Daycoval': 'https://consignado.daycoval.com.br/Autorizador/Login/AC.UI.LOGIN.aspx',
+    'Qualibanking': 'https://quali.joinbank.com.br/loans',
+    'Quero Mais': 'https://queromaiscredito.app/WebFIMenuMVC/Login/AC.UI.LOGIN.aspx?FISession=d0ce92c59bbe',
+    'Amigoz': 'https://amigozconsig.com.br/login',
+    'Facta92': 'https://desenv.facta.com.br/sistemaNovo/login.php',
+    'Santander': 'https://gestorcf.com.br/corretores/index.php?erro=logoff',
+    'PAN': '#', // Link não fornecido
+    'Mercantil': '#' // Link não fornecido
+  };
+
   const [stormFile, setStormFile] = useState(null);
   const [bankFiles, setBankFiles] = useState([]);
   const [stormUploaded, setStormUploaded] = useState(false);
@@ -422,6 +443,57 @@ function App() {
 
   return (
     <div className={`min-h-screen ${themeClasses.bg} py-4 sm:py-8 transition-colors duration-300`}>
+      <style jsx>{`
+        .bank-card-with-link {
+          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+          border: 1px solid #3b82f6;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .bank-card-with-link::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+          transition: left 0.4s;
+        }
+        
+        .bank-card-with-link:hover::before {
+          left: 100%;
+        }
+        
+        .bank-card-with-link:hover {
+          transform: translateY(-3px) !important;
+          box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25) !important;
+          border-color: #2563eb;
+          background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+        }
+        
+        .bank-card-without-link {
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+          border: 1px solid #cbd5e1;
+          box-shadow: 0 2px 8px rgba(148, 163, 184, 0.15);
+          opacity: 0.9;
+        }
+        
+        .bank-card-without-link:hover {
+          transform: translateY(-2px) !important;
+          opacity: 1;
+          box-shadow: 0 4px 16px rgba(148, 163, 184, 0.2) !important;
+          background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%) !important;
+          border-color: #94a3b8;
+        }
+        
+        .bank-link {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          text-decoration: none;
+        }
+      `}</style>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         {/* Header with Theme Selector - Mobile Responsive */}
         <div className={`${themeClasses.header} rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 transition-colors duration-300`}>
@@ -528,21 +600,46 @@ function App() {
 
             {/* Grid de Bancos */}
             <div className="flex flex-col items-center space-y-4">
+              {/* Título dos Bancos */}
+              <div className="text-center mb-2">
+                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-1`}>
+                  🏦 Bancos Suportados
+                </h3>
+                <p className={`text-sm ${themeClasses.secondaryText}`}>
+                  Clique nos bancos com 🔗 para acessar seus sistemas
+                </p>
+              </div>
+              
               {/* Grid de Bancos Melhorado */}
               <div className="max-w-4xl mx-auto">
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-2 sm:gap-3">
-                  {['Averbai', 'Digio', 'Prata', 'VCTEX', 'Daycoval', 'PAN', 'C6', 'Facta92', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'Paulista', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz'].map((bank, index) => (
-                    <div 
-                      key={bank} 
-                      className={`group relative px-3 py-2 ${themeClasses.cardBg} border ${themeClasses.border} rounded-lg shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105`}
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      <span className={`text-xs sm:text-sm font-medium ${themeClasses.text} block text-center`}>
-                        {bank}
-                      </span>
-                      <div className={`absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg opacity-0 group-hover:opacity-20 transition-opacity`}></div>
-                    </div>
-                  ))}
+                  {['Averbai', 'Digio', 'Prata', 'VCTEX', 'Daycoval', 'PAN', 'C6', 'Facta92', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'Paulista', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz'].map((bank, index) => {
+                    const hasLink = bankLinks[bank] && bankLinks[bank] !== '#';
+                    const BankComponent = hasLink ? 'a' : 'div';
+                    const linkProps = hasLink ? {
+                      href: bankLinks[bank],
+                      target: '_blank',
+                      rel: 'noopener noreferrer'
+                    } : {};
+                    
+                    return (
+                      <BankComponent
+                        key={bank} 
+                        {...linkProps}
+                        className={`bank-link group relative px-4 py-3 ${hasLink ? 'bank-card-with-link' : 'bank-card-without-link'} rounded-xl transition-all duration-300 ${hasLink ? 'cursor-pointer' : 'cursor-default'} block`}
+                        style={{ animationDelay: `${index * 50}ms` }}
+                        title={hasLink ? `Clique para acessar o sistema do ${bank}` : `${bank} - Sistema não disponível`}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-1 min-h-[45px]">
+                          <span className={`text-xs sm:text-sm font-semibold text-center ${hasLink ? 'text-white' : 'text-gray-600'}`}>
+                            {bank}
+                          </span>
+                          {hasLink && <span className="text-white text-xs opacity-80">🔗</span>}
+                          {!hasLink && <span className="text-gray-400 text-xs">�</span>}
+                        </div>
+                      </BankComponent>
+                    );
+                  })}
                 </div>
               </div>
             </div>

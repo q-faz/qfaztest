@@ -2,9 +2,38 @@
 
 ## Sistema Q-FAZ - Processamento de Relatórios Financeiros
 
-**Versão Atual:** 7.0.0  
+**Versão Atual:** 7.1.0  
 **Última Atualização:** 07/10/2025  
 **Desenvolvido para:** Q-FAZ Soluções e Intermediações LTDA
+
+---
+
+## 🏦 Versão 7.1.0 - Banco Mercantil Corrigido e Sistema Otimizado
+
+**Data:** 07/10/2025  
+**Foco:** Correção definitiva do Banco Mercantil e limpeza do sistema
+
+### ✅ **Banco Mercantil - Detecção e Mapeamento Corrigidos**
+
+#### 🚨 **Problemas Identificados**
+- **Detecção incorreta**: Mercantil sendo identificado como CREFAZ
+- **Código da tabela errado**: Vinha nome do produto em vez do código
+- **Ordem de processamento**: CREFAZ executava antes do MERCANTIL
+
+#### 🎯 **Soluções Implementadas**
+- **Detecção priorizada**: MERCANTIL agora detecta antes do CREFAZ
+- **Mapeamento correto**: `CodigoProduto` (13728077) em vez de `NomeProduto`
+- **Detecção melhorada**: 3 camadas (filename, colunas, conteúdo)
+
+#### 💡 **Resultado Final**
+- ✅ **Detecção**: 100% precisa para arquivos Mercantil
+- ✅ **Código da tabela**: `13728077` correto
+- ✅ **Compatibilidade**: Funciona com formato real do banco
+
+### 🧹 **Limpeza e Otimização do Sistema**
+- **Arquivos de teste removidos**: test_mercantil_detection.py e debug scripts
+- **Documentação otimizada**: Removidos .md desnecessários
+- **Código limpo**: Apenas arquivos essenciais mantidos
 
 ---
 
@@ -156,13 +185,13 @@
 
 ## 🚀 **Roadmap Futuro**
 
-### **Versão 7.1.0** (Planejada para 20/10/2025)
+### **Versão 7.2.0** (Planejada para 20/10/2025)
 - [ ] Dashboard avançado com métricas em tempo real
 - [ ] Notificações automáticas (email/SMS)
 - [ ] Exportação em múltiplos formatos (PDF, Excel)
 - [ ] Histórico completo de processamentos
 
-### **Versão 7.2.0** (Planejada para 01/11/2025)
+### **Versão 7.3.0** (Planejada para 01/11/2025)
 - [ ] API externa para integração com sistemas terceiros
 - [ ] Machine Learning para validação inteligente
 - [ ] Processamento em nuvem
@@ -195,4 +224,4 @@
 
 ---
 
-**📋 Desenvolvido com 💙 para Q-FAZ** | **Versão 7.0.0** | **Atualização: 07/10/2025**
+**📋 Desenvolvido com 💙 para Q-FAZ** | **Versão 7.1.0** | **Atualização: 07/10/2025**
