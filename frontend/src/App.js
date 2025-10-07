@@ -426,8 +426,10 @@ function App() {
         {/* Header with Theme Selector */}
         <div className={`${themeClasses.header} rounded-lg shadow-md p-6 mb-8 transition-colors duration-300`}>
           <div className="flex justify-between items-center mb-4">
-            <h1 className={`text-3xl font-bold ${themeClasses.text}`}>
+            <h1 className={`text-3xl font-bold ${themeClasses.text} flex items-center gap-3`}>
+              <span className="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Q=FAZ</span>
               Sistema de Processamento de Relatórios Financeiros
+              <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">v7.0.0</span>
             </h1>
             
             {/* Theme Selector */}
@@ -1006,7 +1008,7 @@ function App() {
         {/* Footer */}
         <div className="text-center mt-8 pb-4">
           <p className={`${themeClasses.secondaryText} text-sm`}>
-            Desenvolvido com 💙 para Q-FAZ
+            Desenvolvido com 💙 para Q-FAZ | Versão 7.0.0
           </p>
         </div>
       </div>

@@ -197,6 +197,110 @@ OPERATION_TYPES = {
 processing_jobs = {}
 storm_data_global = {}
 
+# 🌍 FUNÇÕES GLOBAIS DE FORMATAÇÃO (aplicadas a TODOS os bancos)
+
+def format_cpf_global(cpf_str):
+    """Formata CPF para o padrão brasileiro: 000.000.000-00"""
+    if not cpf_str:
+        return ""
+    
+    # Remover tudo que não é número
+    cpf_numbers = ''.join(filter(str.isdigit, str(cpf_str)))
+    
+    # Verificar se tem 11 dígitos
+    if len(cpf_numbers) != 11:
+        # Se não tem 11 dígitos, retornar original
+        return str(cpf_str).strip()
+    
+    # Formatar: 000.000.000-00
+    cpf_formatted = f"{cpf_numbers[0:3]}.{cpf_numbers[3:6]}.{cpf_numbers[6:9]}-{cpf_numbers[9:11]}"
+    return cpf_formatted
+
+def format_value_brazilian(value_str):
+    """Formata valores monetários para o padrão brasileiro: 1.255,00"""
+    if not value_str or str(value_str).strip() in ['', 'nan', 'None', 'null', 'NaN']:
+        return "0,00"
+    
+    try:
+        # Limpar o valor (remover espaços, moeda, etc.)
+        clean_value = str(value_str).strip().replace('R$', '').replace(' ', '').replace('\xa0', '')
+        
+        # Se está vazio após limpeza
+        if not clean_value or clean_value == '0':
+            return "0,00"
+        
+        # Se já está no formato brasileiro correto (X.XXX,XX), manter
+        if ',' in clean_value:
+            parts = clean_value.split(',')
+            if len(parts) == 2 and len(parts[1]) == 2:
+                # Verificar se parte inteira tem pontos como separador de milhar
+                if '.' in parts[0] or parts[0].isdigit():
+                    return clean_value
+        
+        # Remover pontos que são separadores de milhar no formato brasileiro
+        # mas manter o último ponto se for decimal
+        if ',' not in clean_value and '.' in clean_value:
+            # Formato americano: 1234.56 ou 1,234.56
+            clean_value = clean_value.replace(',', '')  # Remove vírgulas (separador de milhar americano)
+            parts = clean_value.split('.')
+            integer_part = parts[0]
+            decimal_part = parts[1][:2] if len(parts) > 1 else "00"
+        elif ',' in clean_value:
+            # Formato brasileiro: 1.234,56 ou já está com vírgula decimal
+            parts = clean_value.replace('.', '').split(',')  # Remove pontos, split por vírgula
+            integer_part = parts[0]
+            decimal_part = parts[1][:2] if len(parts) > 1 else "00"
+        else:
+            # Sem decimal, assumir valor inteiro
+            integer_part = clean_value.replace('.', '').replace(',', '')
+            decimal_part = "00"
+        
+        # Garantir que decimal tenha 2 dígitos
+        if len(decimal_part) == 1:
+            decimal_part += "0"
+        elif len(decimal_part) == 0:
+            decimal_part = "00"
+        
+        # Converter para float
+        float_value = float(f"{integer_part}.{decimal_part}")
+        
+        # Formatar no padrão brasileiro: 1.255,00
+        if float_value >= 1000:
+            # Valores >= 1000: usar ponto para milhar
+            formatted = f"{float_value:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+        else:
+            # Valores < 1000: apenas vírgula decimal
+            formatted = f"{float_value:.2f}".replace('.', ',')
+        
+        return formatted
+        
+    except (ValueError, TypeError) as e:
+        logging.warning(f"⚠️ Erro ao formatar valor '{value_str}': {e}")
+        return str(value_str).strip()  # Retornar original se houver erro
+
+def format_percentage_brazilian(percentage_str):
+    """Formata percentuais para o padrão brasileiro: 1,85%"""
+    if not percentage_str or str(percentage_str).strip() in ['', 'nan', 'None', 'null', 'NaN']:
+        return "0,00%"
+    
+    try:
+        # Limpar o valor (remover %, espaços, etc.)
+        clean_value = str(percentage_str).strip().replace('%', '').replace(' ', '')
+        
+        if not clean_value or clean_value == '0':
+            return "0,00%"
+        
+        # Converter para float
+        percentage_float = float(clean_value.replace(',', '.'))
+        
+        # Formatar no padrão brasileiro: X,XX%
+        formatted = f"{percentage_float:.2f}".replace('.', ',')
+        return f"{formatted}%"
+        
+    except (ValueError, TypeError) as e:
+        logging.warning(f"⚠️ Erro ao formatar percentual '{percentage_str}': {e}")
+        return f"{str(percentage_str).strip()}%"
+
 def load_organ_mapping():
     """Carrega o mapeamento de órgãos do arquivo CSV atualizado - MELHORADO sem dependência de usuário"""
     try:
@@ -360,6 +464,28 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
             raise ValueError("Não foi possível ler o arquivo CSV com nenhum separador")
             
         elif file_ext in ['xlsx', 'xls']:
+            # Verificar se é arquivo PAULISTA - precisa pular primeiras linhas
+            filename_lower = filename.lower()
+            is_paulista = any(indicator in filename_lower for indicator in ['paulista', 'af5eebb7'])
+            
+            logging.info(f"🔍 Arquivo: {filename_lower}, É PAULISTA? {is_paulista}")
+            
+            if is_paulista:
+                logging.info(f"🏦 Detectado arquivo PAULISTA: {filename}, aplicando leitura especial...")
+                try:
+                    # PAULISTA: pular primeiras 2 linhas, usar linha 3 como cabeçalho
+                    df = pd.read_excel(
+                        io.BytesIO(file_content),
+                        skiprows=2,  # Pula logo e linha vazia
+                        na_values=['', 'NaN', 'NULL', 'null', 'N/A', 'n/a'],
+                        dtype=str
+                    )
+                    logging.info(f"🏦 PAULISTA lido com skip=2: {len(df.columns)} colunas, primeiras: {list(df.columns)[:5]}")
+                    return df
+                except Exception as e:
+                    logging.error(f"❌ Erro na leitura especial PAULISTA: {str(e)}")
+                    # Fallback para leitura normal
+            
             # Tentar ler com diferentes configurações
             try:
                 # Primeiro tentar leitura normal
@@ -372,6 +498,26 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                 # Se o DataFrame está vazio ou tem só NaN, tentar pular linhas
                 if df.empty or df.dropna(how='all').empty:
                     raise ValueError("DataFrame vazio após primeira tentativa")
+                
+                # PAULISTA DETECTION: Verificar se tem "Relação de Propostas" nas primeiras linhas
+                if not df.empty and len(df) > 0:
+                    first_few_rows = df.head(3).astype(str)
+                    content_text = ' '.join(first_few_rows.values.flatten()).lower()
+                    
+                    if 'relação de propostas' in content_text or 'analítico' in content_text:
+                        logging.info(f"🏦 PAULISTA detectado por conteúdo! Aplicando leitura especial...")
+                        try:
+                            # Recarregar pulando primeiras linhas
+                            df_paulista = pd.read_excel(
+                                io.BytesIO(file_content),
+                                skiprows=2,  # Pula logo e "Relação de Propostas"
+                                na_values=['', 'NaN', 'NULL', 'null', 'N/A', 'n/a'],
+                                dtype=str
+                            )
+                            logging.info(f"🏦 PAULISTA relido: {len(df_paulista.columns)} colunas: {list(df_paulista.columns)[:5]}")
+                            return df_paulista
+                        except Exception as e:
+                            logging.error(f"❌ Erro na releitura PAULISTA: {str(e)}")
                 
                 # Verificar se a primeira linha parece ser cabeçalho de metadados
                 # (ex: "Relatório de...", "Banco:", etc.)
@@ -555,12 +701,21 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
     # Verificar se é DAYCOVAL (melhorada)
     # 1. Por nome do arquivo
     if 'daycoval' in filename_lower:
+        logging.info(f"✅ DAYCOVAL detectado por nome do arquivo: {filename}")
         return "DAYCOVAL"
     
-    # 2. Por estrutura de colunas específicas
+    # 2. Por estrutura de colunas específicas - FORMATO CSV CORRETO
+    daycoval_csv_indicators = ['proposta', 'data cadastro', 'banco', 'orgao', 'codigo tabela', 'tipo de operacao', 'numero parcelas']
+    daycoval_csv_matches = sum(1 for indicator in daycoval_csv_indicators if any(indicator in col for col in df_columns))
+    if daycoval_csv_matches >= 5:
+        logging.info(f"✅ DAYCOVAL detectado por colunas CSV: {daycoval_csv_matches} matches")
+        return "DAYCOVAL"
+    
+    # 3. Por estrutura de colunas antigas (Unnamed)
     daycoval_column_indicators = ['cliente', 'cpf/cnpj', 'matrícula', 'dt.cad.', 'dt.base', 'vlr.oper', 'prz. em meses', 'tx.am']
     daycoval_col_matches = sum(1 for indicator in daycoval_column_indicators if any(indicator in col for col in df_columns))
     if daycoval_col_matches >= 5:
+        logging.info(f"✅ DAYCOVAL detectado por colunas antigas: {daycoval_col_matches} matches")
         return "DAYCOVAL"
     
     # 3. Por estrutura Unnamed + conteúdo
@@ -591,19 +746,26 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             else:
                 logging.info(f"⚠️ DAYCOVAL não detectado - indicadores DAYCOVAL: {found_daycoval_indicators}, indicadores DIGIO: {found_digio_indicators}")
     
-    # Verificar se é SANTANDER (formato do relatório final)
-    santander_indicators = ['proposta', 'banco', 'orgao', 'codigo tabela', 'tipo de operacao']
-    santander_matches = sum(1 for indicator in santander_indicators if any(indicator in col for col in df_columns))
-    # Verificar se tem "BANCO SANTANDER" nos dados
-    if santander_matches >= 4:
-        if not df.empty:
-            banco_col = next((col for col in df.columns if 'banco' in str(col).lower()), None)
-            if banco_col and any('SANTANDER' in str(val).upper() for val in df[banco_col].dropna()):
-                return "SANTANDER"
-    
-    # Detecção por nome do arquivo SANTANDER
+    # Detecção por nome do arquivo SANTANDER (prioridade)
     if 'santander' in filename_lower:
+        logging.info(f"✅ SANTANDER detectado por nome do arquivo")
         return "SANTANDER"
+    
+    # Verificar se é SANTANDER por colunas específicas
+    # Colunas reais do SANTANDER: COD, COD. BANCO, CPF, CLIENTE, CONVENIO, PRODUTO, STATUS, etc.
+    santander_column_indicators = ['cod. banco', 'convenio', 'produto', 'qtde parcelas', 'valor bruto', 'valor liquido', 'cod digitador']
+    santander_col_matches = sum(1 for indicator in santander_column_indicators if any(indicator in col for col in df_columns))
+    
+    if santander_col_matches >= 4:
+        logging.info(f"✅ SANTANDER detectado por colunas ({santander_col_matches} matches)")
+        return "SANTANDER"
+    
+    # Verificar se tem "SANTANDER" nos dados (formato relatório final)
+    if not df.empty:
+        banco_col = next((col for col in df.columns if 'banco' in str(col).lower()), None)
+        if banco_col and any('SANTANDER' in str(val).upper() for val in df[banco_col].dropna().head(10)):
+            logging.info(f"✅ SANTANDER detectado por conteúdo da coluna BANCO")
+            return "SANTANDER"
     
     # Verificar se é CREFAZ (melhorada)
     # 1. Por nome do arquivo
@@ -1572,8 +1734,18 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
     
     normalized_data = []
     
+    logging.info(f"=" * 100)
     logging.info(f"🔧 INICIANDO normalize_bank_data para {bank_type} com {len(df)} registros")
-    logging.info(f"Colunas disponíveis: {list(df.columns)}")
+    logging.info(f"   Colunas disponíveis: {list(df.columns)}")
+    
+    # Debug específico para PAULISTA
+    if bank_type == "PAULISTA":
+        logging.error(f"🏦 NORMALIZE_BANK_DATA: PAULISTA com {len(df)} linhas")
+        for i in range(min(3, len(df))):
+            row_data = df.iloc[i].to_dict()
+            logging.error(f"   Linha {i}: Unnamed:0='{row_data.get('Unnamed: 0', 'N/A')}'")
+    
+    logging.info(f"=" * 100)
     
     # VALIDAÇÃO: Remover linhas completamente vazias
     df = df.dropna(how='all')
@@ -1588,6 +1760,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         logging.error(f"❌ {bank_type}: Muito poucas colunas ({len(df.columns)}) - Colunas: {list(df.columns)}")
         return pd.DataFrame()
     
+
     logging.info(f"✅ DataFrame passou validações - {len(df)} registros, {len(df.columns)} colunas")
     
     logging.info(f"Após limpeza: {len(df)} registros válidos com {len(df.columns)} colunas")
@@ -1597,6 +1770,10 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         
         # Pular linhas que são claramente cabeçalhos ou metadados
         row_str = ' '.join([str(val).lower() for val in row.values if pd.notna(val)])
+        
+        # DEBUG: Log para PAULISTA mostrando a row_str construída
+        if bank_type == "PAULISTA":
+            logging.info(f"🔍 PAULISTA linha {idx}: row_str = '{row_str[:100]}...'")
         
         # Detectar linhas de metadados/cabeçalho
         metadata_indicators = [
@@ -1609,12 +1786,33 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         paulista_header_indicators = [
             'nº proposta', 'numero proposta', 'data captura', 'banco paulista',
             'cpf/cnpj proponente', 'nome do proponente', 'valor solicitado',
-            'quant. parcelas', 'usuário digitador', 'usuario digitador'
+            'quant. parcelas', 'usuário digitador', 'usuario digitador',
+            'relação de propostas', 'analítico', 'relatório', 'relatorio'
         ]
         
-        if any(indicator in row_str for indicator in metadata_indicators + paulista_header_indicators):
-            logging.debug(f"Pulando linha de cabeçalho/metadados: {row_str[:100]}")
+        # Verificar se deve pular linha de cabeçalho
+        is_header = any(indicator in row_str for indicator in metadata_indicators + paulista_header_indicators)
+        
+        if bank_type == "PAULISTA":
+            # Log bem detalhado para PAULISTA
+            primeira_col = row.get('Unnamed: 0', '')
+            logging.error(f"🔍 PAULISTA linha {idx}: Primeira coluna = '{primeira_col}'")
+            logging.error(f"🔍 PAULISTA linha {idx}: row_str = '{row_str[:50]}...'")
+            logging.error(f"🔍 PAULISTA linha {idx}: É cabeçalho? {is_header}")
+            if is_header:
+                matched_indicators = [ind for ind in metadata_indicators + paulista_header_indicators if ind in row_str]
+                logging.error(f"📋 PAULISTA: Indicadores encontrados: {matched_indicators}")
+        
+        if is_header:
+            if bank_type == "PAULISTA":
+                logging.error(f"📋 PAULISTA: Pulando linha de cabeçalho: {row_str[:50]}...")
+            else:
+                logging.debug(f"Pulando linha de cabeçalho/metadados: {row_str[:100]}")
             continue
+        else:
+            # Esta linha NÃO é cabeçalho - vai processar
+            if bank_type == "PAULISTA":
+                logging.error(f"✅ PAULISTA linha {idx}: VAI PROCESSAR - Primeira coluna: '{row.get('Unnamed: 0', '')}')")
         
         normalized_row = {}
         
@@ -1661,7 +1859,28 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             codigo_tabela_direto = str(row.get('IdTableComissao', '')).strip()
             cpf_cliente = str(row.get('CpfCliente', '')).strip()
             
-            # 💰 FUNÇÃO para formatar valores no padrão brasileiro
+            # � FUNÇÃO para formatar CPF no padrão brasileiro
+            def format_cpf(cpf_str):
+                """Formata CPF para o padrão 000.000.000-00"""
+                if not cpf_str:
+                    return ""
+                
+                # Remover tudo que não é número
+                cpf_numbers = ''.join(filter(str.isdigit, str(cpf_str)))
+                
+                # Verificar se tem 11 dígitos
+                if len(cpf_numbers) != 11:
+                    logging.warning(f"⚠️ CPF inválido (não tem 11 dígitos): '{cpf_str}' -> '{cpf_numbers}'")
+                    return cpf_str  # Retornar original se inválido
+                
+                # Formatar: 000.000.000-00
+                cpf_formatted = f"{cpf_numbers[0:3]}.{cpf_numbers[3:6]}.{cpf_numbers[6:9]}-{cpf_numbers[9:11]}"
+                return cpf_formatted
+            
+            # Formatar CPF
+            cpf_cliente = format_cpf(cpf_cliente)
+            
+            # �💰 FUNÇÃO para formatar valores no padrão brasileiro
             def format_brazilian_currency(value_str):
                 """Converte valores para formato brasileiro: 1.500,39 ou 87,58"""
                 if not value_str or str(value_str).strip() in ['', 'nan', 'None', '0']:
@@ -1785,36 +2004,77 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             }
             
         elif bank_type == "DIGIO":
-            # Mapeamento BANCO DIGIO S.A. - Estrutura com muitas colunas "Unnamed"
-            # Baseado em map_relat_atualizados.txt - 104 colunas no total
-            proposta = str(row.get('Unnamed: 3', '')).strip()
-            tipo_operacao = str(row.get('Unnamed: 4', '')).strip()
-            data_cadastro = str(row.get('Unnamed: 8', '')).strip()
-            situacao = str(row.get('Unnamed: 9', '')).strip()
-            data_lancamento = str(row.get('Unnamed: 13', '')).strip()
-            nome_orgao_raw = str(row.get('Unnamed: 25', '')).strip()
-            usuario_digitador = str(row.get('Unnamed: 29', '')).strip()
-            cpf_cliente = str(row.get('Unnamed: 31', '')).strip()
-            nome_cliente = str(row.get('Unnamed: 32', '')).strip()
-            data_nascimento = str(row.get('Unnamed: 33', '')).strip()
-            qtd_parcelas = str(row.get('Unnamed: 48', '')).strip()
-            vlr_parcela = str(row.get('Unnamed: 49', '')).strip()  # Valor da parcela
-            vlr_financiado = str(row.get('Unnamed: 50', '')).strip()
-            nome_convenio = str(row.get('Unnamed: 54', '')).strip()
-            vlr_lib1 = str(row.get('Unnamed: 59', '')).strip()
+            # Mapeamento BANCO DIGIO S.A. - Suporte para duas estruturas:
+            # 1. Estrutura com colunas Unnamed (arquivo XLS original do banco)
+            # 2. Estrutura com cabeçalhos nomeados (arquivo CSV exportado)
             
-            # DIGIO: Usar NOME_CONVENIO (Unnamed: 54) como tabela - baseado em map_relat_atualizados.txt
-            # Exemplos: "PORT+REFIN VINCULADO-1-96X-1,39 A 1,85-T", "REFIN DA PORT VINCULADO-96X-1,75 A 1,85-"
-            nome_tabela_completo = nome_convenio.strip() if nome_convenio else ""
+            # Verificar se é estrutura com Unnamed ou com cabeçalhos nomeados
+            # Checar se a maioria das colunas são Unnamed
+            unnamed_count = sum(1 for col in row.index if 'unnamed:' in str(col).lower())
+            total_count = len(row.index)
+            has_unnamed_structure = unnamed_count > (total_count * 0.5)  # Mais de 50% Unnamed
             
-            # Se nome_convenio estiver vazio, tentar COD_CONVENIO (Unnamed: 53)
-            if not nome_tabela_completo:
-                cod_convenio = str(row.get('Unnamed: 53', '')).strip()
-                nome_tabela_completo = cod_convenio
+            logging.info(f"🔍 DIGIO estrutura: {unnamed_count} Unnamed de {total_count} colunas ({unnamed_count/total_count*100:.1f}%)")
+            
+            if not has_unnamed_structure:
+                # Estrutura com cabeçalhos nomeados (CSV exportado)
+                logging.info("🔍 DIGIO: Detectada estrutura com cabeçalhos nomeados")
+                proposta = str(row.get('PROPOSTA', '')).strip()
+                tipo_operacao = str(row.get('TIPO DE OPERACAO', row.get('TIPO_OPERACAO', ''))).strip()
+                data_cadastro = str(row.get('DATA CADASTRO', row.get('DATA_CADASTRO', ''))).strip()
+                situacao = str(row.get('SITUACAO', '')).strip()
+                data_lancamento = str(row.get('DATA DE PAGAMENTO', row.get('DATA_PAGAMENTO', ''))).strip()
+                nome_orgao_raw = str(row.get('ORGAO', '')).strip()
+                usuario_digitador = str(row.get('USUARIO BANCO', row.get('USUARIO_BANCO', ''))).strip()
+                cpf_cliente = str(row.get('CPF', '')).strip()
+                nome_cliente = str(row.get('NOME', '')).strip()
+                data_nascimento = str(row.get('DATA DE NASCIMENTO', row.get('DATA_NASCIMENTO', ''))).strip()
+                qtd_parcelas = str(row.get('NUMERO PARCELAS', row.get('NUMERO_PARCELAS', ''))).strip()
+                vlr_parcela = str(row.get('VALOR PARCELAS', row.get('VALOR_PARCELAS', ''))).strip()
+                vlr_financiado = str(row.get('VALOR OPERACAO', row.get('VALOR_OPERACAO', ''))).strip()
+                vlr_lib1 = str(row.get('VALOR LIBERADO', row.get('VALOR_LIBERADO', ''))).strip()
+                
+                # Código de tabela e nome de convênio
+                cod_convenio = str(row.get('CODIGO TABELA', row.get('CODIGO_TABELA', ''))).strip()
+                nome_convenio = cod_convenio  # No CSV exportado, só temos o código
+                
+                nome_tabela_para_busca = cod_convenio
+                
+            else:
+                # Estrutura com Unnamed (XLS original do banco)
+                logging.info("🔍 DIGIO: Detectada estrutura com colunas Unnamed (XLS original)")
+                proposta = str(row.get('Unnamed: 3', '')).strip()
+                tipo_operacao = str(row.get('Unnamed: 4', '')).strip()
+                data_cadastro = str(row.get('Unnamed: 8', '')).strip()
+                situacao = str(row.get('Unnamed: 9', '')).strip()
+                data_lancamento = str(row.get('Unnamed: 13', '')).strip()
+                nome_orgao_raw = str(row.get('Unnamed: 25', '')).strip()
+                usuario_digitador = str(row.get('Unnamed: 29', '')).strip()
+                cpf_cliente = str(row.get('Unnamed: 31', '')).strip()
+                nome_cliente = str(row.get('Unnamed: 32', '')).strip()
+                data_nascimento = str(row.get('Unnamed: 33', '')).strip()
+                qtd_parcelas = str(row.get('Unnamed: 48', '')).strip()
+                vlr_parcela = str(row.get('Unnamed: 49', '')).strip()
+                vlr_financiado = str(row.get('Unnamed: 50', '')).strip()
+                
+                # DIGIO: Extrair códigos e nomes de convênio (Unnamed: 53 e 54)
+                cod_convenio = str(row.get('Unnamed: 53', '')).strip()  # Ex: 002035, 001717
+                nome_convenio = str(row.get('Unnamed: 54', '')).strip()  # Ex: "PORT+REFIN VINCULADO-1-96X-1,39 A 1,85-T"
+                
+                vlr_lib1 = str(row.get('Unnamed: 59', '')).strip()
+                
+                # DIGIO: Usar COD_CONVENIO numérico (ex: 002035 → 2035)
+                # Remover zeros à esquerda se houver
+                if cod_convenio and cod_convenio.isdigit():
+                    cod_convenio = str(int(cod_convenio))  # Remove leading zeros: 002035 → 2035
+                
+                nome_tabela_para_busca = nome_convenio if nome_convenio else cod_convenio
             
             # Log para debug do DIGIO
-            logging.info(f"🔍 DIGIO campos principais: Proposta={proposta}, TipoOp='{tipo_operacao}', Orgao='{nome_orgao_raw}', Convenio='{nome_convenio}', QtdParc={qtd_parcelas}")
-            logging.info(f"🔍 DIGIO tabela final: '{nome_tabela_completo}'")
+            logging.info(f"🔍 DIGIO campos principais: Proposta={proposta}, TipoOp='{tipo_operacao}', Orgao='{nome_orgao_raw}'")
+            logging.info(f"🔍 DIGIO tabela: COD_CONVENIO='{cod_convenio}' | NOME_CONVENIO='{nome_convenio}'")
+            logging.info(f"🔍 DIGIO QtdParc={qtd_parcelas}, VlrFinanc={vlr_financiado}")
+
             
             # MELHORADO: Detecção inteligente de ORGAO DIGIO baseada no map_relat_atualizados.txt
             def detect_digio_organ(nome_orgao, nome_empregador="", cod_empregador=""):
@@ -1838,6 +2098,10 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     return 'PREF BAURU SP'
                 elif 'LINS' in empregador_upper:
                     return 'PREF LINS - SP'
+                elif 'AGUDOS' in empregador_upper:
+                    return 'PREF AGUDOS - S'
+                elif 'JABOTICABA' in empregador_upper:
+                    return 'PREF JABOTICABA'
                 elif 'SERTAOZINHO' in empregador_upper or 'SERTAOZINH' in empregador_upper:
                     return 'PREF SERTAOZINHO - SP'
                 elif 'PREFEITURA DE B' in orgao_upper:
@@ -1846,6 +2110,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     return 'PREF LINS - SP'  # L = LINS
                 elif 'PREFEITURA DE S' in orgao_upper:
                     return 'PREF SERTAOZINHO - SP'  # S = SERTAOZINHO
+                elif 'PREFEITURA DE A' in orgao_upper:
+                    return 'PREF AGUDOS - S'  # A = AGUDOS
                 elif 'PREF' in empregador_upper or 'PREFEITURA' in orgao_upper:
                     # Prefeitura genérica - usar formato do empregador
                     return empregador_upper if empregador_upper else orgao_upper.replace('PREFEITURA', 'PREF').strip()
@@ -1853,7 +2119,15 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 # Default: INSS
                 return 'INSS'
             
-            nome_orgao = detect_digio_organ(nome_orgao_raw, row.get('NOME_EMPREGADOR', ''), row.get('COD_EMPREGADOR', ''))
+            # Se tem estrutura nomeada, usar o campo ORGAO diretamente, senão detectar
+            if not has_unnamed_structure:
+                # Já temos o órgão normalizado no CSV
+                nome_orgao = nome_orgao_raw if nome_orgao_raw else 'INSS'
+            else:
+                # Detectar órgão a partir dos campos Unnamed
+                nome_empregador = str(row.get('Unnamed: 23', '')).strip()
+                cod_empregador = str(row.get('Unnamed: 17', '')).strip()
+                nome_orgao = detect_digio_organ(nome_orgao_raw, nome_empregador, cod_empregador)
             
             # MELHORADO: Detecção inteligente de tipo de operação DIGIO
             def detect_digio_operation(tipo_op, tabela_nome=""):
@@ -1871,8 +2145,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     return "Refinanciamento da Portabilidade"
                 
                 # Prioridade 2: Portabilidade + Refin (diferente do anterior)
-                elif any(x in combined_text for x in ['PORT+REFIN', 'PAGTO SALDO PORTAB']):
-                    return "Portabilidade"
+                elif any(x in combined_text for x in ['PORT+REFIN', 'PORTABILIDADE + REFIN', 'PORT REFIN']):
+                    return "Portabilidade + Refin"
                 
                 # Prioridade 2.5: Portabilidade simples
                 elif 'PORTABILIDADE' in combined_text and 'REFIN' not in combined_text:
@@ -1886,7 +2160,15 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 else:
                     return "Margem Livre (Novo)"
             
-            tipo_operacao_norm = detect_digio_operation(tipo_operacao, nome_tabela_completo)
+            # ✅ CORRIGIDO: Se estrutura nomeada, usar TIPO DE OPERACAO do arquivo diretamente
+            if not has_unnamed_structure:
+                # Arquivo já processado tem tipo correto
+                tipo_operacao_norm = tipo_operacao if tipo_operacao else "Margem Livre (Novo)"
+                logging.info(f"✅ DIGIO usando tipo de operação do arquivo: '{tipo_operacao_norm}'")
+            else:
+                # Estrutura XLS original - detectar tipo
+                tipo_operacao_norm = detect_digio_operation(tipo_operacao, nome_convenio)
+                logging.info(f"🔍 DIGIO tipo detectado: '{tipo_operacao_norm}'")
                 
             normalized_row = {
                 "PROPOSTA": proposta,
@@ -1904,50 +2186,17 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "NOME": nome_cliente,
                 "DATA_NASCIMENTO": data_nascimento,
                 "VALOR_PARCELAS": vlr_parcela,
-                "CODIGO_TABELA": nome_tabela_completo,  # NOME_CONVENIO do DIGIO (campo real)
-                "TAXA": "",  # Será preenchida pelo mapeamento
+                "CODIGO_TABELA": cod_convenio,  # ✅ DIGIO: Usar COD_CONVENIO direto (5076, 5077, 1720, etc)
+                "TAXA": "",  # Taxa deve vir do arquivo ou ser buscada depois
                 "OBSERVACOES": str(row.get('Unnamed: 11', row.get('Observações', ''))).strip()  # NOME_ATIVIDADE como observação
             }
             
-            # NOVO: Aplicar mapeamento automático DIGIO (similar ao AVERBAI) 
-            # para corrigir códigos de tabela e taxas erradas
-            logging.info(f"🔍 DIGIO aplicando mapeamento automático: BANCO={normalized_row['BANCO']}, ORGAO={normalized_row['ORGAO']}, OPERACAO={normalized_row['TIPO_OPERACAO']}")
+            # ✅ DIGIO: NÃO aplicar mapeamento! 
+            # O arquivo DIGIO já vem com códigos corretos (5076, 5077, 1720, 2055, etc)
+            # Diferente de VCTEX que precisa converter "Tabela EXP" → "TabelaEXP"
+            logging.info(f"✅ DIGIO FINAL: Proposta={proposta} | Código='{cod_convenio}' | Órgão='{normalized_row['ORGAO']}' | Operação='{normalized_row['TIPO_OPERACAO']}'")
+            logging.info(f"   └─ Usando código direto do arquivo (SEM mapeamento)")
             
-            digio_mapping = apply_mapping(
-                bank_name=normalized_row['BANCO'],
-                organ=normalized_row['ORGAO'], 
-                operation_type=normalized_row['TIPO_OPERACAO'],
-                tabela=nome_tabela_completo
-            )
-            
-            # Se encontrou mapeamento, substituir dados incorretos do arquivo por dados corretos do CSV
-            if digio_mapping:
-                original_codigo = normalized_row.get('CODIGO_TABELA', '')
-                original_taxa = normalized_row.get('TAXA', '')
-                
-                # Substituir código da tabela
-                if digio_mapping.get('codigo_tabela'):
-                    normalized_row['CODIGO_TABELA'] = digio_mapping['codigo_tabela']
-                    
-                # Substituir taxa 
-                if digio_mapping.get('taxa_storm'):
-                    normalized_row['TAXA'] = digio_mapping['taxa_storm']
-                
-                # Garantir órgão correto
-                if digio_mapping.get('orgao_storm'):
-                    normalized_row['ORGAO'] = digio_mapping['orgao_storm']
-                
-                # Garantir operação correta
-                if digio_mapping.get('operacao_storm'):
-                    normalized_row['TIPO_OPERACAO'] = digio_mapping['operacao_storm']
-                
-                logging.info(f"✅ DIGIO mapeamento aplicado: Código='{normalized_row['CODIGO_TABELA']}' | Taxa='{normalized_row['TAXA']}' | Órgão='{normalized_row['ORGAO']}' | Operação='{normalized_row['TIPO_OPERACAO']}'")
-                
-                if original_codigo != normalized_row['CODIGO_TABELA']:
-                    logging.warning(f"🔄 DIGIO código corrigido: '{original_codigo}' → '{normalized_row['CODIGO_TABELA']}'")
-                    
-            else:
-                logging.warning(f"⚠️ DIGIO: Nenhum mapeamento encontrado para {normalized_row['ORGAO']} + {normalized_row['TIPO_OPERACAO']}")
             
         elif bank_type == "PRATA":
             # Mapeamento baseado na estrutura real do Prata
@@ -2149,12 +2398,10 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             tabela_raw = str(row.get('Tabela', row.get('Nome tabela juros', ''))).strip()
             taxa_raw = str(row.get('Taxa Juros Aplicada', row.get('Taxa de juros', ''))).strip()
             
-            # 🔧 CORREÇÃO VCTEX: Garantir formato correto da tabela para mapeamento
-            if tabela_raw and not tabela_raw.upper().startswith('TABELA'):
-                # Se não começa com "Tabela", adicionar prefixo para match com relat_orgaos.csv
-                tabela_formatted = f"Tabela {tabela_raw}"
-                logging.info(f"🔄 VCTEX: Formatando tabela '{tabela_raw}' → '{tabela_formatted}' para mapeamento")
-                tabela_raw = tabela_formatted
+            # 🎯 VCTEX: Usar código EXATO do arquivo para buscar no relat_orgaos.csv
+            # O relat_orgaos.csv tem: "TABELA BANCO" (ex: "Tabela EXP") → "CODIGO TABELA STORM" (ex: "TabelaEXP")
+            # Preservar tabela_raw EXATAMENTE como vem do arquivo para fazer matching correto
+            logging.info(f"📋 VCTEX: Tabela do arquivo: '{tabela_raw}' (será usada para buscar CODIGO TABELA STORM no CSV)")
             
             # Normalizar ORGAO usando CONVENIO e TABELA como indicadores
             orgao_vctex = ""
@@ -2261,10 +2508,62 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.error(f"❌ VCTEX: Erro ao validar datas: {e}")
             
             # 📊 LOG COMPLETO das datas VCTEX para debug
-            logging.info(f"� VCTEX Proposta {row.get('Número do Contrato', 'N/A')}: DATAS ORIGINAIS DO ARQUIVO")
+            logging.info(f"📅 VCTEX Proposta {row.get('Número do Contrato', 'N/A')}: DATAS ORIGINAIS DO ARQUIVO")
             logging.info(f"   ✅ DATA_CADASTRO_FINAL: '{data_cadastro_vctex}'")
             logging.info(f"   ✅ DATA_PAGAMENTO_FINAL: '{data_pagamento_vctex}'")
             logging.info(f"   🏦 BANCO: VCTEX | ÓRGÃO: {orgao_vctex} | TAXA: {taxa_raw}")
+            
+            # 💰 VCTEX: Formatação de valores no padrão brasileiro (1.234,56)
+            def format_vctex_value(value_str):
+                """Formata valores do VCTEX no padrão brasileiro com ponto e vírgula"""
+                if not value_str or str(value_str).strip() in ['', 'nan', 'NaN', 'None', '0']:
+                    return "0,00"
+                
+                try:
+                    # Limpar o valor (remover R$, espaços, etc.)
+                    clean_value = str(value_str).strip().replace('R$', '').replace(' ', '')
+                    
+                    # Se já está no formato brasileiro, verificar se está correto
+                    if ',' in clean_value:
+                        # Formato brasileiro: 1.234,56 ou 87,58
+                        parts = clean_value.split(',')
+                        if len(parts) == 2 and len(parts[1]) == 2:
+                            # Já está formatado corretamente
+                            return clean_value
+                        else:
+                            # Tem vírgula mas não está formatado corretamente
+                            # Converter para ponto e processar
+                            clean_value = clean_value.replace('.', '').replace(',', '.')
+                    
+                    # Converter para float
+                    value_float = float(clean_value)
+                    
+                    # Formatar no padrão brasileiro
+                    if value_float >= 1000:
+                        # Valores >= 1000: usar ponto como separador de milhar
+                        # Ex: 1.234,56
+                        formatted = f"{value_float:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                    else:
+                        # Valores < 1000: só vírgula decimal
+                        # Ex: 87,58
+                        formatted = f"{value_float:.2f}".replace('.', ',')
+                    
+                    return formatted
+                    
+                except (ValueError, TypeError) as e:
+                    logging.warning(f"⚠️ VCTEX: Erro ao formatar valor '{value_str}': {e}")
+                    return str(value_str)  # Retornar original se houver erro
+            
+            # Formatar valores antes de adicionar ao normalized_row
+            valor_operacao_raw = str(row.get('Valor da operacao', str(row.get('Valor Liberado', '')))).strip()
+            valor_liberado_raw = str(row.get('Valor Liberado', '')).strip()
+            valor_parcela_raw = str(row.get('Parcela', row.get('Valor parcela', ''))).strip()
+            
+            valor_operacao_formatado = format_vctex_value(valor_operacao_raw)
+            valor_liberado_formatado = format_vctex_value(valor_liberado_raw)
+            valor_parcela_formatado = format_vctex_value(valor_parcela_raw)
+            
+            logging.info(f"💰 VCTEX Proposta {row.get('Número do Contrato', 'N/A')}: Valores formatados - OP: {valor_operacao_formatado}, LIB: {valor_liberado_formatado}, PARC: {valor_parcela_formatado}")
             
             normalized_row = {
                 "PROPOSTA": str(row.get('Número do Contrato', row.get('Identificacao da operacao', ''))).strip(),
@@ -2273,487 +2572,508 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "ORGAO": orgao_vctex,
                 "TIPO_OPERACAO": "Margem Livre (Novo)",  # VCTEX normalmente só tem esse tipo
                 "NUMERO_PARCELAS": numero_parcelas_vctex,
-                "VALOR_OPERACAO": str(row.get('Valor da operacao', str(row.get('Valor Liberado', '')))).strip(),
-                "VALOR_LIBERADO": str(row.get('Valor Liberado', '')).strip(),
+                "VALOR_OPERACAO": valor_operacao_formatado,  # 💰 FORMATADO
+                "VALOR_LIBERADO": valor_liberado_formatado,  # 💰 FORMATADO
                 "USUARIO_BANCO": str(row.get('Usuário (acesso login)', row.get('CPF Usuario', ''))).strip(),
                 "SITUACAO": str(row.get('Status', '')).strip(),
                 "DATA_PAGAMENTO": data_pagamento_vctex,
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de nascimento', '')).strip() if 'Data de nascimento' in df.columns else "",
-                "VALOR_PARCELAS": str(row.get('Parcela', row.get('Valor parcela', ''))).strip(),
+                "VALOR_PARCELAS": valor_parcela_formatado,  # 💰 FORMATADO
                 "CODIGO_TABELA": tabela_raw,  # Nome COMPLETO da tabela (usado para buscar no dicionário)
                 "TAXA": taxa_raw,  # Taxa do arquivo (mas será substituída pelo mapeamento se encontrar)
                 "OBSERVACOES": str(row.get('Observação', row.get('Observações', row.get('Observacoes', row.get('Obs', ''))))).strip()  # Campo observações do VCTEX
             }
             
         elif bank_type == "DAYCOVAL":
-            # 🔧 DAYCOVAL - Mapeamento Melhorado (não tem código direto como AVERBAI)
-            # DAYCOVAL não tem campo direto com código da tabela, então usamos mapeamento tradicional
-            # Unnamed: 0 = NR.PROP., Unnamed: 1 = Tp. Operação
-            # Unnamed: 2 = CLIENTE, Unnamed: 3 = CPF/CNPJ
-            # Unnamed: 12 = TX.AM (taxa), Unnamed: 23 = DESCRIÇÃO EMPREGADOR
+            # 🔧 DAYCOVAL - Detectar formato (CSV correto vs Unnamed)
             
-            cpf_cliente = str(row.get('Unnamed: 3', '')).strip()
-            taxa_arquivo = str(row.get('Unnamed: 12', '')).strip()
+            # Verificar se já está no formato CSV correto
+            has_correct_columns = any(col in ['PROPOSTA', 'DATA CADASTRO', 'BANCO', 'ORGAO'] for col in row.keys())
             
-            # Detectar órgão e operação dos campos do arquivo
-            tipo_op = str(row.get('Unnamed: 1', '')).strip().upper()
-            orgao_descricao = str(row.get('Unnamed: 23', '')).strip().upper()  # DESCRIÇÃO EMPREGADOR
-            
-            # 🔍 LOG DEBUG: Campos importantes do DAYCOVAL  
-            logging.info(f"🔍 DAYCOVAL Debug - Proposta: {row.get('Unnamed: 0', 'N/A')}, TipoOp: '{tipo_op}', Orgao: '{orgao_descricao}', CPF: '{cpf_cliente}', Taxa: '{taxa_arquivo}'")
-            
-            # 🔍 LOG DEBUG: Validação individual dos campos críticos
-            proposta_debug = str(row.get('Unnamed: 0', '')).strip()
-            nome_debug = str(row.get('Unnamed: 2', '')).strip()
-            cpf_debug = str(row.get('Unnamed: 3', '')).strip()
-            
-            logging.info(f"🔍 DAYCOVAL Validação - Proposta: '{proposta_debug}' (len={len(proposta_debug)}), Nome: '{nome_debug}' (len={len(nome_debug)}), CPF: '{cpf_debug}' (len={len(cpf_debug)})")
-            
-            # Órgão baseado na descrição
-            if 'INSS' in orgao_descricao:
-                orgao_final = "INSS"
-            elif 'SPPREV' in orgao_descricao:
-                orgao_final = "SPPREV"  
-            elif 'EDUC' in orgao_descricao or 'SEC EDU' in orgao_descricao:
-                orgao_final = "EDUCACAO"
+            if has_correct_columns:
+                # ✅ FORMATO CSV CORRETO - Mapear diretamente
+                logging.info(f"✅ DAYCOVAL linha {idx}: FORMATO CSV CORRETO DETECTADO")
+                
+                normalized_row = {
+                    "PROPOSTA": str(row.get('PROPOSTA', '')).strip(),
+                    "ADE": str(row.get('PROPOSTA', '')).strip(),  # ADE = mesma proposta
+                    "DATA_CADASTRO": str(row.get('DATA CADASTRO', '')).strip(),
+                    "BANCO": "BANCO DAYCOVAL",
+                    "ORGAO": str(row.get('ORGAO', '')).strip(),
+                    "TIPO_OPERACAO": str(row.get('TIPO DE OPERACAO', '')).strip(),
+                    "NUMERO_PARCELAS": str(row.get('NUMERO PARCELAS', '')).strip(),
+                    "VALOR_OPERACAO": str(row.get('VALOR OPERACAO', '')).strip(),
+                    "VALOR_LIBERADO": str(row.get('VALOR LIBERADO', '')).strip(),
+                    "USUARIO_BANCO": str(row.get('USUARIO BANCO', '')).strip(),
+                    "SITUACAO": str(row.get('SITUACAO', '')).strip(),
+                    "DATA_PAGAMENTO": str(row.get('DATA DE PAGAMENTO', '')).strip(),
+                    "CPF": str(row.get('CPF', '')).strip(),
+                    "NOME": str(row.get('NOME', '')).strip().upper(),
+                    "DATA_NASCIMENTO": str(row.get('DATA DE NASCIMENTO', '')).strip(),
+                    "CODIGO_TABELA": str(row.get('CODIGO TABELA', '')).strip(),
+                    "VALOR_PARCELAS": str(row.get('VALOR PARCELAS', '')).strip(),
+                    "TAXA": str(row.get('TAXA', '')).strip(),
+                    "OBSERVACOES": f"Processado via CSV correto | {str(row.get('ENDERECO', row.get('ENDEREÇO', '')))}"
+                }
+                
+                logging.info(f"✅ DAYCOVAL CSV: {normalized_row['PROPOSTA']} | {normalized_row['NOME']} | {normalized_row['SITUACAO']}")
+                
             else:
-                orgao_final = "INSS"  # Default
+                # ✅ FORMATO ANTIGO - Não processar por enquanto
+                logging.info(f"⚠️ DAYCOVAL linha {idx}: FORMATO ANTIGO - não processado")  
+                normalized_row = None
+                # 🔧 FORMATO ANTIGO COM "Unnamed:" - Manter processamento existente
+                # Estrutura DAYCOVAL:
+                # Unnamed: 0 = NR.PROP., Unnamed: 1 = Tp. Operação, Unnamed: 2 = CLIENTE, Unnamed: 3 = CPF/CNPJ
+                # Unnamed: 4 = MATRÍCULA, Unnamed: 5 = DT.CAD., Unnamed: 6 = DT.BASE
+                # Unnamed: 11 = Prz. em Meses, Unnamed: 12 = TX.AM, Unnamed: 13 = VLR.LIQ
+                # Unnamed: 16 = VLR.OPER, Unnamed: 18 = VLR.PARC, Unnamed: 23 = DESCRIÇÃO EMPREGADOR
+                # Unnamed: 27 = Situação_Atual_da_Proposta, Unnamed: 36 = Data da liberação
                 
-            # Operação baseada no tipo
-            if 'PORTABILIDADE' in tipo_op and 'REFIN' in tipo_op:
-                operacao_final = "Refinanciamento da Portabilidade"
-            elif 'PORTABILIDADE' in tipo_op:
-                operacao_final = "Portabilidade + Refin"  # DAYCOVAL usa esse padrão
-            elif 'REFIN' in tipo_op:
-                operacao_final = "Refinanciamento"  
-            elif 'NOVA' in tipo_op:
-                operacao_final = "Margem Livre (Novo)"
+                logging.info(f"=" * 80)
+                logging.info(f"🏦 DAYCOVAL linha {idx}: FORMATO ANTIGO DETECTADO")
+                logging.info(f"   Colunas disponíveis: {list(row.keys())[:10]}")
+                logging.info(f"=" * 80)
+                
+                # 🔍 Debug: Verificar estrutura completa dos valores importantes
+                logging.error(f"🔍 DAYCOVAL DEBUG - Valores importantes:")
+                campos_importantes = [10, 11, 12, 13, 16, 17, 18, 26, 27, 36, 38]
+                for i in campos_importantes:
+                    col_name = f'Unnamed: {i}'
+                    col_value = str(row.get(col_name, 'N/A')).strip()[:30]
+                    logging.error(f"   {col_name}: '{col_value}'")
+                
+                # Extrair campos principais do DAYCOVAL - ajustado para estrutura real
+                # Se a primeira coluna não é Unnamed: 0, usar o nome real da coluna
+                primeira_coluna = 'BANCO DAYCOVAL S/A - Consignado'  # Nome real da primeira coluna
+                proposta_raw = str(row.get(primeira_coluna, row.get('Unnamed: 0', ''))).strip()  # NR.PROP.
+                tipo_operacao_raw = str(row.get('Unnamed: 1', '')).strip()  # Tp. Operação
+                cliente_raw = str(row.get('Unnamed: 2', '')).strip()  # CLIENTE
+                cpf_raw = str(row.get('Unnamed: 3', '')).strip()  # CPF/CNPJ
+                matricula_raw = str(row.get('Unnamed: 4', '')).strip()  # MATRÍCULA
+                data_cadastro_raw = str(row.get('Unnamed: 5', '')).strip()  # DT.CAD.
+                data_base_raw = str(row.get('Unnamed: 6', '')).strip()  # DT.BASE
+                prazo_meses_raw = str(row.get('Unnamed: 11', '')).strip()  # Prz. em Meses
+                taxa_raw = str(row.get('Unnamed: 12', '')).strip()  # TX.AM
+                valor_liquido_raw = str(row.get('Unnamed: 13', '')).strip()  # VLR.LIQ
+                valor_operacao_raw = str(row.get('Unnamed: 16', '')).strip()  # VLR.OPER
+                valor_parcela_raw = str(row.get('Unnamed: 18', '')).strip()  # VLR.PARC
+                descricao_empregador_raw = str(row.get('Unnamed: 23', '')).strip()  # DESCRIÇÃO EMPREGADOR
+                situacao_raw = str(row.get('Unnamed: 27', '')).strip()  # Situação_Atual_da_Proposta
+                data_liberacao_raw = str(row.get('Unnamed: 36', '')).strip()  # Data da liberação
+            
+            # Normalizar campos para detecção
+            tipo_op = tipo_operacao_raw.upper()
+            orgao_descricao = descricao_empregador_raw.upper()
+            
+            # Logs detalhados para debug
+            logging.info(f"� DAYCOVAL extraído:")
+            logging.info(f"   Proposta: {proposta_raw}")
+            logging.info(f"   Tipo Operação: {tipo_operacao_raw}")
+            logging.info(f"   Cliente: {cliente_raw[:30] if cliente_raw else 'N/A'}...")
+            logging.info(f"   CPF: {cpf_raw}")
+            logging.info(f"   Situação: {situacao_raw}")
+            logging.info(f"   Órgão: {descricao_empregador_raw}")
+            logging.info(f"   Valor Operação: {valor_operacao_raw}")
+            
+            # Função para detectar órgão do DAYCOVAL
+            def detect_daycoval_orgao(descricao_empregador):
+                """Detecta órgão baseado na descrição do empregador"""
+                desc_upper = descricao_empregador.upper()
+                
+                if 'INSS' in desc_upper:
+                    return "INSS"
+                elif 'SPPREV' in desc_upper:
+                    return "SPPREV"
+                elif 'EDUC' in desc_upper or 'SEC EDU' in desc_upper:
+                    return "EDUCACAO"
+                elif 'SEFAZ' in desc_upper:
+                    return "SEFAZ"
+                else:
+                    return "INSS"  # Default
+            
+            # Função para detectar operação do DAYCOVAL  
+            def detect_daycoval_operacao(tipo_operacao):
+                """Detecta tipo de operação baseado no campo Tp. Operação"""
+                tipo_upper = tipo_operacao.upper()
+                
+                if 'PORTABILIDADE' in tipo_upper and 'REFINANCIAMENTO' in tipo_upper:
+                    return "Refinanciamento da Portabilidade"
+                elif 'PORTABILIDADE' in tipo_upper:
+                    return "Portabilidade + Refin"
+                elif 'REFINANCIAMENTO' in tipo_upper:
+                    return "Refinanciamento"
+                elif 'NOVA' in tipo_upper:
+                    return "Margem Livre (Novo)"
+                else:
+                    return "Margem Livre (Novo)"  # Default
+            
+            # Detectar órgão e operação usando as funções
+            orgao_detectado = detect_daycoval_orgao(descricao_empregador_raw)
+            operacao_detectada = detect_daycoval_operacao(tipo_operacao_raw)
+            
+            # Verificar se não são cabeçalhos óbvios (menos restritivo)
+            if (proposta_raw.upper() in ['PROPOSTAS CADASTRADAS', 'DETALHADO', 'NR.PROP.'] or
+                'PROPOSTAS CADASTRADAS' in proposta_raw.upper()):
+                logging.info(f"⏭️ DAYCOVAL linha {idx}: Detectado cabeçalho - pulando")
+                normalized_row = None
             else:
-                operacao_final = "Margem Livre (Novo)"
+                # Aplicar formatação brasileira
+                cpf_formatted = format_cpf_global(cpf_raw)
+                valor_operacao_formatted = format_value_brazilian(valor_operacao_raw)
+                valor_liberado_formatted = format_value_brazilian(valor_liquido_raw)
+                valor_parcela_formatted = format_value_brazilian(valor_parcela_raw)
+                taxa_formatted = format_percentage_brazilian(taxa_raw)
             
-            # Extrair dados principais para validação
-            proposta_daycoval = str(row.get('Unnamed: 0', '')).strip()
-            nome_daycoval = str(row.get('Unnamed: 2', '')).strip()
-            
-            # 🔧 DAYCOVAL FIX: Se proposta vazia, tentar outros campos
-            if not proposta_daycoval or proposta_daycoval in ['nan', 'None', '']:
-                # Tentar campo alternativo ou gerar proposta sintética
-                proposta_daycoval = f"DAYC_{row.name if hasattr(row, 'name') else 'AUTO'}"
-                logging.warning(f"⚠️ DAYCOVAL: Proposta vazia, usando sintética: {proposta_daycoval}")
+                logging.info(f"✅ DAYCOVAL formatado:")
+                logging.info(f"   CPF: {cpf_formatted}")
+                logging.info(f"   Valor Operação: {valor_operacao_formatted}")
+                logging.info(f"   Valor Liberado: {valor_liberado_formatted}")
+                logging.info(f"   Órgão: {orgao_detectado}")
+                logging.info(f"   Operação: {operacao_detectada}")
                 
-            # 🔧 DAYCOVAL FIX: Garantir que tem pelo menos CPF válido para identificação
-            if not cpf_cliente or len(cpf_cliente) < 11:
-                # Se CPF inválido, usar nome como identificador
-                if nome_daycoval and len(nome_daycoval) > 3:
-                    cpf_cliente = "00000000000"  # CPF sintético para permitir processamento
-                    logging.warning(f"⚠️ DAYCOVAL: CPF inválido, usando nome como identificador: {nome_daycoval[:20]}")
+                # ✅ SEMPRE CRIAR normalized_row - Deixar validação final decidir
+                logging.info(f"✅ DAYCOVAL linha {idx}: Processando proposta {proposta_raw}")
                 
-            normalized_row = {
-                "PROPOSTA": proposta_daycoval,
-                "DATA_CADASTRO": str(row.get('Unnamed: 5', '')).strip(),
-                "BANCO": "BANCO DAYCOVAL", 
-                "ORGAO": orgao_final,  # Órgão detectado do arquivo
-                "TIPO_OPERACAO": operacao_final,  # Operação detectada do arquivo
-                "NUMERO_PARCELAS": str(row.get('Unnamed: 11', '')).strip(),
-                "VALOR_OPERACAO": str(row.get('Unnamed: 16', '')).strip(),  # VLR.OPER
-                "VALOR_LIBERADO": str(row.get('Unnamed: 13', '')).strip(),  # VLR.LIQ
-                "USUARIO_BANCO": "",  # Não disponível
-                "SITUACAO": str(row.get('Unnamed: 27', '')).strip(),  # Situação_Atual_da_Proposta
-                "DATA_PAGAMENTO": str(row.get('Unnamed: 6', '')).strip(),  # DT.BASE
-                "CPF": cpf_cliente,  # CPF já extraído e validado
-                "NOME": nome_daycoval,
-                "DATA_NASCIMENTO": "",  # Não disponível
-                "CODIGO_TABELA": "",  # Será preenchido pelo mapeamento
-                "VALOR_PARCELAS": str(row.get('Unnamed: 18', '')).strip(),  # VLR.PARC
-                "TAXA": taxa_arquivo,  # Taxa do arquivo, será substituída pelo mapeamento
-                "OBSERVACOES": str(row.get('Unnamed: 29', '')).strip()  # Motivo de reprovação
-            }
+                # Normalizar campos obrigatórios - Valores seguros
+                proposta_final = str(proposta_raw).strip() if proposta_raw and str(proposta_raw).strip() not in ['nan', 'None', ''] else f"DAYC_{idx}"
+                nome_final = str(cliente_raw).strip().upper() if cliente_raw and str(cliente_raw).strip() not in ['nan', 'None', ''] else "NOME NAO INFORMADO"
+                cpf_final = cpf_formatted if cpf_formatted and cpf_formatted != "000.000.000-00" else "000.000.000-00"
+                
+                normalized_row = {
+                    "PROPOSTA": proposta_final,  # Unnamed: 0
+                    "ADE": proposta_final,  # Campo ADE = mesma proposta
+                    "DATA_CADASTRO": str(data_cadastro_raw) if data_cadastro_raw else "",  # Unnamed: 5 - DT.CAD.
+                    "BANCO": "BANCO DAYCOVAL",
+                    "ORGAO": orgao_detectado,  # ✅ Detectado do arquivo
+                    "TIPO_OPERACAO": operacao_detectada,  # ✅ Detectado do arquivo  
+                    "NUMERO_PARCELAS": str(prazo_meses_raw) if prazo_meses_raw else "0",  # Unnamed: 11 - Prz. em Meses
+                    "VALOR_OPERACAO": valor_operacao_formatted,  # ✅ Formatado brasileiro
+                    "VALOR_LIBERADO": valor_liberado_formatted,  # ✅ Formatado brasileiro
+                    "USUARIO_BANCO": str(row.get('Unnamed: 40', '')).strip(),  # Usuário_Digitador
+                    "SITUACAO": str(situacao_raw) if situacao_raw else "",  # Unnamed: 27 - Situação_Atual_da_Proposta
+                    "DATA_PAGAMENTO": str(data_liberacao_raw) if data_liberacao_raw else "",  # Unnamed: 36 - Data da liberação
+                    "CPF": cpf_final,  # ✅ Formatado brasileiro (XXX.XXX.XXX-XX)
+                    "NOME": nome_final,  # ✅ Maiúsculas
+                    "DATA_NASCIMENTO": "",  # Não disponível no DAYCOVAL
+                    "CODIGO_TABELA": str(row.get('Unnamed: 38', '')).strip() if row.get('Unnamed: 38') else "",  # Código da tabela
+                    "VALOR_PARCELAS": valor_parcela_formatted,  # ✅ Formatado brasileiro
+                    "TAXA": taxa_formatted,  # ✅ Formatado brasileiro (X,XX%)
+                    "OBSERVACOES": f"Matrícula: {matricula_raw} | Forma Liberação: {str(row.get('Unnamed: 32', '')).strip()} | {str(row.get('Unnamed: 29', '')).strip()}"
+                }
+                
+                logging.info(f"✅✅✅ DAYCOVAL normalized_row criado com sucesso para proposta: {proposta_final}")
+                logging.info(f"✅✅✅ DAYCOVAL normalized_row: PROPOSTA={proposta_final}, NOME={nome_final}, CPF={cpf_final}")
             
         elif bank_type == "SANTANDER":
-            # 🏦 MAPEAMENTO BANCO SANTANDER - Baseado no map_relat_atualizados.txt
-            # Campos reais: COD, COD. BANCO, CPF, CLIENTE, CONVENIO, PRODUTO, QTDE PARCELAS, VALOR BRUTO, VALOR LIQUIDO, etc.
+            # 🏦 BANCO SANTANDER - Processamento simplificado
+            # Campos reais: COD, COD. BANCO, CPF, CLIENTE, CONVENIO, PRODUTO, QTDE PARCELAS, 
+            #               VALOR BRUTO, VALOR LIQUIDO, STATUS, DATA, DATA AVERBACAO, COD DIGITADOR
             
-            # Mapear campos reais do arquivo SANTANDER
-            proposta_santander = str(row.get('COD. BANCO', row.get('COD', row.get('PROPOSTA', '')))).strip()
-            cliente_santander = str(row.get('CLIENTE', row.get('NOME', ''))).strip()
-            cpf_santander = str(row.get('CPF', '')).strip()
-            convenio_santander = str(row.get('CONVENIO', '')).strip()
-            produto_santander = str(row.get('PRODUTO', '')).strip()
-            parcelas_santander = str(row.get('QTDE PARCELAS', row.get('NUMERO PARCELAS', '96'))).strip()
-            valor_bruto = str(row.get('VALOR BRUTO', row.get('VALOR', row.get('VALOR OPERACAO', '0')))).strip()
-            valor_liquido = str(row.get('VALOR LIQUIDO', row.get('VALOR BRUTO', '0'))).strip()
-            valor_parcela = str(row.get('VALOR PARCELA', row.get('VALOR PARCELAS', '0'))).strip()
-            data_cadastro = str(row.get('DATA', row.get('DATA CADASTRO', ''))).strip()
-            status_santander = str(row.get('STATUS', row.get('SITUACAO', 'AGUARDANDO'))).strip()
-            data_averbacao = str(row.get('DATA AVERBACAO', row.get('DATA DE PAGAMENTO', ''))).strip()
-            cod_digitador = str(row.get('COD DIGITADOR NO BANCO', row.get('USUARIO BANCO', ''))).strip()
+            logging.info(f"=" * 80)
+            logging.info(f"🏦 SANTANDER linha {idx}: INICIANDO PROCESSAMENTO")
+            logging.info(f"   Colunas disponíveis: {list(row.keys())[:15]}")
+            logging.info(f"=" * 80)
             
-            # Extrair código tabela do PRODUTO (formato: "21387 - 810021387 - 1 OFERTA NOVO COM SEGURO")
-            codigo_tabela_santander = ""
-            if produto_santander:
-                parts = produto_santander.split(' - ')
-                if len(parts) >= 2 and parts[1].strip().isdigit():
-                    codigo_tabela_santander = parts[1].strip()
-                else:
-                    # Buscar primeiro número longo no produto
-                    import re
-                    numbers = re.findall(r'\d{6,}', produto_santander)
-                    if numbers:
-                        codigo_tabela_santander = numbers[0]
+            import re
             
-            # Determinar órgão baseado no convênio
-            if 'PREF' in convenio_santander.upper() or 'AGUDOS' in convenio_santander.upper():
-                orgao_santander = 'PREF. DE AGUDOS - SP'
-            elif 'RANCHARIA' in convenio_santander.upper():
-                orgao_santander = 'PREF. DE RANCHARIA - SP'
-            else:
-                orgao_santander = 'INSS'
-            
-            # Determinar tipo de operação baseado no produto
-            if 'REFIN' in produto_santander.upper():
-                operacao_santander = 'REFINANCIAMENTO'
-            elif 'NOVO' in produto_santander.upper():
-                operacao_santander = 'MARGEM LIVRE (NOVO)'
-            elif 'PORTABILIDADE' in produto_santander.upper():
-                operacao_santander = 'PORTABILIDADE'
-            else:
-                operacao_santander = 'MARGEM LIVRE (NOVO)'
-            
-            # 🔧 FIX: Normalização de status SANTANDER (AGUARDANDO/PAGO/CANCELADO)
-            status_santander = str(row.get('SITUACAO', '')).strip().upper()
-            
-            # Normalizar status para padrão Storm
-            if status_santander in ['PAGO', 'AVERBADO', 'AVERBADA', 'LIBERADO', 'DESEMBOLSADO', 'APROVADO']:
-                status_santander = 'PAGO'
-            elif status_santander in ['CANCELADO', 'REPROVADO', 'REJEITADO', 'NEGADO', 'CANCELADA']:
-                status_santander = 'CANCELADO'
-            elif status_santander in ['AGUARDANDO', 'EM ANALISE', 'EM ANÁLISE', 'PENDENTE', 'ABERTO', 'PROCESSANDO']:
-                status_santander = 'AGUARDANDO'
-            else:
-                # Manter original se não conseguir mapear
-                logging.warning(f"⚠️ SANTANDER: Status não reconhecido '{status_santander}', mantendo original")
-                status_santander = str(row.get('SITUACAO', 'AGUARDANDO')).strip()
-            
-            logging.info(f"📋 SANTANDER: Proposta {row.get('PROPOSTA')} - Status: {status_santander}, ADE: {ade_santander}, CPF Digitador: {cpf_digitador_limpo}")
-            # Problemas resolvidos:
-            # 1. ADE errada (era do COD.BANCO, agora correto)
-            # 2. Código tabela com nome junto (extração limpa)
-            # 3. Usuário digitador com números extras (CPF padronizado)
-            # 4. Status normalizado como AVERBAI/VCTEX
-            # 5. Valores formatados corretamente
-            # 6. Propostas SEGURO (11111111) removidas
-            
-            # 🚫 FILTRO SANTANDER: Remover propostas SEGURO (mais robusto)
-            codigo_tabela_check = str(row.get('CODIGO TABELA', row.get('PRODUTO', ''))).strip()
-            produto_check = str(row.get('PRODUTO', '')).upper()
-            tipo_operacao_check = str(row.get('TIPO DE OPERACAO', '')).upper()
-            
-            # Verificar múltiplos critérios para filtrar SEGURO
-            is_seguro = (
-                '11111111' in codigo_tabela_check or 
-                'SEGURO' in produto_check or
-                'SEGURO' in tipo_operacao_check or
-                'TODOS OS CONVENIOS' in produto_check
-            )
-            
-            if is_seguro:
-                logging.info(f"🚫 SANTANDER FILTRO: Removendo proposta SEGURO - Código: {codigo_tabela_check}, Produto: {produto_check[:50]}")
-                return None  # Retornar None para indicar que deve ser pulado
-            
+            # 🔧 Funções auxiliares
             def extract_santander_codigo_tabela(produto_str):
-                """Extrai código tabela limpo do Santander (ex: '810021387' de '21387 - 810021387 - 1 OFERTA NOVO COM SEGURO')"""
+                """Extrai código tabela do produto (ex: '810021387' de '21387 - 810021387 - OFERTA')"""
                 if not produto_str:
                     return ""
                 
-                produto_str = str(produto_str).strip()
-                
-                # Padrão: "21387 - 810021387 - 1 OFERTA NOVO COM SEGURO"
-                # Queremos extrair o código do meio (810021387)
-                parts = produto_str.split(' - ')
-                if len(parts) >= 2:
-                    # Segundo elemento é o código que queremos
-                    codigo = parts[1].strip()
-                    # Verificar se é numérico
-                    if codigo.isdigit():
-                        return codigo
-                
-                # Se não conseguir extrair, usar o primeiro número encontrado
-                import re
-                numbers = re.findall(r'\d+', produto_str)
-                if numbers:
-                    # Pegar o maior número (provavelmente o código)
-                    return max(numbers, key=len)
-                
-                return produto_str
-            
-            def extract_cpf_from_user(user_field):
-                """Extrai CPF do campo usuário que pode ter números extras"""
-                if not user_field:
-                    return ""
-                
-                user_str = str(user_field).strip()
-                
-                # Procurar padrão de CPF (11 dígitos)
-                import re
-                cpf_match = re.search(r'\d{11}', user_str)
-                if cpf_match:
-                    return cpf_match.group()
-                
-                # Se não encontrar CPF completo, retornar apenas números
-                numbers = re.sub(r'\D', '', user_str)
-                return numbers if len(numbers) >= 11 else user_str
-            
-            # Detecção de órgão melhorada
-            convenio = str(row.get('CONVENIO', '')).strip().upper()
-            cod_banco = str(row.get('COD. BANCO', '')).strip().upper()
-            
-            # Usar múltiplas fontes para detectar órgão
-            orgao = 'INSS'  # Default
-            if 'INSS' in convenio or 'PREF' in convenio:
-                orgao = 'INSS'
-            elif 'FGTS' in convenio:
-                orgao = 'FGTS'
-            elif 'SEGURO' in convenio:
-                orgao = 'INSS'  # Seguro vinculado ao INSS
-            elif 'PREFEITURA' in cod_banco or 'PREF' in cod_banco:
-                orgao = 'INSS'  # Prefeituras geralmente INSS
-            
-            # FIX: ADE correta - usar 'DATA AVERBACAO' em vez de 'COD. BANCO'
-            data_averbacao = str(row.get('DATA AVERBACAO', row.get('DATA DE AVERBACAO', ''))).strip()
-            
-            # FIX: Código tabela limpo
-            codigo_tabela_bruto = str(row.get('PRODUTO', '')).strip()
-            codigo_tabela = extract_santander_codigo_tabela(codigo_tabela_bruto)
-            
-            # FIX: CPF do usuário padronizado
-            usuario_bruto = str(row.get('USUARIO DIGITADOR', row.get('GERENTE', ''))).strip()
-            usuario_cpf = extract_cpf_from_user(usuario_bruto)
-            
-            # 🔧 SANTANDER FIX: Usar campos corretos baseados no arquivo manual
-            # Campos do arquivo Santander real:
-            # PROPOSTA;DATA CADASTRO;BANCO;ORGAO;CODIGO TABELA;TIPO DE OPERACAO;
-            # NUMERO PARCELAS;VALOR PARCELAS;VALOR OPERACAO;VALOR LIBERADO;VALOR QUITAR;
-            # USUARIO BANCO;CODIGO LOJA;SITUACAO;DATA DE PAGAMENTO;CPF;NOME
-            
-            # Campo PROPOSTA correto (não é COD!)
-            proposta_santander = str(row.get('PROPOSTA', row.get('COD', ''))).strip()
-            
-            # Campo USUARIO BANCO já é CPF (não precisa extrair!)
-            usuario_banco_original = str(row.get('USUARIO BANCO', row.get('USUARIO DIGITADOR', ''))).strip()
-            
-            # Se USUARIO BANCO já tem formato CPF, manter; senão extrair
-            if re.match(r'^\d{3}\.\d{3}\.\d{3}-\d{2}$', usuario_banco_original):
-                usuario_cpf_final = usuario_banco_original  # Já está formatado
-            else:
-                usuario_cpf_final = extract_cpf_from_user(usuario_banco_original)
-            
-            # DATA DE PAGAMENTO correta (não é DATA AVERBACAO!)
-            data_pagamento_original = str(row.get('DATA DE PAGAMENTO', row.get('DATA AVERBACAO', ''))).strip()
-            
-            # SITUACAO original (não mapear para outros valores!)
-            situacao_original = str(row.get('SITUACAO', row.get('STATUS', ''))).strip()
-            
-            # ORGAO direto do arquivo (não detectar!)
-            orgao_arquivo = str(row.get('ORGAO', row.get('CONVENIO', ''))).strip().upper()
-            if not orgao_arquivo or orgao_arquivo == 'NAN':
-                # Só se não vier no arquivo, detectar
-                if 'PREF' in convenio or 'PREFEITURA' in convenio:
-                    orgao_arquivo = 'PREF. DE AGUDOS - SP'  # Padrão Santander
-                else:
-                    orgao_arquivo = 'INSS'
-            
-            # CODIGO TABELA direto do arquivo
-            codigo_tabela_arquivo = str(row.get('CODIGO TABELA', row.get('PRODUTO', ''))).strip()
-            if not codigo_tabela_arquivo or codigo_tabela_arquivo == 'NAN':
-                # Só se não vier, extrair do PRODUTO
-                codigo_tabela_arquivo = extract_santander_codigo_tabela(codigo_tabela_bruto)
-            
-            # 🔧 SANTANDER: Normalização de STATUS como AVERBAI/VCTEX
-            def normalize_santander_status(status_original):
-                """Normaliza status do Santander para padrão Storm"""
-                if not status_original:
-                    return "AGUARDANDO"
-                
-                status_upper = str(status_original).strip().upper()
-                
-                # Mapeamento específico Santander
-                if status_upper in ['PAGO', 'AVERBADO', 'AVERBADA', 'LIBERADO', 'DESEMBOLSADO']:
-                    return "PAGO"
-                elif status_upper in ['CANCELADO', 'REPROVADO', 'REJEITADO', 'NEGADO']:
-                    return "CANCELADO" 
-                elif status_upper in ['AGUARDANDO', 'EM ANALISE', 'EM ANÁLISE', 'PENDENTE', 'ABERTO']:
-                    return "AGUARDANDO"
-                else:
-                    return status_original  # Manter original se não reconhecer
-            
-            # 💰 SANTANDER: Formatação brasileira de valores
-            def format_santander_value(value_str):
-                """Formata valores do Santander no padrão brasileiro"""
-                if not value_str or str(value_str).strip() in ['', 'nan', 'NaN', 'None']:
-                    return "0,00"
-                
-                try:
-                    # Converter para float e formatar
-                    value_clean = str(value_str).replace(',', '.')
-                    value_float = float(value_clean)
-                    
-                    # Formato brasileiro: 1.234,56
-                    if value_float >= 1000:
-                        return f"{value_float:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
-                    else:
-                        return f"{value_float:.2f}".replace('.', ',')
-                        
-                except (ValueError, TypeError):
-                    return str(value_str)  # Retornar original se não conseguir converter
-            
-            # 🏛️ SANTANDER: Correção de ÓRGÃO
-            def correct_santander_orgao(orgao_original, codigo_tabela):
-                """Corrige órgão baseado no código da tabela"""
-                if not orgao_original or str(orgao_original).strip().upper() == 'INSS':
-                    # Se código começar com 810, é prefeitura
-                    if codigo_tabela and codigo_tabela.startswith('810'):
-                        return "PREF. DE AGUDOS - SP"  # Padrão Santander prefeitura
-                    elif codigo_tabela and codigo_tabela.startswith('827'):
-                        return "PREF. DE AGUDOS - SP"  # Refinanciamento prefeitura
-                    else:
-                        return "INSS"  # Default
-                else:
-                    return str(orgao_original).strip()
-            
-            # Aplicar correções
-            status_normalizado = normalize_santander_status(situacao_original)
-            orgao_corrigido = correct_santander_orgao(orgao_arquivo, codigo_tabela_arquivo)
-            
-            # Garantir USUARIO_BANCO válido
-            if not usuario_cpf_final or usuario_cpf_final == 'NAN':
-                # Tentar campo alternativo ou usar CPF do cliente
-                cpf_cliente = str(row.get('CPF', '')).strip().replace('.', '').replace('-', '')
-                if len(cpf_cliente) == 11:
-                    usuario_cpf_final = cpf_cliente
-                else:
-                    usuario_cpf_final = "00000000000"  # CPF sintético
-                    logging.warning(f"⚠️ SANTANDER: USUARIO_BANCO vazio, usando CPF sintético")
-            
-            # 🔧 FIX: Mapear campos do arquivo original SANTANDER (baseado no mapeamento)
-            # Campos originais: COD, COD. BANCO, COD DIGITADOR NO BANCO, STATUS, etc.
-            
-            def _detect_santander_orgao(row):
-                """Detecta órgão do SANTANDER baseado no convênio"""
-                convenio = str(row.get('CONVENIO', '')).strip().upper()
-                if 'PREF' in convenio or 'AGUDOS' in convenio:
-                    return 'PREF. DE AGUDOS - SP'
-                elif 'RANCHARIA' in convenio:
-                    return 'PREF. DE RANCHARIA - SP'
-                else:
-                    return 'INSS'
-            
-            def _get_santander_operation_type(row):
-                """Extrai tipo de operação do SANTANDER baseado no produto"""
-                produto = str(row.get('PRODUTO', '')).strip().upper()
-                if 'REFIN' in produto:
-                    return 'REFINANCIAMENTO'
-                elif 'NOVO' in produto:
-                    return 'MARGEM LIVRE (NOVO)'
-                elif 'PORTABILIDADE' in produto:
-                    return 'PORTABILIDADE'
-                else:
-                    return 'MARGEM LIVRE (NOVO)'
-            
-            def _extract_santander_codigo_tabela(produto_str):
-                """Extrai código tabela do produto SANTANDER"""
-                if not produto_str:
-                    return ""
-                
-                import re
-                # Procurar padrão: "21387 - 810021387 - 1 OFERTA NOVO COM SEGURO"
-                # Queremos o segundo número (810021387)
                 parts = str(produto_str).split(' - ')
                 if len(parts) >= 2 and parts[1].strip().isdigit():
                     return parts[1].strip()
                 
-                # Se não encontrar, buscar número longo
+                # Buscar número longo
                 numbers = re.findall(r'\d{6,}', str(produto_str))
                 return numbers[0] if numbers else ""
             
-            normalized_row = {
-                "PROPOSTA": proposta_santander,
-                "DATA_CADASTRO": data_cadastro,
-                "BANCO": "BANCO SANTANDER",
-                "ORGAO": orgao_santander,
-                "TIPO_OPERACAO": operacao_santander,
-                "NUMERO_PARCELAS": parcelas_santander,
-                "VALOR_OPERACAO": format_santander_value(valor_bruto),
-                "VALOR_LIBERADO": format_santander_value(valor_liquido),
-                "USUARIO_BANCO": cod_digitador,
-                "SITUACAO": status_santander.upper(),
-                "DATA_PAGAMENTO": data_averbacao,
-                "CPF": cpf_santander,
-                "NOME": cliente_santander.upper(),
-                "DATA_NASCIMENTO": "",
-                "CODIGO_TABELA": codigo_tabela_santander,
-                "VALOR_PARCELAS": format_santander_value(valor_parcela),
-                "TAXA": "0,00%",
-                "OBSERVACOES": ""
-            }
-            
-            # 🔧 FIX: ADE deve usar COD.BANCO (não PROPOSTA)
-            # No relatório final, ADE = PROPOSTA, mas deve vir do COD.BANCO original
-            ade_original = str(row.get('COD. BANCO', row.get('COD.BANCO', ''))).strip()
-            if ade_original:
-                # Usar COD.BANCO como base para PROPOSTA no relatório final 
-                # (mantendo o mapeamento correto ADE = COD.BANCO)
-                pass  # Por enquanto manter a PROPOSTA original, mas o ADE é COD.BANCO
-            
-            # 🔄 SANTANDER: Aplicar mapeamento após normalização para garantir CODIGO_TABELA e OPERACAO corretos
-            if codigo_tabela_arquivo and codigo_tabela_arquivo.isdigit():
-                logging.info(f"🔍 SANTANDER: Aplicando mapeamento para código {codigo_tabela_arquivo}")
+            def format_santander_value(value_str):
+                """Formata valores no padrão brasileiro"""
+                if not value_str or str(value_str).strip() in ['', 'nan', 'NaN', 'None']:
+                    return "0,00"
                 
-                # Buscar mapeamento direto
-                for key, details in TABELA_MAPPING.items():
-                    if details.get('codigo_tabela') == codigo_tabela_arquivo and 'BANCO SANTANDER' in key:
-                        # Atualizar com dados oficiais do mapeamento
-                        orgao_mapeado = details.get('orgao_storm', '')
-                        operacao_mapeada = details.get('operacao_storm', '')
-                        taxa_mapeada = details.get('taxa_storm', '')
-                        
-                        if orgao_mapeado:
-                            normalized_row["ORGAO"] = orgao_mapeado
-                        if operacao_mapeada:
-                            normalized_row["TIPO_OPERACAO"] = operacao_mapeada
-                        if taxa_mapeada:
-                            normalized_row["TAXA"] = taxa_mapeada
-                            
-                        logging.info(f"✅ SANTANDER MAPEADO: {codigo_tabela_arquivo} → {operacao_mapeada} ({orgao_mapeado}) [{taxa_mapeada}]")
-                        break
-                else:
-                    logging.warning(f"⚠️ SANTANDER: Código {codigo_tabela_arquivo} não encontrado no mapeamento oficial")
+                try:
+                    value_clean = str(value_str).replace(',', '.')
+                    value_float = float(value_clean)
+                    
+                    if value_float >= 1000:
+                        return f"{value_float:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                    else:
+                        return f"{value_float:.2f}".replace('.', ',')
+                except (ValueError, TypeError):
+                    return str(value_str)
             
+            def normalize_santander_status(status_str):
+                """Normaliza status para padrão Storm"""
+                if not status_str:
+                    return "AGUARDANDO"
+                
+                # Limpar caracteres especiais e encoding problems
+                import unicodedata
+                status_clean = str(status_str).strip()
+                
+                # Remover caracteres de encoding corrompido (� e similares)
+                status_clean = ''.join(c for c in status_clean if ord(c) < 65536 and c.isprintable() or c.isspace())
+                
+                # Normalizar para maiúsculas e remover acentos
+                status_clean = ''.join(
+                    c for c in unicodedata.normalize('NFD', status_clean.upper())
+                    if unicodedata.category(c) != 'Mn'
+                )
+                
+                # Verificar palavras-chave
+                if any(palavra in status_clean for palavra in ['PAG', 'AVERBAD', 'LIBERAD', 'DESEMBOLSA']):
+                    return "PAGO"
+                elif any(palavra in status_clean for palavra in ['CANCEL', 'REPROV', 'REJEITA', 'NEGAD']):
+                    return "CANCELADO"
+                elif any(palavra in status_clean for palavra in ['AGUARD', 'ANALISE', 'PENDENT', 'ABERTO', 'DIGITAL']):
+                    return "AGUARDANDO"
+                else:
+                    return "AGUARDANDO"  # Padrão se não reconhecer
+            
+            # Extrair campos do arquivo
+            proposta = str(row.get('COD. BANCO', row.get('COD', row.get('PROPOSTA', '')))).strip()
+            cliente = str(row.get('CLIENTE', row.get('NOME', ''))).strip()
+            cpf = str(row.get('CPF', '')).strip()
+            convenio = str(row.get('CONVENIO', '')).strip().upper()
+            produto = str(row.get('PRODUTO', '')).strip()
+            parcelas = str(row.get('QTDE PARCELAS', row.get('NUMERO PARCELAS', '96'))).strip()
+            valor_bruto = str(row.get('VALOR BRUTO', row.get('VALOR OPERACAO', '0'))).strip()
+            valor_liquido = str(row.get('VALOR LIQUIDO', row.get('VALOR LIBERADO', '0'))).strip()
+            valor_parcela = str(row.get('VALOR PARCELA', row.get('VALOR PARCELAS', '0'))).strip()
+            data_cadastro = str(row.get('DATA', row.get('DATA CADASTRO', ''))).strip()
+            status = str(row.get('STATUS', row.get('SITUACAO', 'AGUARDANDO'))).strip()
+            data_averbacao = str(row.get('DATA AVERBACAO', row.get('DATA DE PAGAMENTO', ''))).strip()
+            cod_digitador = str(row.get('COD DIGITADOR NO BANCO', row.get('USUARIO BANCO', ''))).strip()
+            
+            logging.info(f"📋 SANTANDER extraído: Proposta={proposta}, Cliente={cliente[:20] if cliente else 'N/A'}, CPF={cpf[:6] if cpf else 'N/A'}...")
+            logging.info(f"🔍 SANTANDER validações: proposta='{proposta}', convenio='{convenio[:30] if convenio else 'N/A'}', produto='{produto[:50] if produto else 'N/A'}'")
+            
+            # ✅ VALIDAÇÃO: Verificar se linha deve ser processada
+            should_process = True
+            
+            if not proposta or proposta.upper() in ['NAN', 'NONE', '', 'COD. BANCO']:
+                logging.info(f"⏭️ SANTANDER linha {idx}: Pulando - proposta vazia ou cabeçalho")
+                should_process = False
+                normalized_row = None
+            
+            # 🚫 FILTRO ESPECIAL: Propostas SEGURO têm 'S' no final do COD. BANCO
+            elif proposta.upper().endswith('S') and len(proposta) > 5:
+                # Verificar se é realmente SEGURO (não um código normal que termina com S)
+                if 'SEGURO' in convenio or 'SEGURO' in produto.upper():
+                    logging.info(f"🚫 SANTANDER linha {idx}: Filtrando - proposta SEGURO com 'S' no final ({proposta})")
+                    should_process = False
+                    normalized_row = None
+                else:
+                    logging.info(f"✓ SANTANDER linha {idx}: Proposta termina com 'S' mas NÃO é SEGURO - vai processar")
+            
+            logging.info(f"📊 SANTANDER linha {idx}: should_process = {should_process}")
+            
+            # Processar apenas se não foi filtrado
+            if should_process:
+                # Extrair código tabela
+                codigo_tabela = extract_santander_codigo_tabela(produto)
+                
+                logging.info(f"🔍 SANTANDER linha {idx}: código extraído = '{codigo_tabela}' de produto: {produto[:50] if produto else 'N/A'}...")
+                
+                # Detectar órgão
+                if 'PREF' in convenio or 'AGUDOS' in convenio or 'RANCHARIA' in convenio:
+                    orgao = 'PREF. DE AGUDOS - SP' if 'AGUDOS' in convenio else 'PREF. DE RANCHARIA - SP'
+                elif 'LINS' in convenio:
+                    orgao = 'PREF. DE LINS - SP'
+                else:
+                    orgao = 'INSS'
+                
+                logging.info(f"🏛️ SANTANDER linha {idx}: órgão = {orgao} (convênio: {convenio[:30] if convenio else 'N/A'}...)")
+                
+                # Detectar tipo de operação
+                produto_upper = produto.upper()
+                if 'REFIN' in produto_upper:
+                    tipo_operacao = 'REFINANCIAMENTO'
+                elif 'PORT' in produto_upper:
+                    tipo_operacao = 'PORTABILIDADE'
+                else:
+                    tipo_operacao = 'MARGEM LIVRE (NOVO)'
+                
+                logging.info(f"🔧 SANTANDER linha {idx}: tipo_operacao = {tipo_operacao}")
+                
+                # 🚫 FILTRO: Remover propostas SEGURO (11111111)
+                has_seguro_codigo = codigo_tabela and '11111111' in codigo_tabela
+                has_seguro_produto = False  # Desativado - estava filtrando tudo
+                is_pure_seguro = 'SEGURO' in produto_upper and not any(p in produto_upper for p in ['OFERTA', 'REFIN', 'PORT'])
+                has_todos_convenios = 'TODOS OS CONVENIOS' in produto_upper
+                
+                logging.info(f"� SANTANDER linha {idx}: Verificando SEGURO - has_seguro_codigo={has_seguro_codigo}, has_seguro_produto={has_seguro_produto}, has_todos_convenios={has_todos_convenios}")
+                
+                if codigo_tabela and (has_seguro_codigo or is_pure_seguro or has_todos_convenios):
+                    logging.info(f"FILTRADO por SEGURO - proposta {proposta}")
+                    normalized_row = None
+                else:
+                    logging.info(f"PASSOU nos filtros - vai criar normalized_row")
+                    
+                    # Criar registro normalizado apenas se passou nos filtros
+                    normalized_row = {
+                        "PROPOSTA": proposta,
+                        "DATA_CADASTRO": data_cadastro,
+                        "BANCO": "BANCO SANTANDER",
+                        "ORGAO": orgao,
+                        "TIPO_OPERACAO": tipo_operacao,
+                        "NUMERO_PARCELAS": parcelas,
+                        "VALOR_OPERACAO": format_santander_value(valor_bruto),
+                        "VALOR_LIBERADO": format_santander_value(valor_liquido),
+                        "USUARIO_BANCO": cod_digitador,
+                        "SITUACAO": normalize_santander_status(status),
+                        "DATA_PAGAMENTO": data_averbacao if normalize_santander_status(status) == "PAGO" else "",
+                        "CPF": cpf,
+                        "NOME": cliente.upper(),
+                        "DATA_NASCIMENTO": "",
+                        "CODIGO_TABELA": codigo_tabela,
+                        "VALOR_PARCELAS": format_santander_value(valor_parcela),
+                        "TAXA": "0,00%",
+                        "OBSERVACOES": ""
+                    }
+                    
+                    logging.info(f"✅✅✅ SANTANDER linha {idx}: normalized_row CRIADO! Proposta={proposta} | Código={codigo_tabela} | Órgão={orgao} | Status={normalize_santander_status(status)}")
+                    logging.info(f"📦 SANTANDER linha {idx}: normalized_row pronto para validação comum")
+            else:
+                # Se should_process=False, garantir que normalized_row=None já foi definido
+                logging.info(f"⏭️ SANTANDER linha {idx}: should_process=False, normalized_row=None")
+                if 'normalized_row' not in locals():
+                    normalized_row = None
+        
         elif bank_type == "CREFAZ":
             # Mapeamento BANCO CREFAZ - Campos reais baseados no mapeamento
             # Colunas reais: Data Cadastro, Número da Proposta, CPF, Cliente, Cidade, Status, Agente, etc.
             
+            # 💰 FUNÇÃO para formatar valores no padrão brasileiro
+            def format_crefaz_value(value_str):
+                """Converte valores para formato brasileiro: 1.255,00"""
+                if not value_str or str(value_str).strip() in ['', 'nan', 'None', '0']:
+                    return "0,00"
+                
+                try:
+                    # Limpar o valor (remover espaços, moeda, etc.)
+                    clean_value = str(value_str).strip().replace('R$', '').replace(' ', '')
+                    
+                    # Se já está no formato brasileiro, manter
+                    if ',' in clean_value and clean_value.count(',') == 1:
+                        parts = clean_value.split(',')
+                        if len(parts[1]) == 2:  # Duas casas decimais após vírgula
+                            return clean_value
+                    
+                    # Converter do formato americano (ponto decimal)
+                    if '.' in clean_value:
+                        # Separar parte inteira e decimal
+                        parts = clean_value.split('.')
+                        integer_part = parts[0]
+                        decimal_part = parts[1][:2] if len(parts) > 1 else "00"
+                    else:
+                        # Sem decimal, assumir valor inteiro
+                        integer_part = clean_value
+                        decimal_part = "00"
+                    
+                    # Garantir que decimal tenha 2 dígitos
+                    if len(decimal_part) == 1:
+                        decimal_part += "0"
+                    elif len(decimal_part) == 0:
+                        decimal_part = "00"
+                    
+                    # Converter para float para formatar
+                    float_value = float(f"{integer_part}.{decimal_part}")
+                    
+                    # Formatar no padrão brasileiro: 1.255,00
+                    if float_value >= 1000:
+                        # Valores >= 1000: usar ponto para milhar
+                        formatted = f"{float_value:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                    else:
+                        # Valores < 1000: apenas vírgula decimal
+                        formatted = f"{float_value:.2f}".replace('.', ',')
+                    
+                    return formatted
+                    
+                except (ValueError, TypeError) as e:
+                    logging.warning(f"⚠️ CREFAZ: Erro ao formatar valor '{value_str}': {e}")
+                    return str(value_str)  # Retornar original se houver erro
+            
+            # Extrair campos
+            proposta = str(row.get('Número da Proposta', row.get('Proposta', ''))).strip()
+            cod_operacao = str(row.get('Cod Operação', row.get('Tabela', ''))).strip()
+            produto = str(row.get('Produto', '')).strip()
+            
+            # ✅ VALIDAÇÃO: Pular linhas com código de operação vazio
+            if not cod_operacao or cod_operacao.upper() in ['NAN', 'NONE', '']:
+                logging.info(f"⏭️ CREFAZ: Pulando proposta {proposta} - código de operação vazio")
+                continue
+            
+            # Extrair código digitador
+            agente = str(row.get('Agente', row.get('Login Agente', ''))).strip()
+            codigo_digitador = str(row.get('Codigo Digitador', row.get('Código Digitador', ''))).strip()
+            usuario_banco = codigo_digitador if codigo_digitador else agente
+            
+            # 🔍 CREFAZ: Detectar ÓRGÃO baseado no CÓDIGO (não no produto)
+            # Os códigos já vêm corretos do arquivo: ENER, CPAUTO, LUZ, BOL, CSD
+            cod_upper = cod_operacao.upper()
+            
+            # Mapear órgão baseado no código
+            if cod_upper in ['ENER', 'LUZ']:
+                orgao = 'ENERGIA'
+            elif cod_upper in ['BOL', 'BOLETO']:
+                orgao = 'BOLETO'
+            elif cod_upper in ['CPAUTO', 'AUTO', 'VEICULO']:
+                orgao = 'VEICULOS'
+            elif cod_upper in ['CSD', 'CLT', 'TRABALHADOR']:
+                orgao = 'CRÉDITO DO TRABALHADOR'
+            else:
+                # Se código desconhecido, tentar detectar pelo produto
+                produto_upper = produto.upper()
+                if 'ENERGIA' in produto_upper or 'LUZ' in produto_upper or 'FATURA' in produto_upper:
+                    orgao = 'ENERGIA'
+                elif 'BOLETO' in produto_upper:
+                    orgao = 'BOLETO'
+                elif 'VEICULO' in produto_upper or 'AUTO' in produto_upper or 'CARRO' in produto_upper:
+                    orgao = 'VEICULOS'
+                elif 'TRABALHADOR' in produto_upper or 'CLT' in produto_upper or 'PRIVADO' in produto_upper:
+                    orgao = 'CRÉDITO DO TRABALHADOR'
+                else:
+                    orgao = 'ENERGIA'  # Default
+            
+            tipo_operacao = 'Margem Livre (Novo)'  # CREFAZ sempre é margem livre
+            
+            # 💰 Formatar valores no padrão brasileiro
+            valor_operacao_br = format_crefaz_value(row.get('Valor Liberado', row.get('Valor Solicitado', '')))
+            valor_liberado_br = format_crefaz_value(row.get('Valor Liberado', ''))
+            valor_parcela_br = format_crefaz_value(row.get('Valor da Parcela', row.get('Parcela', '')))
+            
+            # Criar registro normalizado
             normalized_row = {
-                "PROPOSTA": str(row.get('Número da Proposta', row.get('Proposta', ''))).strip(),
+                "PROPOSTA": proposta,
                 "DATA_CADASTRO": str(row.get('Data Cadastro', '')).strip(),
                 "BANCO": "BANCO CREFAZ",
-                "ORGAO": "INSS",  # CREFAZ é sempre INSS (energia/boleto)
-                "TIPO_OPERACAO": str(row.get('Produto', 'Margem Livre (Novo)')).strip(),
+                "ORGAO": orgao,
+                "TIPO_OPERACAO": tipo_operacao,
                 "NUMERO_PARCELAS": str(row.get('Prazo', '')).strip(),
-                "VALOR_OPERACAO": str(row.get('Valor Liberado', row.get('Valor Solicitado', ''))).strip(),
-                "VALOR_LIBERADO": str(row.get('Valor Liberado', '')).strip(),
-                "USUARIO_BANCO": str(row.get('Agente', row.get('Login Agente', ''))).strip(),
+                "VALOR_OPERACAO": valor_operacao_br,  # 💰 FORMATO BRASILEIRO
+                "VALOR_LIBERADO": valor_liberado_br,  # 💰 FORMATO BRASILEIRO
+                "USUARIO_BANCO": usuario_banco,
                 "SITUACAO": str(row.get('Status', '')).strip(),
                 "DATA_PAGAMENTO": str(row.get('Alteração', row.get('Data Pagamento', ''))).strip(),
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": "",
-                "CODIGO_TABELA": str(row.get('Cod Operação', row.get('Tabela', ''))).strip(),
-                "VALOR_PARCELAS": str(row.get('Valor da Parcela', row.get('Parcela', ''))).strip(),
-                "TAXA": "",
+                "CODIGO_TABELA": cod_operacao,  # ✅ Usar código diretamente do arquivo (ENER, CPAUTO, LUZ, BOL, CSD)
+                "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
+                "TAXA": "0,00%",  # CREFAZ não tem taxa no relat_orgaos (sempre 0,00%)
                 "OBSERVACOES": str(row.get('Motivos', row.get('Observacoes', ''))).strip()
             }
+            
+            logging.info(f"✅ CREFAZ processado: Proposta={proposta} | Código='{cod_operacao}' | Órgão='{orgao}'")
+
         
         elif bank_type == "QUERO_MAIS":
             # Mapeamento BANCO QUERO MAIS CREDITO - ESTRUTURA REAL IDENTIFICADA
@@ -3030,6 +3350,31 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             }
         
         elif bank_type == "PAULISTA":
+            logging.error(f"🎯 CHEGOU NO BLOCO PAULISTA! Linha {idx}: '{row.get('Unnamed: 0', '')}'")
+            logging.error(f"💥 INICIO DO PROCESSAMENTO PAULISTA - ANTES DE QUALQUER LÓGICA")
+            logging.info(f"=" * 80)
+            logging.info(f"🏦 PAULISTA linha {idx}: INICIANDO PROCESSAMENTO")
+            logging.info(f"   Colunas disponíveis: {list(row.keys())[:10]}")
+            
+            # 🔧 CORREÇÃO PAULISTA: Verificar se primeira linha contém cabeçalhos
+            primeira_celula = row.get('Unnamed: 0', '')
+            logging.error(f"🔧 PAULISTA: Verificando primeira_celula = '{primeira_celula}'")
+            if str(primeira_celula) == 'Nº Proposta':
+                logging.info(f"� PAULISTA: Primeira linha é cabeçalho! Pulando...")
+                continue  # Pular linha de cabeçalho
+            
+            logging.error(f"🎉 PAULISTA: Passou da verificação de cabeçalho! Continuando processamento...")
+            
+            # Debug da linha atual - log detalhado para ver o que está vindo
+            logging.error(f"🔍 PAULISTA: Iniciando debug da linha atual...")
+            logging.info(f"   🔍 Proposta bruta: '{primeira_celula}' (tipo: {type(primeira_celula)})")
+            logging.info(f"   🔍 Segunda coluna (Contrato): '{row.get('Unnamed: 1', '')}'")
+            logging.info(f"   🔍 CPF: '{row.get('Unnamed: 4', '')}'")
+            logging.info(f"   🔍 Nome: '{row.get('Unnamed: 5', '')}'")
+            
+            logging.error(f"🔍 PAULISTA: Após logs básicos - continuando...")
+            logging.info(f"=" * 80)
+            
             def detect_paulista_organ(especies_beneficio, produto, proposta=""):
                 """Detecta órgão do Paulista de forma inteligente"""
                 especies_upper = especies_beneficio.upper() if especies_beneficio else ""
@@ -3083,45 +3428,77 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 else:
                     return "Margem Livre (Novo)"
             
-            # Mapeamento BANCO PAULISTA - Colunas corretas (Unnamed)
-            # Unnamed: 0 = Nº Proposta, Unnamed: 1 = Contrato
-            # Unnamed: 2 = Data Captura, Unnamed: 3 = Dt Atividade  
-            # Unnamed: 4 = CPF, Unnamed: 5 = Nome do Proponente
-            # Unnamed: 7 = Espécie Benefício (indica INSS)
-            # Unnamed: 14 = Valor Empréstimo, Unnamed: 15 = Prazo
-            # Unnamed: 18 = Produto, Unnamed: 19 = Fase, Unnamed: 20 = Status
-            # Unnamed: 21 = Dta. Integração, Unnamed: 24 = Nome Digitador
+            # Mapeamento BANCO PAULISTA - Colunas NOMEADAS (não Unnamed!)
+            # Baseado no arquivo real: Nº Proposta | Contrato | Data Captura | etc.
             
-            proposta = str(row.get('Unnamed: 0', row.get('Unnamed: 1', ''))).strip()
-            especies_beneficio = str(row.get('Unnamed: 7', '')).strip()
-            produto = str(row.get('Unnamed: 18', '')).strip()
-            status = str(row.get('Unnamed: 20', '')).strip()
+            # Mapeamento PAULISTA corrigido baseado em map_relat_atualizados.txt
+            # Unnamed: 0='Nº Proposta', 1='Contrato', 2='Data Captura', 3='Dt Atividade'  
+            # Unnamed: 4='CPF/CNPJ Proponente', 5='Nome do Proponente', 6='Matrícula', 7='Espécie Benefício'
+            # Unnamed: 8='Banco', 9='Agência', 10='Conta', 11='Valor Solicitado'
+            # Unnamed: 12='Vl. Liberado', 13='Vl. Troco', 14='Quant. Parcelas', 15='Valor Parcela'
+            # Unnamed: 16='Plano', 17='1º Vencimento', 18='Produto', 19='Fase', 20='Status'
+            # Unnamed: 21='Dta. Integração', 22='Loja/Sub', 23='Lojista/Master', 24='Usuário Digitador'
             
-            # Detectar órgão e operação
-            orgao_detectado = detect_paulista_organ(especies_beneficio, produto, proposta)
-            operacao_detectada = detect_paulista_operation(produto, especies_beneficio, status)
+            proposta = str(row.get('Unnamed: 0', '')).strip()  # Nº Proposta
+            especies_beneficio = str(row.get('Unnamed: 7', '')).strip()  # Espécie Benefício
+            produto = str(row.get('Unnamed: 18', '')).strip()  # Produto
+            status = str(row.get('Unnamed: 20', '')).strip()  # Status
             
-            normalized_row = {
-                "PROPOSTA": proposta,  # ADE/PROPOSTA (Unnamed: 0)
-                "ADE": proposta,  # Campo ADE explícito = mesma proposta
-                "DATA_CADASTRO": str(row.get('Unnamed: 2', '')).strip(),
-                "BANCO": "BANCO PAULISTA",
-                "ORGAO": orgao_detectado,
-                "TIPO_OPERACAO": operacao_detectada,
-                "NUMERO_PARCELAS": str(row.get('Unnamed: 15', '')).strip(),
-                "VALOR_OPERACAO": str(row.get('Unnamed: 14', '')).strip(),
-                "VALOR_LIBERADO": str(row.get('Unnamed: 14', '')).strip(),
-                "USUARIO_BANCO": str(row.get('Unnamed: 24', '')).strip(),
-                "SITUACAO": status,  # STATUS direto (será normalizado depois)
-                "DATA_PAGAMENTO": str(row.get('Unnamed: 21', '')).strip(),
-                "CPF": str(row.get('Unnamed: 4', '')).strip(),  # CPF (Unnamed: 4)
-                "NOME": str(row.get('Unnamed: 5', '')).strip(),
-                "DATA_NASCIMENTO": "",  # Não disponível
-                "CODIGO_TABELA": str(row.get('Unnamed: 16', '')).strip(),  # Será mapeado pelo Storm depois
-                "VALOR_PARCELAS": str(row.get('Unnamed: 11', '')).strip(),
-                "TAXA": "",  # Será mapeado pelo Storm depois
-                "OBSERVACOES": f"Contrato: {str(row.get('Unnamed: 1', '')).strip()} | Fase: {str(row.get('Unnamed: 19', '')).strip()}"
-            }
+            # Logs detalhados para debug
+            logging.info(f"📋 PAULISTA extraído: Proposta={proposta}, Produto={produto[:30] if produto else 'N/A'}")
+            logging.info(f"📋 PAULISTA status='{status}', espécie='{especies_beneficio[:20] if especies_beneficio else 'N/A'}'")
+            
+            logging.error(f"🔍 PAULISTA: Chegou na validação! Proposta extraída: '{proposta}'")
+            
+            # ✅ VALIDAÇÃO: Verificar se linha deve ser processada
+            if not proposta or proposta.upper() in ['NAN', 'NONE', '', 'UNNAMED: 0', 'Nº PROPOSTA', 'PROPOSTA']:
+                logging.info(f"⏭️ PAULISTA linha {idx}: Pulando - proposta vazia ou cabeçalho ({proposta})")
+                normalized_row = None
+            else:
+                logging.info(f"✅ PAULISTA linha {idx}: Proposta válida - vai processar")
+                
+                # Detectar órgão e operação
+                orgao_detectado = detect_paulista_organ(especies_beneficio, produto, proposta)
+                operacao_detectada = detect_paulista_operation(produto, especies_beneficio, status)
+                
+                # Aplicar formatação brasileira usando posições Unnamed corretas do mapeamento
+                valor_operacao_raw = str(row.get('Unnamed: 11', '')).strip()  # Valor Solicitado
+                valor_parcela_raw = str(row.get('Unnamed: 15', '')).strip()   # Valor Parcela  
+                valor_liberado_raw = str(row.get('Unnamed: 12', '')).strip()  # Vl. Liberado
+                cpf_raw = str(row.get('Unnamed: 4', '')).strip()             # CPF/CNPJ Proponente
+                
+                # Usar as funções globais de formatação
+                valor_operacao_formatted = format_value_brazilian(valor_operacao_raw)
+                valor_liberado_formatted = format_value_brazilian(valor_liberado_raw)
+                valor_parcela_formatted = format_value_brazilian(valor_parcela_raw)
+                cpf_formatted = format_cpf_global(cpf_raw)
+                
+                logging.info(f"✅ PAULISTA formatado: CPF={cpf_formatted}, Valor={valor_operacao_formatted}, Órgão={orgao_detectado}")
+                
+                normalized_row = {
+                    "PROPOSTA": proposta,  # Unnamed: 0 = Nº Proposta
+                    "ADE": proposta,  # Campo ADE explícito = mesma proposta
+                    "DATA_CADASTRO": str(row.get('Unnamed: 2', '')).strip(),  # Data Captura
+                    "BANCO": "BANCO PAULISTA",
+                    "ORGAO": orgao_detectado,
+                    "TIPO_OPERACAO": operacao_detectada,
+                    "NUMERO_PARCELAS": str(row.get('Unnamed: 14', '')).strip(),  # Quant. Parcelas
+                    "VALOR_OPERACAO": valor_operacao_formatted,  # ✅ Formatado brasileiro
+                    "VALOR_LIBERADO": valor_liberado_formatted,  # ✅ Formatado brasileiro
+                    "USUARIO_BANCO": str(row.get('Unnamed: 24', '')).strip(),   # Usuário Digitador
+                    "SITUACAO": status,  # STATUS direto (será normalizado depois)
+                    "DATA_PAGAMENTO": str(row.get('Unnamed: 21', '')).strip(),  # Dta. Integração
+                    "CPF": cpf_formatted,  # ✅ Formatado brasileiro (XXX.XXX.XXX-XX)
+                    "NOME": str(row.get('Unnamed: 5', '')).strip().upper(),     # Nome do Proponente ✅ Maiúsculas
+                    "DATA_NASCIMENTO": "",  # Não disponível no PAULISTA
+                    "CODIGO_TABELA": str(row.get('Unnamed: 16', '')).strip(),   # Plano - será mapeado pelo Storm depois
+                    "VALOR_PARCELAS": valor_parcela_formatted,  # ✅ Formatado brasileiro
+                    "TAXA": "0,00%",  # Padrão brasileiro
+                    "OBSERVACOES": f"Contrato: {str(row.get('Unnamed: 1', '')).strip()} | Banco: {str(row.get('Unnamed: 8', '')).strip()} | Agência: {str(row.get('Unnamed: 9', '')).strip()}"
+                }
+                
+                logging.info(f"✅✅✅ PAULISTA normalized_row criado com sucesso!")
+                logging.info(f"✅✅✅ PAULISTA normalized_row final: {normalized_row}")
         
         elif bank_type == "BRB":
             # Mapeamento BRB (Banco de Brasília) - Baseado em map_relat_atualizados.txt
@@ -3302,6 +3679,12 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     if not normalized_row["VALOR_OPERACAO"]:
                         normalized_row["VALOR_OPERACAO"] = str(row.get(col, '')).strip()
         
+        # ✅ VERIFICAÇÃO CRÍTICA: Pular linhas filtradas (normalized_row = None)
+        # DEVE VIR ANTES de qualquer acesso a normalized_row.get() ou normalized_row[]
+        if normalized_row is None:
+            logging.info(f"⏭️ [{bank_type}] Linha filtrada (normalized_row=None), pulando mapeamento e validação")
+            continue
+        
         # Aplicar mapeamento de status (normalização completa)
         if normalized_row.get("SITUACAO"):
             situacao_original = str(normalized_row["SITUACAO"]).strip()
@@ -3342,10 +3725,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.warning(f"⚠ Status não mapeado: '{situacao_original}' - mantido como está")
         
         # Aplicar mapeamento de código de tabela (sem dependência de usuário para maior estabilidade)
-        # EXCETO para DIGIO, AVERBAI e DAYCOVAL que já fizeram mapeamento específico
+        # EXCETO para DIGIO, AVERBAI, DAYCOVAL, QUERO_MAIS e SANTANDER que já têm códigos corretos
+        # VCTEX PRECISA de mapeamento: "Tabela EXP" (banco) → "TabelaEXP" (storm)
         if bank_type == "DIGIO":
             # DIGIO já aplicou mapeamento específico, pular mapeamento geral
             logging.info(f"📊 PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: DIGIO já mapeado, pulando mapeamento geral")
+            mapping_result = None
+        elif bank_type == "SANTANDER":
+            # 🏦 SANTANDER: Códigos já extraídos corretamente (810021387, 82721387, etc.)
+            codigo_direto = normalized_row.get("CODIGO_TABELA", "")
+            logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: SANTANDER código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "AVERBAI" and normalized_row.get("CODIGO_TABELA", "").isdigit():
             # 🎯 AVERBAI com código direto do arquivo - não precisa mapeamento complexo!
@@ -3444,6 +3833,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         nome = str(normalized_row.get("NOME", "")).strip()
         cpf = str(normalized_row.get("CPF", "")).strip()
         
+        logging.info(f"🔍 VALIDAÇÃO FINAL - Proposta: '{proposta}', Nome: '{nome[:30] if nome else 'N/A'}', CPF: '{cpf}'")
+        
         # Palavras-chave que indicam linha inválida (EXATAS, não substring)
         invalid_exact_keywords = [
             "nan", "none", "null", "unnamed", "relatório", "relatorio",
@@ -3471,6 +3862,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             len(proposta.strip()) >= 1  # Qualquer proposta com pelo menos 1 caractere
         )
         
+        logging.info(f"   is_valid_proposta={is_valid_proposta} (has_invalid_exact={has_invalid_exact}, has_invalid_whole={has_invalid_whole})")
+        
         # Verificar se tem pelo menos nome OU cpf válido
         nome_lower = nome.lower() if nome else ""
         nome_is_invalid = any(nome_lower == keyword for keyword in invalid_whole_words + invalid_exact_keywords)
@@ -3479,22 +3872,31 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         cpf_clean = ''.join(filter(str.isdigit, cpf)) if cpf else ""
         cpf_valid = len(cpf_clean) >= 11 or (cpf and len(cpf) >= 11)
         
-        has_valid_data = (
-            (nome and len(nome) > 3 and not nome_is_invalid) or
-            cpf_valid or
-            proposta  # Se tem proposta, já é válido
-        )
+        # VALIDAÇÃO ESPECÍFICA PARA DAYCOVAL - Mais flexível só para este banco
+        if bank_type == "DAYCOVAL":
+            # DAYCOVAL: Se tem proposta numérica, é praticamente sempre válido
+            has_numeric_proposta = proposta and any(c.isdigit() for c in proposta)
+            has_valid_data = (
+                (nome and len(nome) > 2 and not nome_is_invalid) or  # Nome com 3+ chars
+                (cpf_clean and len(cpf_clean) >= 8) or  # CPF mais flexível para DAYCOVAL
+                has_numeric_proposta or  # Proposta com números
+                (proposta and len(proposta) >= 5)  # Qualquer proposta longa o suficiente
+            )
+        else:
+            # VALIDAÇÃO NORMAL PARA OUTROS BANCOS (Storm, Santander, etc.)
+            has_valid_data = (
+                (nome and len(nome) > 3 and not nome_is_invalid) or
+                cpf_valid or
+                proposta  # Se tem proposta, já é válido
+            )
         
-        # ✅ Verificar se normalized_row não é None (filtrado pelo SANTANDER)
-        if normalized_row is None:
-            logging.info(f"🚫 SANTANDER: Linha filtrada (proposta SEGURO removida)")
-            continue
-            
+        logging.info(f"   has_valid_data={has_valid_data} (nome_valid={nome and len(nome) > 3 and not nome_is_invalid}, cpf_valid={cpf_valid})")
+        
         if is_valid_proposta and has_valid_data:
             normalized_data.append(normalized_row)
-            logging.info(f"✅ Linha válida adicionada: Proposta={proposta}, Nome={nome[:20] if nome else 'N/A'}, CPF={cpf[:6] if cpf else 'N/A'}...")
+            logging.info(f"✅✅✅ Linha ADICIONADA com sucesso: Proposta={proposta}, Nome={nome[:20] if nome else 'N/A'}, CPF={cpf[:6] if cpf else 'N/A'}...")
         else:
-            logging.warning(f"❌ Linha IGNORADA [{bank_type}] - Proposta='{proposta}' (len={len(proposta)}), Nome='{nome[:20] if nome else 'N/A'}' (len={len(nome)}), CPF='{cpf}' (len={len(cpf)}), is_valid_proposta={is_valid_proposta}, has_valid_data={has_valid_data}")
+            logging.warning(f"❌❌❌ Linha IGNORADA [{bank_type}] - Proposta='{proposta}' (len={len(proposta)}), Nome='{nome[:20] if nome else 'N/A'}' (len={len(nome)}), CPF='{cpf}' (len={len(cpf)}), is_valid_proposta={is_valid_proposta}, has_valid_data={has_valid_data}")
             # Log detalhado para debug
             if not is_valid_proposta:
                 logging.warning(f"  🔍 Proposta inválida: has_invalid_exact={has_invalid_exact}, has_invalid_whole={has_invalid_whole}")
@@ -3511,7 +3913,17 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.error(f"   📄 Primeira linha: {dict(df.iloc[0])}") 
         return pd.DataFrame()
     
-    return pd.DataFrame(normalized_data)
+    # 🧹 FILTRO DE SEGURANÇA: Remover qualquer None que possa ter escapado
+    normalized_data_clean = [row for row in normalized_data if row is not None and isinstance(row, dict)]
+    
+    if len(normalized_data_clean) != len(normalized_data):
+        logging.warning(f"⚠️ [{bank_type}] Removidos {len(normalized_data) - len(normalized_data_clean)} registros None da lista")
+    
+    if len(normalized_data_clean) == 0:
+        logging.error(f"❌ [{bank_type}] Após filtrar None, nenhum dado restou!")
+        return pd.DataFrame()
+    
+    return pd.DataFrame(normalized_data_clean)
 
 def _get_daycoval_operation_type(table_description: str) -> str:
     """Determina o tipo de operação baseado na descrição da tabela do Daycoval"""
@@ -3529,6 +3941,13 @@ def _get_daycoval_operation_type(table_description: str) -> str:
 def map_to_final_format(df: pd.DataFrame, bank_type: str) -> tuple[pd.DataFrame, int]:
     """Mapear dados para o formato final de 24 colunas com estatísticas de mapeamento"""
     try:
+        # Debug específico para PAULISTA
+        if bank_type == "PAULISTA":
+            logging.info(f"🏦 map_to_final_format: PAULISTA com {len(df)} linhas")
+            logging.info(f"🏦 Primeiras 3 linhas do DF:")
+            for i, (idx, row) in enumerate(df.head(3).iterrows()):
+                logging.info(f"   Linha {idx}: Unnamed:0='{row.get('Unnamed: 0', 'N/A')}'")
+        
         # Primeiro normalizar os dados
         normalized_df = normalize_bank_data(df, bank_type)
         
@@ -3556,6 +3975,19 @@ def map_to_final_format(df: pd.DataFrame, bank_type: str) -> tuple[pd.DataFrame,
             if situacao.upper() != "PAGO":
                 data_pagamento = ""
             
+            # 🌎 APLICAR FORMATAÇÃO GLOBAL BRASILEIRA (CPF + Valores Monetários)
+            cpf_raw = row.get("CPF", "")
+            cpf_formatted = format_cpf_global(cpf_raw)
+            
+            valor_parcelas_raw = row.get("VALOR_PARCELAS", "")
+            valor_parcelas_formatted = format_value_brazilian(valor_parcelas_raw)
+            
+            valor_operacao_raw = row.get("VALOR_OPERACAO", "")
+            valor_operacao_formatted = format_value_brazilian(valor_operacao_raw)
+            
+            valor_liberado_raw = row.get("VALOR_LIBERADO", "")
+            valor_liberado_formatted = format_value_brazilian(valor_liberado_raw)
+            
             final_row = {
                 "PROPOSTA": row.get("PROPOSTA", ""),
                 "DATA CADASTRO": row.get("DATA_CADASTRO", ""),
@@ -3564,15 +3996,15 @@ def map_to_final_format(df: pd.DataFrame, bank_type: str) -> tuple[pd.DataFrame,
                 "CODIGO TABELA": row.get("CODIGO_TABELA", ""),
                 "TIPO DE OPERACAO": row.get("TIPO_OPERACAO", ""),
                 "NUMERO PARCELAS": row.get("NUMERO_PARCELAS", ""),
-                "VALOR PARCELAS": row.get("VALOR_PARCELAS", ""),
-                "VALOR OPERACAO": row.get("VALOR_OPERACAO", ""),
-                "VALOR LIBERADO": row.get("VALOR_LIBERADO", ""),
+                "VALOR PARCELAS": valor_parcelas_formatted,  # ✅ Formatado em padrão brasileiro
+                "VALOR OPERACAO": valor_operacao_formatted,  # ✅ Formatado em padrão brasileiro
+                "VALOR LIBERADO": valor_liberado_formatted,  # ✅ Formatado em padrão brasileiro
                 "VALOR QUITAR": "",
                 "USUARIO BANCO": row.get("USUARIO_BANCO", ""),
                 "CODIGO LOJA": "",
                 "SITUACAO": situacao,
                 "DATA DE PAGAMENTO": data_pagamento,
-                "CPF": row.get("CPF", ""),
+                "CPF": cpf_formatted,  # ✅ Formatado em padrão brasileiro (XXX.XXX.XXX-XX)
                 "NOME": row.get("NOME", ""),
                 "DATA DE NASCIMENTO": row.get("DATA_NASCIMENTO", ""),
                 "TIPO DE CONTA": "",
@@ -3823,7 +4255,18 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
                 
                 logging.info(f"✅ Banco detectado: {bank_type}, Registros originais: {len(df)}, Colunas: {len(df.columns)}")
                 
+                # DEBUG: Log adicional para PAULISTA
+                if 'AF5EEBB7' in file.filename or 'paulista' in file.filename.lower():
+                    logging.error(f"🔍 DEBUG PAULISTA: Arquivo={file.filename}, Banco detectado={bank_type}")
+                    logging.error(f"🔍 DEBUG PAULISTA: Primeiras colunas: {list(df.columns)[:10]}")
+                    if not df.empty:
+                        first_row = df.iloc[0].to_dict()
+                        logging.error(f"🔍 DEBUG PAULISTA: Primeira linha: {first_row}")
+                
                 # Mapear para formato final
+                if bank_type == "PAULISTA":
+                    logging.error(f"🏦 PAULISTA: Chamando map_to_final_format com {len(df)} linhas")
+                
                 mapped_df, mapped_count = map_to_final_format(df, bank_type)
                 
                 if mapped_df.empty:
