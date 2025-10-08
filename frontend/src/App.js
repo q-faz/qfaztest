@@ -145,7 +145,7 @@ function App() {
     'Qualibanking': 'https://quali.joinbank.com.br/loans',
     'Quero Mais': 'https://queromaiscredito.app/WebFIMenuMVC/Login/AC.UI.LOGIN.aspx?FISession=d0ce92c59bbe',
     'Amigoz': 'https://amigozconsig.com.br/login',
-    'Facta92': 'https://desenv.facta.com.br/sistemaNovo/login.php',
+  'Facta Financeira': 'https://desenv.facta.com.br/sistemaNovo/login.php',
     'Santander': 'https://gestorcf.com.br/corretores/index.php?erro=logoff',
     'PAN': '#', // Link não fornecido
     'Mercantil': '#' // Link não fornecido
@@ -444,54 +444,52 @@ function App() {
   return (
     <div className={`min-h-screen ${themeClasses.bg} py-4 sm:py-8 transition-colors duration-300`}>
       <style jsx>{`
+        /* Pill style for banks with links */
         .bank-card-with-link {
-          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
-          border: 1px solid #3b82f6;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          background: #eaf5ff !important; /* very light blue */
+          border: 1px solid #93c5fd !important; /* blue-300 */
+          color: #075985 !important; /* dark blue text */
+          box-shadow: 0 6px 14px rgba(3, 105, 161, 0.06) !important;
           position: relative;
-          overflow: hidden;
+          overflow: visible;
+          padding: 6px 12px !important;
+          border-radius: 9999px !important;
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+          min-height: 36px;
         }
-        
-        .bank-card-with-link::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: -100%;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-          transition: left 0.4s;
-        }
-        
-        .bank-card-with-link:hover::before {
-          left: 100%;
-        }
-        
+
         .bank-card-with-link:hover {
-          transform: translateY(-3px) !important;
-          box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25) !important;
-          border-color: #2563eb;
-          background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
-        }
-        
-        .bank-card-without-link {
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
-          border: 1px solid #cbd5e1;
-          box-shadow: 0 2px 8px rgba(148, 163, 184, 0.15);
-          opacity: 0.9;
-        }
-        
-        .bank-card-without-link:hover {
           transform: translateY(-2px) !important;
-          opacity: 1;
-          box-shadow: 0 4px 16px rgba(148, 163, 184, 0.2) !important;
-          background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%) !important;
-          border-color: #94a3b8;
+          box-shadow: 0 10px 28px rgba(3, 105, 161, 0.12) !important;
+          border-color: #60a5fa !important; /* blue-400 */
+          background: linear-gradient(180deg, #f0f9ff 0%, #e6f2ff 100%) !important;
         }
-        
+
+        /* Pill style for banks without links (muted) */
+        .bank-card-without-link {
+          background: #f1f5f9 !important; /* light gray */
+          border: 1px solid #d1d5db !important;
+          color: #6b7280 !important;
+          box-shadow: 0 4px 10px rgba(99, 102, 106, 0.03) !important;
+          padding: 6px 12px !important;
+          border-radius: 9999px !important;
+          display: inline-flex !important;
+          align-items: center;
+          justify-content: center;
+          min-height: 36px;
+        }
+
+        .bank-card-without-link:hover {
+          transform: translateY(-1px) !important;
+          box-shadow: 0 6px 16px rgba(99, 102, 106, 0.06) !important;
+        }
+
         .bank-link {
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          transition: all 0.24s cubic-bezier(0.2, 0, 0.2, 1) !important;
           text-decoration: none;
+          color: inherit;
         }
       `}</style>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -613,7 +611,7 @@ function App() {
               {/* Grid de Bancos Melhorado */}
               <div className="max-w-4xl mx-auto">
                 <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-9 gap-2 sm:gap-3">
-                  {['Averbai', 'Digio', 'Prata', 'VCTEX', 'Daycoval', 'PAN', 'C6', 'Facta92', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'Paulista', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz'].map((bank, index) => {
+                  {['Averbai', 'Digio', 'Prata', 'VCTEX', 'Daycoval', 'PAN', 'C6', 'Facta Financeira', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'Paulista', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz'].map((bank, index) => {
                     const hasLink = bankLinks[bank] && bankLinks[bank] !== '#';
                     const BankComponent = hasLink ? 'a' : 'div';
                     const linkProps = hasLink ? {
@@ -631,10 +629,10 @@ function App() {
                         title={hasLink ? `Clique para acessar o sistema do ${bank}` : `${bank} - Sistema não disponível`}
                       >
                         <div className="flex flex-col items-center justify-center gap-1 min-h-[45px]">
-                          <span className={`text-xs sm:text-sm font-semibold text-center ${hasLink ? 'text-white' : 'text-gray-600'}`}>
+                          <span className={`text-xs sm:text-sm font-semibold text-center ${hasLink ? 'text-blue-800' : 'text-gray-600'}`}>
                             {bank}
                           </span>
-                          {hasLink && <span className="text-white text-xs opacity-80">🔗</span>}
+                          {/* removed link emoji as requested */}
                           {!hasLink && <span className="text-gray-400 text-xs">�</span>}
                         </div>
                       </BankComponent>
@@ -788,11 +786,15 @@ function App() {
 
             {/* Bank Icons - Mobile Responsive Grid */}
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1 sm:gap-2 mb-4 text-center">
-              {['Averbai', 'VCTEX', 'Digio', 'Prata', 'Daycoval', 'PAN', 'C6 Bank', 'Facta92', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz', 'Paulista'].map(bank => (
-                <span key={bank} className={`px-1 sm:px-2 py-1 ${themeClasses.buttonBg} border ${themeClasses.buttonBorder} rounded-full text-xs font-semibold shadow-sm`}>
-                  {bank}
-                </span>
-              ))}
+              {['Averbai', 'VCTEX', 'Digio', 'Prata', 'Daycoval', 'PAN', 'C6 Bank', 'Facta Financeira', 'Santander', 'Crefaz', 'Quero Mais', 'Totalcash', 'BRB', 'Qualibanking', 'Mercantil', 'Amigoz', 'Paulista'].map(bank => {
+                const hasLink = bankLinks[bank] && bankLinks[bank] !== '#';
+                // In the upload section badges should NOT be clickable — only the top grid is clickable
+                return (
+                  <span key={bank} className={`inline-flex items-center px-2 sm:px-3 py-1 ${hasLink ? 'bank-card-with-link' : 'bank-card-without-link'} text-xs font-semibold shadow-sm`}>
+                    <span className={`${hasLink ? 'text-blue-800' : ''}`}>{bank}</span>
+                  </span>
+                );
+              })}
             </div>
 
             {/* Drag and Drop Zone */}
@@ -1051,7 +1053,7 @@ function App() {
                 </li>
                 <li className="flex items-center">
                   <span className="w-2 h-2 bg-cyan-500 rounded-full mr-2"></span>
-                  <strong>Facta92:</strong> Múltiplos convênios
+                  <strong>Facta Financeira:</strong> Múltiplos convênios
                 </li>
                 <li className="flex items-center">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>

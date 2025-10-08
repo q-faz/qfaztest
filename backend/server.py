@@ -324,14 +324,20 @@ def load_organ_mapping():
         
         for _, row in df.iterrows():
             banco = ' '.join(str(row.get('BANCO', '')).strip().upper().split())
-            # FIX ENCODING: Usar nomes de colunas como o pandas lê (com caracteres corrompidos)
-            orgao = ' '.join(str(row.get('ORG�O', '') or row.get('ÓRGÃO', '') or row.get('ORG�O STORM', '') or row.get('ÓRGÃO STORM', '')).strip().upper().split())
+            # FIX ENCODING: Usar ÍNDICE em vez de nome da coluna para evitar problemas de encoding
+            # Coluna 0: BANCO
+            # Coluna 1: ORGÃO
+            # Coluna 2: TABELA BANCO
+            # Coluna 3: CODIGO TABELA STORM
+            # Coluna 4: OPERAÇÃO STORM
+            # Coluna 5: TAXA STORM
+            orgao = ' '.join(str(row.iloc[1] if len(row) > 1 else '').strip().upper().split())
             # CRÍTICO: Normalizar tabela removendo TODOS os espaços extras (incluindo espaços iniciais)
-            tabela_banco_raw = str(row.get('TABELA BANCO', '')).strip()
+            tabela_banco_raw = str(row.iloc[2] if len(row) > 2 else '').strip()
             tabela_banco = ' '.join(tabela_banco_raw.split())  # Remove espaços extras completamente
-            codigo_tabela = str(row.get('CODIGO TABELA STORM', '')).strip()
-            operacao_storm = str(row.get('OPERA��O STORM', '') or row.get('OPERAÇÃO STORM', '') or row.get('OPERA��O', '') or row.get('OPERAÇÃO', '')).strip()
-            taxa_storm = str(row.get('TAXA STORM', '')).strip()
+            codigo_tabela = str(row.iloc[3] if len(row) > 3 else '').strip()
+            operacao_storm = str(row.iloc[4] if len(row) > 4 else '').strip()
+            taxa_storm = str(row.iloc[5] if len(row) > 5 else '').strip()
             
             if banco and banco != 'NAN' and codigo_tabela and codigo_tabela != 'NAN':
                 # Mapeamento simples (primeira ocorrência por hierarquia)
@@ -367,6 +373,11 @@ def load_organ_mapping():
                         'operacao_storm': operacao_storm,
                         'taxa_storm': taxa_storm
                     }
+                    
+                    # 🔍 DEBUG: Log primeiras 3 linhas FACTA
+                    if 'FACTA' in banco and len([k for k in tabela_mapping.keys() if 'FACTA' in k]) <= 3:
+                        logging.info(f"🔍 DEBUG TABELA_MAPPING FACTA: Chave='{tabela_key}'")
+                        logging.info(f"   Valores: codigo={codigo_tabela}, orgao={orgao}, operacao={operacao_storm}, taxa={taxa_storm}")
                 
                 # Mapeamento genérico por BANCO|ORGÃO (para fallback quando operação não bate exatamente)
                 bank_organ_key = f"{banco}|{orgao}"
@@ -381,6 +392,15 @@ def load_organ_mapping():
                 })
         
         logging.info(f"Mapeamento carregado: {len(mapping)} bancos, {len(detailed_mapping)} combinações banco+orgao+operacao, {len(tabela_mapping)} por tabela específica, {len(bank_organ_mapping)} por banco+orgao")
+        
+        # 🔍 DEBUG: Mostrar primeiras chaves FACTA no TABELA_MAPPING
+        facta_keys = [k for k in tabela_mapping.keys() if 'FACTA' in k]
+        if facta_keys:
+            logging.info(f"🔍 DEBUG: Primeiras {min(3, len(facta_keys))} chaves FACTA no TABELA_MAPPING:")
+            for key in facta_keys[:3]:
+                logging.info(f"   Chave: '{key}'")
+                logging.info(f"   Dados: {tabela_mapping[key]}")
+        
         return mapping, detailed_mapping, tabela_mapping, bank_organ_mapping
     except Exception as e:
         logging.error(f"Erro ao carregar mapeamento de órgãos: {str(e)}")
@@ -1576,7 +1596,11 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
                     # Para tabela, usar matching inteligente com diferentes níveis de precisão
                     match_score = 0
                     
-                    if tabela_normalized == key_tabela_norm:
+                    # 🔢 PRIORIDADE MÁXIMA: Match exato de CÓDIGO NUMÉRICO no início
+                    # Ex: busca "61700" deve bater EXATO em "61700 - CLT..." e não em "60763 - CLT..."
+                    if tabela_normalized.isdigit() and key_tabela_norm.startswith(tabela_normalized + ' '):
+                        match_score = 10  # Match de código exato (MÁXIMA PRIORIDADE)
+                    elif tabela_normalized == key_tabela_norm:
                         match_score = 5  # Match exato (melhor)
                     else:
                         # Análise por palavras para casos com formatação diferente
@@ -3296,40 +3320,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 situacao = "PAGO"  # FACTA92 default para pagos
             
             # Tabela - DS_TABCOM tem formato: "60186 - INSS NOVO GOLD MAX PN-S"
+            # NR_TABCOM tem o código numérico: 60186
             tabela_completa = str(row.get('DS_TABCOM', row.get('TABELA', row.get('TIPO_TABELA', '')))).strip()
+            nr_tabcom = str(row.get('NR_TABCOM', '')).strip()
             
-            # Função para detectar tipo de operação baseado na tabela
-            def detect_facta_operation_type(tabela_descricao):
-                """Detecta tipo de operação FACTA92 baseado na descrição da tabela"""
-                if not tabela_descricao:
-                    return "Margem Livre (Novo)"
-                    
-                descricao_upper = tabela_descricao.upper()
-                logging.info(f"🔧 FACTA92 detectando operação: '{descricao_upper[:50]}...'")
-                
-                # Baseado nos códigos vistos no relatório
-                if 'FGTS' in descricao_upper:
-                    return "Margem Livre (Novo)"  # FGTS é margem livre
-                elif 'CLT' in descricao_upper and 'NOVO' in descricao_upper:
-                    return "Margem Livre (Novo)"
-                elif 'PORTABILIDADE' in descricao_upper or 'PORT' in descricao_upper:
-                    return "Portabilidade"
-                elif 'REFINANCIAMENTO' in descricao_upper or 'REFIN' in descricao_upper:
-                    return "Refinanciamento"
-                else:
-                    return "Margem Livre (Novo)"  # Default
-            
-            # CORRIGIDO: Extrair apenas código numérico da tabela
+            # ✅ CORREÇÃO: Extrair código da tabela (priorizar NR_TABCOM)
             codigo_tabela = ""
-            if tabela_completa:
-                # Procurar por código numérico no início
+            if nr_tabcom:
+                # Usar NR_TABCOM diretamente (mais confiável)
+                codigo_tabela = nr_tabcom
+                logging.info(f"✅ FACTA92 código de NR_TABCOM: {codigo_tabela}")
+            elif tabela_completa:
+                # Fallback: extrair do DS_TABCOM
                 import re
                 match = re.match(r'^(\d+)', tabela_completa)
                 if match:
                     codigo_tabela = match.group(1)
-                    logging.info(f"✅ FACTA92 código extraído: '{tabela_completa}' → '{codigo_tabela}'")
+                    logging.info(f"✅ FACTA92 código extraído de DS_TABCOM: '{tabela_completa}' → '{codigo_tabela}'")
                 else:
-                    codigo_tabela = tabela_completa  # Fallback
+                    codigo_tabela = tabela_completa
                     logging.warning(f"⚠️ FACTA92 não conseguiu extrair código de: '{tabela_completa}'")
             
             # Usuário/Corretor
@@ -3341,46 +3350,49 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             # Convênio e detecção de órgão melhorada
             convenio = str(row.get('CONVENIO', '')).strip()
-            if convenio == '3':
-                orgao = 'INSS'
-            else:
-                # Detectar órgão baseado na tabela completa
-                if tabela_completa:
-                    tabela_upper = tabela_completa.upper()
-                    if 'FGTS' in tabela_upper:
-                        orgao = 'INSS'  # FGTS usa margem INSS
-                    elif 'CLT' in tabela_upper or 'INSS' in tabela_upper:
-                        orgao = 'INSS'
-                    elif 'SIAPE' in tabela_upper:
-                        orgao = 'SIAPE'
-                    elif 'PREFEITURA' in tabela_upper or 'PREF' in tabela_upper:
-                        orgao = 'PREFEITURA'
-                    else:
-                        orgao = 'INSS'  # Default
+            
+            # ✅ CORREÇÃO: Detectar órgão baseado no DS_TABCOM
+            orgao = 'INSS'  # Default
+            if tabela_completa:
+                tabela_upper = tabela_completa.upper()
+                if 'FGTS' in tabela_upper:
+                    orgao = 'FGTS'  # ✅ FGTS é órgão próprio
+                elif 'CLT' in tabela_upper:
+                    orgao = 'CRÉDITO DO TRABALHADOR'  # ✅ CLT é crédito do trabalhador
+                elif 'INSS' in tabela_upper:
+                    orgao = 'INSS'
+                elif 'SIAPE' in tabela_upper:
+                    orgao = 'SIAPE'
+                elif 'PREFEITURA' in tabela_upper or 'PREF' in tabela_upper:
+                    orgao = 'PREFEITURA'
                 else:
-                    orgao = 'INSS'  # Default
+                    orgao = 'INSS'
+            
+            # ❌ NÃO buscar TAXA do arquivo - deixar vazio para o mapeamento preencher com 0,00%
+            # O relat_orgaos.csv tem a taxa correta (0,00% para FACTA)
+            taxa_formatada = ""  # Sempre vazio - será preenchido pelo apply_mapping()
             
             # Log para debug
-            logging.info(f"✅ FACTA92 processado: PROPOSTA={proposta}, TABELA={tabela_completa} → CODIGO={codigo_tabela}, VL_BRUTO={vl_bruto}, VL_LIQ={vl_liquido}")
+            logging.info(f"✅ FACTA92 processado: PROPOSTA={proposta}, CODIGO_TABELA={codigo_tabela}, ORGAO={orgao}, TAXA={taxa_formatada}")
             
             normalized_row = {
                 "PROPOSTA": proposta,
                 "DATA_CADASTRO": data_cadastro,
-                "BANCO": "FACTA92",
+                "BANCO": "FACTA FINANCEIRA",  # ✅ Nome correto
                 "ORGAO": orgao,
-                "TIPO_OPERACAO": detect_facta_operation_type(tabela_completa),
+                "TIPO_OPERACAO": "",  # ✅ Será buscado em relat_orgaos.csv pelo CODIGO_TABELA
                 "NUMERO_PARCELAS": num_parcelas,
                 "VALOR_OPERACAO": vl_bruto if vl_bruto else vl_liquido,
                 "VALOR_LIBERADO": vl_liquido,
                 "USUARIO_BANCO": usuario,
-                "SITUACAO": situacao if situacao else "PAGO",  # Status melhorado
+                "SITUACAO": situacao if situacao else "PAGO",
                 "DATA_PAGAMENTO": data_pagamento,
                 "CPF": cpf,
                 "NOME": nome,
-                "DATA_NASCIMENTO": data_nascimento,  # Agora mapeado
-                "CODIGO_TABELA": codigo_tabela,  # CORRIGIDO: Só código numérico
-                "VALOR_PARCELAS": vl_parcela,  # CORRIGIDO: Agora mapeado
-                "TAXA": str(row.get('TAXA', '')).strip(),  # FACTA92 tem TAXA em formato decimal (1.85)
+                "DATA_NASCIMENTO": data_nascimento,
+                "CODIGO_TABELA": codigo_tabela,  # ✅ Código da tabela (ex: 61700)
+                "VALOR_PARCELAS": vl_parcela,
+                "TAXA": taxa_formatada,  # ✅ Vazia - será preenchida pelo mapeamento
                 "OBSERVACOES": ""
             }
         
@@ -3536,27 +3548,163 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"✅✅✅ PAULISTA normalized_row final: {normalized_row}")
         
         elif bank_type == "BRB":
-            # Mapeamento BRB (Banco de Brasília) - Baseado em map_relat_atualizados.txt
+            # Mapeamento BRB (Banco de Brasília) - Estrutura REAL do arquivo
+            # Colunas REAIS do arquivo BRB (Propostas-202593.csv):
+            # - ID Card: ID interno Q-FAZ (2579370)
+            # - Nº Contrato: Número da proposta BRB (1901615764) ✅ USAR ESTE!
+            # - Nome do cliente
+            # - CPF do Beneficiário (sem formatação)
+            # - Data da Proposta
+            # - Qtd. Parcelas
+            # - Valor da Parcela (formato: 294,30)
+            # - Valor da Proposta (formato: 13082,34)
+            # - Tabela: TAXA em decimal (1.85, 1.79, 1) ✅ NÃO é código!
+            # - Produto: Tipo operação (Refinanciamento, Novo, Portabilidade e Refinanciamento)
+            # - Status da Proposta (Nova proposta, Pago, Perdido, etc)
+            # - Sub-Status (opcional)
+            # - Observações (opcional)
+            # - E-mail Agente Responsável
+            # - Parceiro: "70-BRB - Banco de Brasília S.A."
+            
             normalized_row = {
-                "PROPOSTA": str(row.get('ID Card', '')).strip(),
+                "PROPOSTA": str(row.get('Nº Contrato', '')).strip(),  # ✅ CORRIGIDO: Nº Contrato, não ID Card!
                 "DATA_CADASTRO": str(row.get('Data da Proposta', '')).strip(),
-                "BANCO": "BRB",
-                "ORGAO": str(row.get('ORGÃO', 'INSS')).strip(),
-                "TIPO_OPERACAO": str(row.get('OPERAÇÃO', 'Margem Livre (Novo)')).strip(),
+                "BANCO": "BRB - CRÉDITO, FINANCIAMENTO E INVESTIMENTO",  # ✅ Nome completo
+                "ORGAO": "INSS",  # ✅ Todos BRB são INSS (arquivo não tem coluna ORGÃO)
+                "TIPO_OPERACAO": str(row.get('Produto', 'Margem Livre (Novo)')).strip(),  # ✅ CORRIGIDO: Produto, não OPERAÇÃO!
                 "NUMERO_PARCELAS": str(row.get('Qtd. Parcelas', '')).strip(),
                 "VALOR_OPERACAO": str(row.get('Valor da Proposta', '')).strip(),
                 "VALOR_LIBERADO": str(row.get('Valor da Proposta', '')).strip(),
-                "USUARIO_BANCO": str(row.get('Agente Responsável', '')).strip(),
+                "USUARIO_BANCO": str(row.get('E-mail Agente Responsável', '')).strip(),
                 "SITUACAO": str(row.get('Status da Proposta', '')).strip(),
-                "DATA_PAGAMENTO": str(row.get('Data da PAGAMENTO', '')).strip(),
+                "DATA_PAGAMENTO": "",  # ✅ Arquivo não tem Data da PAGAMENTO, será vazio
                 "CPF": str(row.get('CPF do Beneficiário', '')).strip(),
-                "NOME": str(row.get('Nome do cliente', '')).strip(),
+                "NOME": str(row.get('Nome do cliente', '')).strip().upper(),
                 "DATA_NASCIMENTO": "",  # Não disponível
-                "CODIGO_TABELA": str(row.get('TABELA', '')).strip(),
+                "CODIGO_TABELA": str(row.get('Tabela', '')).strip(),  # ✅ Tabela = TAXA que vira código (1.85 → 185)
                 "VALOR_PARCELAS": str(row.get('Valor da Parcela', '')).strip(),
-                "TAXA": str(row.get('TAXA', '')).strip(),
+                "TAXA": str(row.get('Tabela', '')).strip(),  # ✅ CORRIGIDO: Tabela contém TAXA!
                 "OBSERVACOES": str(row.get('Observações', '')).strip()
             }
+            
+            # ✅ FORMATAÇÃO BRASILEIRA para BRB
+            # Converter valores para formato brasileiro COM R$
+            valor_operacao = normalized_row.get("VALOR_OPERACAO", "")
+            if valor_operacao:
+                valor_formatado = format_value_brazilian(valor_operacao)
+                normalized_row["VALOR_OPERACAO"] = f"R$ {valor_formatado}"
+            
+            valor_liberado = normalized_row.get("VALOR_LIBERADO", "")
+            if valor_liberado:
+                valor_formatado = format_value_brazilian(valor_liberado)
+                normalized_row["VALOR_LIBERADO"] = f"R$ {valor_formatado}"
+            
+            valor_parcelas = normalized_row.get("VALOR_PARCELAS", "")
+            if valor_parcelas:
+                valor_formatado = format_value_brazilian(valor_parcelas)
+                normalized_row["VALOR_PARCELAS"] = f"R$ {valor_formatado}"
+            
+            # Formatar CPF para padrão brasileiro (vem sem formatação: 13097582800)
+            normalized_row["CPF"] = format_cpf_global(normalized_row.get("CPF", ""))
+            
+            # Converter CODIGO_TABELA de taxa decimal para código inteiro
+            # BRB: Tabela = 1.85 → CODIGO_TABELA = 185
+            #      Tabela = 1.79 → CODIGO_TABELA = 179
+            #      Tabela = 1 → CODIGO_TABELA = 100
+            codigo_tabela_raw = normalized_row.get("CODIGO_TABELA", "")
+            if codigo_tabela_raw:
+                try:
+                    taxa_str = str(codigo_tabela_raw).replace(',', '.')
+                    taxa_float = float(taxa_str)
+                    # Multiplicar por 100 para obter código
+                    codigo_int = int(taxa_float * 100)
+                    normalized_row["CODIGO_TABELA"] = str(codigo_int)
+                    logging.info(f"  🔢 CODIGO_TABELA: {codigo_tabela_raw} → {codigo_int}")
+                except (ValueError, TypeError):
+                    normalized_row["CODIGO_TABELA"] = str(codigo_tabela_raw)
+            
+            # Formatar TAXA para percentual brasileiro
+            # BRB vem como decimal COM PONTO: 1.85 → deve virar 1,85%
+            taxa_raw = normalized_row.get("TAXA", "")
+            if taxa_raw:
+                try:
+                    taxa_str = str(taxa_raw).replace(',', '.')
+                    taxa_float = float(taxa_str)
+                    
+                    if taxa_float < 10:
+                        normalized_row["TAXA"] = f"{taxa_float:.2f}%".replace('.', ',')
+                    else:
+                        taxa_percentual = taxa_float / 100
+                        normalized_row["TAXA"] = f"{taxa_percentual:.2f}%".replace('.', ',')
+                except (ValueError, TypeError):
+                    normalized_row["TAXA"] = format_percentage_brazilian(taxa_raw)
+            
+            logging.info(f"✅ BRB formatado: PROPOSTA={normalized_row.get('PROPOSTA')}, TAXA={normalized_row.get('TAXA')}, CODIGO={normalized_row.get('CODIGO_TABELA')}")
+            
+            # 🔧 NORMALIZAÇÃO DE STATUS BRB
+            # Nova proposta → AGUARDANDO
+            # Ag. aprovação do convênio → AGUARDANDO
+            # Formalização cliente → AGUARDANDO
+            # Pendente de documentação → AGUARDANDO
+            # (vazio) → AGUARDANDO
+            # Perdido → CANCELADO
+            # PAGO → PAGO
+            situacao_original = normalized_row.get('SITUACAO', '').strip()
+            situacao_upper = situacao_original.upper()
+            
+            if not situacao_original or situacao_original == '':
+                normalized_row['SITUACAO'] = 'AGUARDANDO'
+                logging.info(f"  📊 STATUS: (vazio) → AGUARDANDO")
+            elif 'NOVA PROPOSTA' in situacao_upper:
+                normalized_row['SITUACAO'] = 'AGUARDANDO'
+                logging.info(f"  📊 STATUS: {situacao_original} → AGUARDANDO")
+            elif 'APROVAÇÃO' in situacao_upper or 'CONVÊNIO' in situacao_upper or 'CONVENIO' in situacao_upper:
+                normalized_row['SITUACAO'] = 'AGUARDANDO'
+                logging.info(f"  📊 STATUS: {situacao_original} → AGUARDANDO")
+            elif 'FORMALIZAÇÃO' in situacao_upper or 'FORMALIZACAO' in situacao_upper:
+                normalized_row['SITUACAO'] = 'AGUARDANDO'
+                logging.info(f"  📊 STATUS: {situacao_original} → AGUARDANDO")
+            elif 'PENDENTE' in situacao_upper or 'DOCUMENTAÇÃO' in situacao_upper or 'DOCUMENTACAO' in situacao_upper:
+                normalized_row['SITUACAO'] = 'AGUARDANDO'
+                logging.info(f"  📊 STATUS: {situacao_original} → AGUARDANDO")
+            elif 'PERDIDO' in situacao_upper:
+                normalized_row['SITUACAO'] = 'CANCELADO'
+                logging.info(f"  📊 STATUS: {situacao_original} → CANCELADO")
+            elif 'PAGO' in situacao_upper:
+                normalized_row['SITUACAO'] = 'PAGO'
+                logging.info(f"  📊 STATUS: {situacao_original} → PAGO")
+            elif 'CANCELAD' in situacao_upper:
+                normalized_row['SITUACAO'] = 'CANCELADO'
+                logging.info(f"  📊 STATUS: {situacao_original} → CANCELADO")
+            else:
+                # Manter original se não reconhecer
+                normalized_row['SITUACAO'] = 'AGUARDANDO'
+                logging.info(f"  📊 STATUS: {situacao_original} → AGUARDANDO (padrão)")
+            
+            # 🔧 REGRAS ESPECÍFICAS BRB - Portabilidade e Refinanciamento
+            try:
+                tipo_operacao = normalized_row.get('TIPO_OPERACAO', '').upper()
+                observacoes = normalized_row.get('OBSERVACOES', '').upper()
+                
+                # Produtos BRB que são Portabilidade/Refin:
+                # - "Portabilidade e Refinanciamento" (campo Produto)
+                # - "Refinanciamento" (campo Produto)
+                # Estes NÃO devem esvaziar CODIGO_TABELA (código deve vir da taxa)
+                
+                if 'PORTABILIDADE' in tipo_operacao:
+                    # Portabilidade: manter CODIGO_TABELA e DATA_PAGAMENTO vazios
+                    normalized_row['DATA_PAGAMENTO'] = ''
+                    
+                    # Adicionar marcador nas observações
+                    obs_atual = normalized_row.get('OBSERVACOES', '')
+                    if obs_atual:
+                        normalized_row['OBSERVACOES'] = f"{obs_atual} | MANUAL: Portabilidade/Refin"
+                    else:
+                        normalized_row['OBSERVACOES'] = "MANUAL: Portabilidade/Refin"
+                    
+                    logging.info(f"🔧 BRB PROPOSTA {normalized_row.get('PROPOSTA')}: {tipo_operacao} - DATA_PAGAMENTO vazio, CODIGO_TABELA mantido")
+            except Exception as e:
+                logging.warning(f"⚠️ Erro aplicando regras específicas BRB: {e}")
         
         elif bank_type == "QUALIBANKING":
             # Mapeamento QUALIBANKING - Baseado em map_relat_atualizados.txt
@@ -3759,6 +3907,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             if not situacao_normalizada:
                 logging.warning(f"⚠ Status não mapeado: '{situacao_original}' - mantido como está")
         
+        # 🔧 REGRA GERAL: Se SITUACAO vier vazia, definir como AGUARDANDO
+        if not normalized_row.get("SITUACAO") or str(normalized_row.get("SITUACAO", "")).strip() == "":
+            normalized_row["SITUACAO"] = "AGUARDANDO"
+            logging.info(f"📋 Status vazio detectado - definido como AGUARDANDO para PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}")
+        
         # Aplicar mapeamento de código de tabela (sem dependência de usuário para maior estabilidade)
         # EXCETO para DIGIO, AVERBAI, DAYCOVAL, QUERO_MAIS e SANTANDER que já têm códigos corretos
         # VCTEX PRECISA de mapeamento: "Tabela EXP" (banco) → "TabelaEXP" (storm)
@@ -3786,6 +3939,89 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
+        elif bank_type == "FACTA92":
+            # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
+            codigo_direto = normalized_row.get("CODIGO_TABELA", "")
+            banco_para_mapeamento = normalized_row.get("BANCO", "")
+            
+            print(f"🚨🚨🚨 FACTA92 INICIOU - Proposta {normalized_row.get('PROPOSTA', 'N/A')}, Codigo {codigo_direto}")
+            logging.warning(f"� FACTA92 PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Código {codigo_direto}, buscando mapeamento por BANCO + CODIGO")
+            
+            # 🔍 Buscar no TABELA_MAPPING usando apenas BANCO e CODIGO (ignorar ORGAO e OPERACAO)
+            mapping_result = None
+            codigo_norm = ' '.join(str(codigo_direto).strip().upper().split()) if codigo_direto else ""
+            banco_norm = ' '.join(str(banco_para_mapeamento).strip().upper().split())
+            
+            logging.info(f"🔍 FACTA92 Debug INICIAL: banco_norm='{banco_norm}', codigo_norm='{codigo_norm}', codigo_isdigit={codigo_norm.isdigit()}")
+            logging.info(f"🔍 FACTA92 TABELA_MAPPING type: {type(TABELA_MAPPING)}, len: {len(TABELA_MAPPING) if TABELA_MAPPING else 0}")
+            
+            # DEBUG: Mostrar TODAS as chaves FACTA que contém 61700 ou CLT
+            if TABELA_MAPPING:
+                facta_keys = [k for k in TABELA_MAPPING.keys() if 'FACTA' in k]
+                logging.warning(f"🔍 FACTA92 Total de chaves FACTA no mapping: {len(facta_keys)}")
+                
+                # Procurar especificamente 61700
+                keys_61700 = [k for k in facta_keys if '61700' in k]
+                logging.warning(f"🔍 FACTA92 Chaves com 61700: {len(keys_61700)}")
+                for k in keys_61700:
+                    logging.warning(f"   -> '{k}'")
+                    
+                # Mostrar todas as chaves CLT
+                keys_clt = [k for k in facta_keys if 'CLT' in k or 'CRÉDITO DO TRABALHADOR' in k or 'CREDITO DO TRABALHADOR' in k]
+                logging.warning(f"🔍 FACTA92 Total chaves CLT/CREDITO: {len(keys_clt)}")
+                for i, k in enumerate(keys_clt[:5]):
+                    logging.warning(f"   CLT #{i+1}: '{k}'")
+            
+            if codigo_norm and TABELA_MAPPING:
+                matches_found = 0
+                banco_matches = 0
+                for key, details in TABELA_MAPPING.items():
+                    parts = key.split('|')
+                    if len(parts) == 4:
+                        key_banco, key_orgao, key_operacao, key_tabela = parts
+                        key_banco_norm = ' '.join(key_banco.upper().split())
+                        key_tabela_norm = ' '.join(key_tabela.upper().split())
+                        
+                        # Contar quantos matches de banco temos
+                        if banco_norm == key_banco_norm:
+                            banco_matches += 1
+                            
+                            # Debug: Log primeiras 3 chaves do CSV que batem com BANCO
+                            if matches_found < 3:
+                                logging.info(f"🔍 FACTA92 Exemplo chave CSV #{matches_found+1}: '{key}' → banco='{key_banco_norm}', tabela='{key_tabela_norm}'")
+                                matches_found += 1
+                        
+                        # Match EXATO por BANCO e código numérico no início da tabela
+                        if banco_norm == key_banco_norm:
+                            # 🔧 CORREÇÃO: Tabela vem como "61700 - CLT NOVO GOLD PN-S", então verificar se começa com "61700 " OU "61700-"
+                            codigo_match = False
+                            if codigo_norm.isdigit():
+                                # Aceitar tanto "61700 -" quanto "61700 " quanto "61700-"
+                                if (key_tabela_norm.startswith(codigo_norm + ' ') or 
+                                    key_tabela_norm.startswith(codigo_norm + '-') or
+                                    key_tabela_norm == codigo_norm):
+                                    codigo_match = True
+                                    
+                            # Log TODOS os testes de código para 61700
+                            if codigo_norm == '61700':
+                                logging.info(f"🎯 FACTA92 Testando 61700: key_tabela_norm='{key_tabela_norm}', codigo_match={codigo_match}")
+                            
+                            if codigo_match:
+                                # Encontrou! Usar esse mapeamento mas SEM sobrescrever o código
+                                mapping_result = {
+                                    'orgao_storm': details.get('orgao_storm', ''),
+                                    'operacao_storm': details.get('operacao_storm', ''),
+                                    'taxa_storm': details.get('taxa_storm', '0,00%')
+                                }
+                                logging.info(f"✅ FACTA92: Encontrou mapeamento para código {codigo_direto}: ORGAO={mapping_result['orgao_storm']}, OPERACAO={mapping_result['operacao_storm']}, TAXA={mapping_result['taxa_storm']}")
+                                break
+                
+                # Log resumo da busca
+                logging.info(f"🔍 FACTA92 Resumo busca código {codigo_norm}: {banco_matches} chaves com BANCO match, mapping_result={'ENCONTRADO' if mapping_result else 'NÃO ENCONTRADO'}")
+            
+            if not mapping_result:
+                logging.warning(f"⚠️ FACTA92 PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Mapeamento NÃO encontrado para código {codigo_direto}")
+                logging.warning(f"⚠️ FACTA92 Debug: banco_norm='{banco_norm}', codigo_norm='{codigo_norm}', TABELA_MAPPING tem {len(TABELA_MAPPING)} entradas")
         else:
             banco_para_mapeamento = normalized_row.get("BANCO", "")
             orgao_para_mapeamento = normalized_row.get("ORGAO", "")
@@ -3832,8 +4068,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         else:
             # Se NÃO encontrou mapeamento, manter valores do banco mas garantir que TAXA existe
             logging.warning(f"⚠️ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Mapeamento NÃO encontrado! Usando valores do banco")
-            # Garantir que TAXA tenha valor mesmo sem mapeamento
-            if not normalized_row.get("TAXA") or normalized_row.get("TAXA") == "":
+            # 🔧 CORREÇÃO FACTA92: SEMPRE definir TAXA como 0,00% se não encontrou mapeamento
+            if bank_type == "FACTA92":
+                normalized_row["TAXA"] = "0,00%"
+                logging.info(f"✅ FACTA92: Sem mapeamento, TAXA definida como 0,00%")
+            elif not normalized_row.get("TAXA") or normalized_row.get("TAXA") == "":
                 normalized_row["TAXA"] = "0,00%"
             elif '%' not in normalized_row.get("TAXA", ""):
                 normalized_row["TAXA"] = normalized_row.get("TAXA") + '%'

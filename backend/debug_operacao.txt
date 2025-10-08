@@ -1,0 +1,13 @@
+Total colunas: 6
+
+Coluna 0: 'BANCO' (bytes: b'BANCO')
+Coluna 1: 'ORG�O' (bytes: b'ORG\xef\xbf\xbdO')
+Coluna 2: 'TABELA BANCO' (bytes: b'TABELA BANCO')
+Coluna 3: 'CODIGO TABELA STORM' (bytes: b'CODIGO TABELA STORM')
+Coluna 4: 'OPERA��O STORM' (bytes: b'OPERA\xef\xbf\xbd\xef\xbf\xbdO STORM')
+Coluna 5: 'TAXA STORM' (bytes: b'TAXA STORM')
+
+Valor OPERACAO (coluna 4): 'Margem Livre (Novo)'
+Tipo: <class 'str'>
+
+Lookup result: 'Margem Livre (Novo)'
