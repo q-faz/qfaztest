@@ -1,16 +1,24 @@
 # Configuração Nixpacks para Railway
-[phases.build]
-# Primeiro instalar dependências Python
+[phases.setup]
+# Instalar Node.js e Python
+nixPkgs = ["nodejs_18", "python3", "gcc"]
+
+# Construir React primeiro
 cmds = [
-    "pip install -r requirements.txt"
+    "ls -la",
+    "pwd", 
+    "cd frontend",
+    "npm install",
+    "npm run build",
+    "cd ..",
+    "cp -r frontend/build ."
 ]
 
-[phases.setup]
-# Depois construir o React
+[phases.install]
+# Instalar dependências Python
 cmds = [
-    "cd frontend && npm install",
-    "cd frontend && npm run build", 
-    "cp -r frontend/build ."
+    "python -m venv --copies /opt/venv",
+    ". /opt/venv/bin/activate && pip install -r requirements.txt"
 ]
 
 [start]
