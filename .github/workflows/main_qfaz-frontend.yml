@@ -1,4 +1,4 @@
-name: Deploy Q-FAZ Backend + Frontend
+name: Build and Deploy Q-FAZ
 
 on:
   push:
@@ -10,79 +10,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout do repositório
-      - uses: actions/checkout@v4
+    - name: Checkout do repositório
+      uses: actions/checkout@v4
 
-      # 2️⃣ Configurar Node.js
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
 
-      # 3️⃣ Build do frontend React
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm install --legacy-peer-deps
-          npm run build
+    - name: Instalar dependências do frontend
+      working-directory: frontend
+      run: |
+        npm install
+        npm run build
 
-      # 4️⃣ Copiar build para backend/public (ou criar uma pasta 'frontend' dentro do backend)
-      - name: Move frontend build to backend
-        run: |
-          mkdir -p backend/frontend
-          cp -r frontend/build/* backend/frontend/
+    - name: Instalar dependências do backend
+      working-directory: backend
+      run: |
+        npm install
 
-      # 5️⃣ Instalar dependências do backend
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          npm install
+    - name: Login no Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 6️⃣ Validar secrets do Azure
-      - name: Validate required GitHub Secrets
-        shell: bash
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          MONGO_URL: ${{ secrets.MONGO_URL }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-        run: |
-          missing=false
-          for var in AZURE_CREDENTIALS AZURE_WEBAPP_NAME AZURE_RESOURCE_GROUP MONGO_URL DB_NAME; do
-            if [ -z "${!var}" ]; then
-              echo "ERROR: $var is not set"
-              missing=true
-            fi
-          done
-          if [ "$missing" = true ]; then exit 1; fi
-
-      # 7️⃣ Login no Azure
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # 8️⃣ Configurar variáveis de ambiente no Web App
-      - name: Configure Azure Web App environment variables
-        env:
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          MONGO_URL: ${{ secrets.MONGO_URL }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-        run: |
-          az webapp config appsettings set \
-            --name $AZURE_WEBAPP_NAME \
-            --resource-group $AZURE_RESOURCE_GROUP \
-            --settings MONGO_URL=$MONGO_URL DB_NAME=$DB_NAME
-
-      # 9️⃣ Deploy completo do backend + frontend via Node.js
-      - name: Deploy backend with frontend
-        env:
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-        run: |
-          cd backend
-          zip -r ../backend_deploy.zip . -x "__pycache__/*" "*.pyc"
-          cd ..
-          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path backend_deploy.zip
+    - name: Deploy para Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'nome-do-seu-app-no-azure'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./backend
