@@ -4,6 +4,6 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python server_minimal.py"
+    "startCommand": "python server.py"
   }
 }
