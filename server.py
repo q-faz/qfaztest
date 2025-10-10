@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -4956,7 +4957,12 @@ async def debug_file(file: UploadFile = File(...)):
 app.include_router(api_router)
 
 # Mount static files for frontend
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/static", StaticFiles(directory="build/static"), name="static")
+
+# Serve React app
+@app.get("/")
+async def serve_react_app():
+    return FileResponse("build/index.html")
 
 app.add_middleware(
     CORSMiddleware,
