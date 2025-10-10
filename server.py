@@ -4961,20 +4961,41 @@ import os
 build_exists = os.path.exists("build") and os.path.exists("build/static")
 index_html_exists = os.path.exists("build/index.html")
 
-if build_exists:
-    # Monte arquivos estáticos do React se existirem
-    app.mount("/static", StaticFiles(directory="build/static"), name="static")
+print(f"🔍 DEBUG Railway - build exists: {build_exists}")
+print(f"🔍 DEBUG Railway - index.html exists: {index_html_exists}")
+print(f"🔍 DEBUG Railway - current dir: {os.getcwd()}")
+print(f"🔍 DEBUG Railway - files: {os.listdir('.') if os.path.exists('.') else 'No current dir'}")
+
+# FORÇAR montagem static mesmo se não existir (para debug)
+try:
+    if build_exists:
+        app.mount("/static", StaticFiles(directory="build/static"), name="static")
+        print("✅ Static files montados com sucesso!")
+    else:
+        print("❌ Pasta build/static não encontrada!")
+except Exception as e:
+    print(f"❌ Erro ao montar static: {e}")
 
 # Rota principal que serve React ou API info
 @app.get("/")
 async def serve_home():
+    print(f"🔍 Rota / acessada - index_html_exists: {index_html_exists}")
+    
     if index_html_exists:
+        print("✅ Servindo React build/index.html")
         return FileResponse("build/index.html")
     else:
+        print("❌ React não encontrado, servindo API info")
         return {
             "status": "Q-FAZ Backend COMPLETO funcionando! 🚀",
             "message": "Sistema pronto para processar Storm",
             "frontend": "React build não encontrado - usando API pura",
+            "debug": {
+                "build_exists": build_exists,
+                "index_html_exists": index_html_exists,
+                "current_dir": os.getcwd(),
+                "files": os.listdir('.') if os.path.exists('.') else 'No dir'
+            },
             "endpoints": {
                 "upload": "/api/upload",
                 "health": "/api/health", 
