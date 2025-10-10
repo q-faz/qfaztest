@@ -4956,13 +4956,18 @@ async def debug_file(file: UploadFile = File(...)):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Mount static files for frontend
-app.mount("/static", StaticFiles(directory="build/static"), name="static")
-
-# Serve React app
+# Simple health check route
 @app.get("/")
-async def serve_react_app():
-    return FileResponse("build/index.html")
+async def health_check():
+    return {
+        "status": "Q-FAZ Backend COMPLETO funcionando!",
+        "message": "Sistema pronto para processar Storm",
+        "endpoints": {
+            "upload": "/api/upload",
+            "health": "/api/health", 
+            "debug": "/api/debug"
+        }
+    }
 
 app.add_middleware(
     CORSMiddleware,
