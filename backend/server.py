@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
+# from motor.motor_asyncio import AsyncIOMotorClient  # Comentado para deploy mais rápido
 import os
 import logging
 from pathlib import Path
@@ -21,13 +21,24 @@ import re
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# MongoDB connection (comentado para deploy mais rápido)
+# mongo_url = os.environ.get('MONGO_URL', '')
+# client = AsyncIOMotorClient(mongo_url) if mongo_url else None
+# db = client[os.environ.get('DB_NAME', '')] if client else None
 
 # Create the main app without a prefix
 app = FastAPI()
+
+# Health check endpoint for Docker
+@app.get("/health")
+async def health_check():
+    """Health check endpoint para verificar se a aplicação está funcionando"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "Q-FAZ Backend",
+        "version": "1.0.0"
+    }
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
@@ -2114,9 +2125,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho na estrutura nomeada (usuario='{usuario_digitador_raw}')")
                     continue
                 
-                # �🔧 DIGIO: Limpar usuário digitador - remover sufixo após underscore
-                # Aplicar também na estrutura com cabeçalhos nomeados
-                usuario_digitador = usuario_digitador_raw.split('_')[0] if '_' in usuario_digitador_raw and usuario_digitador_raw else usuario_digitador_raw
+                # 🔧 DIGIO: Manter usuário digitador no formato original com underscore
+                usuario_digitador = usuario_digitador_raw
                 nome_cliente = str(row.get('NOME', '')).strip()
                 data_nascimento = str(row.get('DATA DE NASCIMENTO', row.get('DATA_NASCIMENTO', ''))).strip()
                 qtd_parcelas = str(row.get('NUMERO PARCELAS', row.get('NUMERO_PARCELAS', ''))).strip()
@@ -2149,20 +2159,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (usuario='{usuario_digitador_raw}', cpf='{cpf_cliente}')")
                     continue
                 
-                # �🔧 DIGIO: Limpar usuário digitador - remover sufixo após underscore
-                # Exemplo: "02579846158_202902" → "02579846158"
-                def clean_digio_user(user_str):
-                    """Remove sufixo do usuário digitador do DIGIO (parte após _)"""
-                    if not user_str:
-                        return ""
-                    # Se tem underscore, pegar apenas a parte antes dele
-                    if '_' in user_str:
-                        cleaned = user_str.split('_')[0]
-                        logging.info(f"🔧 DIGIO: Usuário '{user_str}' → '{cleaned}'")
-                        return cleaned
-                    return user_str
-                
-                usuario_digitador = clean_digio_user(usuario_digitador_raw)
+                # 🔧 DIGIO: Manter usuário digitador no formato original com underscore
+                # Exemplo: "02579846158_202902" (manter como está)
+                usuario_digitador = usuario_digitador_raw
                 nome_cliente = str(row.get('Unnamed: 32', '')).strip()
                 data_nascimento = str(row.get('Unnamed: 33', '')).strip()
                 qtd_parcelas = str(row.get('Unnamed: 48', '')).strip()
@@ -2510,10 +2509,34 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             tabela_raw = str(row.get('Tabela', row.get('Nome tabela juros', ''))).strip()
             taxa_raw = str(row.get('Taxa Juros Aplicada', row.get('Taxa de juros', ''))).strip()
             
-            # 🎯 VCTEX: Usar código EXATO do arquivo para buscar no relat_orgaos.csv
-            # O relat_orgaos.csv tem: "TABELA BANCO" (ex: "Tabela EXP") → "CODIGO TABELA STORM" (ex: "TabelaEXP")
-            # Preservar tabela_raw EXATAMENTE como vem do arquivo para fazer matching correto
-            logging.info(f"📋 VCTEX: Tabela do arquivo: '{tabela_raw}' (será usada para buscar CODIGO TABELA STORM no CSV)")
+            # 🎯 VCTEX: Normalizar nome da tabela para fazer matching correto no relat_orgaos.csv
+            # O relat_orgaos.csv tem: "TABELA BANCO" (ex: "Tabela Exponencial") → "CODIGO TABELA STORM" (ex: "TabelaExponencial")
+            # Normalizar tabela_raw para garantir prefixo "Tabela" quando necessário
+            def normalize_vctex_table_name(table_name):
+                """Normaliza nome da tabela VCTEX para matching no mapeamento"""
+                if not table_name:
+                    return ""
+                
+                table_clean = str(table_name).strip()
+                
+                # Se já começa com "Tabela", manter como está
+                if table_clean.startswith("Tabela"):
+                    return table_clean
+                
+                # Casos especiais que precisam do prefixo "Tabela"
+                prefixed_cases = ["Exponencial", "EXP", "Linear", "Diferenciada", "Especial", "Padrão", "Padrao"]
+                
+                for case in prefixed_cases:
+                    if table_clean.upper() == case.upper():
+                        normalized = f"Tabela {table_clean}"
+                        logging.info(f"🔧 VCTEX: Tabela normalizada '{table_clean}' → '{normalized}'")
+                        return normalized
+                
+                # Para outros casos, manter original
+                return table_clean
+            
+            tabela_normalized = normalize_vctex_table_name(tabela_raw)
+            logging.info(f"📋 VCTEX: Tabela original: '{tabela_raw}' → Normalizada: '{tabela_normalized}' (será usada para buscar CODIGO TABELA STORM no CSV)")
             
             # Normalizar ORGAO usando CONVENIO e TABELA como indicadores
             orgao_vctex = ""
@@ -2693,7 +2716,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "NOME": str(row.get('Nome do Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de nascimento', '')).strip() if 'Data de nascimento' in df.columns else "",
                 "VALOR_PARCELAS": valor_parcela_formatado,  # 💰 FORMATADO
-                "CODIGO_TABELA": tabela_raw,  # Nome COMPLETO da tabela (usado para buscar no dicionário)
+                "CODIGO_TABELA": tabela_normalized,  # Nome NORMALIZADO da tabela (usado para buscar no dicionário)
                 "TAXA": taxa_raw,  # Taxa do arquivo (mas será substituída pelo mapeamento se encontrar)
                 "OBSERVACOES": str(row.get('Observação', row.get('Observações', row.get('Observacoes', row.get('Obs', ''))))).strip()  # Campo observações do VCTEX
             }
@@ -3259,8 +3282,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             if not codigo_tabela_final:
                 codigo_tabela_final = codigo_tabela_original
             
-            # Manter formato original do usuário (já vem correto do banco com underscore)
-            usuario_final = usuario_cadastro  # Manter formato original: 36057733894_901064
+            # 🔧 QUERO_MAIS: Manter usuário digitador no formato original com underscore
+            # Exemplo: "39891947807_901064" (manter como está)
+            usuario_final = usuario_cadastro  # Manter formato original: 39891947807_901064
             
             normalized_row = {
                 "PROPOSTA": proposta,
@@ -3271,7 +3295,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "NUMERO_PARCELAS": qtd_parcelas,
                 "VALOR_OPERACAO": valor_liberado,  # Usar valor liberado como operação
                 "VALOR_LIBERADO": valor_liberado,
-                "USUARIO_BANCO": usuario_final,  # Usuário com formato correto (com _)
+                "USUARIO_BANCO": usuario_final,  # Usuário no formato original completo (com underscore)
                 "SITUACAO": "DIGITADA",  # ✅ MANUAL conforme solicitado 
                 "DATA_PAGAMENTO": "",   # ✅ MANUAL conforme solicitado (sempre vazio)
                 "CPF": cpf_cliente,
@@ -4432,9 +4456,49 @@ def format_csv_for_storm(df: pd.DataFrame) -> str:
     # Reordenar colunas
     df_ordered = df.reindex(columns=required_columns, fill_value="")
     
-    # Limpar dados e garantir formatação consistente
+    # Limpar dados e garantir formatação consistente + CORRIGIR ENCODING
+    def clean_encoding_issues(text_value):
+        """Limpa problemas de encoding e caracteres corrompidos"""
+        if not text_value or text_value in ['nan', 'None', 'null', 'NaN']:
+            return ""
+        
+        import unicodedata
+        text_str = str(text_value).strip()
+        
+        # Remover caracteres de encoding corrompido específicos
+        # � (replacement character) e outros caracteres problemáticos
+        problematic_chars = ['\ufffd', '\u00bf', '\u00c2', '\u00c3']
+        for char in problematic_chars:
+            text_str = text_str.replace(char, '')
+        
+        # Remover caracteres não imprimíveis (exceto espaços)
+        text_clean = ''.join(c for c in text_str if c.isprintable() or c.isspace())
+        
+        # Normalizar caracteres especiais para garantir compatibilidade
+        try:
+            # NFC: Canonical Composition - junta caracteres decompostos
+            text_normalized = unicodedata.normalize('NFC', text_clean)
+        except:
+            text_normalized = text_clean
+        
+        # Substituir caracteres problemáticos específicos por versões compatíveis
+        replacements = {
+            'ç': 'ç',  # Garantir cedilha correta
+            'ã': 'ã',  # Garantir til correto
+            'á': 'á', 'à': 'à', 'â': 'â',  # Acentos
+            'é': 'é', 'ê': 'ê',
+            'í': 'í',
+            'ó': 'ó', 'ô': 'ô', 'õ': 'õ',
+            'ú': 'ú',
+        }
+        
+        for original, replacement in replacements.items():
+            text_normalized = text_normalized.replace(original, replacement)
+        
+        return text_normalized.strip()
+    
     for col in df_ordered.columns:
-        df_ordered[col] = df_ordered[col].astype(str).str.strip()
+        df_ordered[col] = df_ordered[col].astype(str).apply(clean_encoding_issues)
         df_ordered[col] = df_ordered[col].replace(['nan', 'None', 'null', 'NaN'], '')
     
     # 🔧 FIX: Corrigir formatação do CPF digitador (USUARIO BANCO) no relatório final

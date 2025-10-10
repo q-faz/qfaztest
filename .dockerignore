@@ -1,0 +1,44 @@
+# Arquivos a serem ignorados no build do Docker
+
+# Diretórios desnecessários
+node_modules/
+frontend/
+data/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Arquivos de desenvolvimento
+.git/
+.gitignore
+README.md
+HISTORICO_VERSOES.md
+.vscode/
+.idea/
+
+# Logs e temporários
+*.log
+*.tmp
+temp/
+logs/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.pytest_cache/
+
+# Arquivos de ambiente
+.env
+.env.*
+
+# Arquivos de backup
+*.bak
+*.backup
