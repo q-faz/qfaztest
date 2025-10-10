@@ -1,17 +1,24 @@
 const express = require('express');
 const path = require('path');
-const app = express();
-const port = process.env.PORT || 3000;
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
-// Serve arquivos estáticos do build do React
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Serve frontend build
 app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 
-// Qualquer rota que não seja API retorna index.html
+// Proxy para backend se estiver separado
+app.use('/api', createProxyMiddleware({
+  target: 'http://localhost:8000', // ou seu backend real
+  changeOrigin: true,
+}));
+
+// Todas as outras rotas vão para o index.html do React
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
-// Start do servidor
-app.listen(port, () => {
-    console.log(`Servidor rodando na porta ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server rodando na porta ${PORT}`);
 });
