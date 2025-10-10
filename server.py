@@ -427,8 +427,17 @@ def load_organ_mapping():
         logging.error(f"Erro ao carregar mapeamento de órgãos: {str(e)}")
         return {}, {}, {}, {}
 
-# Carregar mapeamento global - ATUALIZADO sem dependência de usuário
-ORGAN_MAPPING, DETAILED_MAPPING, TABELA_MAPPING, BANK_ORGAN_MAPPING = load_organ_mapping()
+# Carregar mapeamento global - INICIALIZAÇÃO SEGURA PARA DEPLOY
+try:
+    ORGAN_MAPPING, DETAILED_MAPPING, TABELA_MAPPING, BANK_ORGAN_MAPPING = load_organ_mapping()
+    logging.info("✅ Mapeamento carregado com sucesso")
+except Exception as e:
+    logging.warning(f"⚠️ Erro ao carregar mapeamento: {e}")
+    # Valores padrão para deploy - o sistema funcionará mesmo sem o CSV
+    ORGAN_MAPPING = {}
+    DETAILED_MAPPING = {}
+    TABELA_MAPPING = {}
+    BANK_ORGAN_MAPPING = {}
 
 def reload_organ_mapping():
     """Recarrega o mapeamento de órgãos para pegar novos códigos de tabela adicionados"""
