@@ -33,12 +33,21 @@ app = FastAPI()
 @app.get("/health")
 async def health_check():
     """Health check endpoint para verificar se a aplicação está funcionando"""
-    return {
-        "status": "healthy",
-        "timestamp": datetime.utcnow().isoformat(),
-        "service": "Q-FAZ Backend",
-        "version": "1.0.0"
-    }
+    try:
+        return {
+            "status": "healthy",
+            "timestamp": datetime.utcnow().isoformat(),
+            "service": "Q-FAZ Backend",
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# Root endpoint para verificação básica
+@app.get("/")
+async def root():
+    """Endpoint raiz"""
+    return {"message": "Q-FAZ Backend está funcionando!", "status": "online"}
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
