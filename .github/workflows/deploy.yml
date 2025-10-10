@@ -1,75 +1,137 @@
-name: Build and Deploy Q-FAZ
+name: Deploy Frontend + Backend to Azure Web App
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
-        node-version: [20]
 
     steps:
       # 1️⃣ Checkout do repositório
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js
+      # 2️⃣ Configurar Node.js para frontend
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          node-version: '20'
+
+      - name: Cache node modules
+        uses: actions/cache@v4
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       # 3️⃣ Instalar dependências do frontend
       - name: Install frontend dependencies
-        working-directory: frontend
         run: |
-          npm ci
+          cd frontend
+          npm ci --legacy-peer-deps
+
+      # 4️⃣ Build do frontend
+      - name: Build frontend
+        run: |
+          cd frontend
           npm run build
+        shell: bash
 
-      # 4️⃣ Setup Python
+      # 5️⃣ Configurar Python para backend
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          python-version: '3.11'
 
-      # 5️⃣ Instalar dependências do backend
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 6️⃣ Instalar dependências do backend
       - name: Install backend dependencies
-        working-directory: backend
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --no-cache-dir -r backend/requirements.txt
 
-      # 6️⃣ Login no Azure
-      - name: Azure Login
-        uses: azure/login@v2
+      # 7️⃣ Validar secrets obrigatórios
+      - name: Validate required GitHub Secrets
+        shell: bash
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          MONGO_URL: ${{ secrets.MONGO_URL }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+        run: |
+          missing=false
+          for var in AZURE_CREDENTIALS AZURE_WEBAPP_NAME AZURE_RESOURCE_GROUP MONGO_URL DB_NAME; do
+            if [ -z "${!var}" ]; then
+              echo "ERROR: $var is not set"
+              missing=true
+            fi
+          done
+          if [ "$missing" = true ]; then
+            echo "One or more required GitHub Secrets are missing."
+            exit 1
+          fi
+
+      # 8️⃣ Login no Azure
+      - name: Login to Azure
+        uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 7️⃣ Deploy do frontend
-      - name: Deploy frontend to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'qfaz-frontend'
-          slot-name: 'production'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
-          package: ./frontend
+      # 9️⃣ Configurar variáveis de ambiente no Web App
+      - name: Configure Azure Web App environment variables
+        env:
+          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          MONGO_URL: ${{ secrets.MONGO_URL }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+        run: |
+          az webapp config appsettings set \
+            --name $AZURE_WEBAPP_NAME \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --settings MONGO_URL=$MONGO_URL DB_NAME=$DB_NAME
 
-      # 8️⃣ Deploy do backend
-      - name: Deploy backend to Azure Web App
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'qfaz-backend'
-          slot-name: 'production'
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
-          package: ./backend
+      - name: Ensure startup command and port for App Service
+        env:
+          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+        run: |
+          # Set the port and startup command to run uvicorn
+          az webapp config appsettings set --name $AZURE_WEBAPP_NAME --resource-group $AZURE_RESOURCE_GROUP --settings WEBSITES_PORT=8000
+          az webapp config set --name $AZURE_WEBAPP_NAME --resource-group $AZURE_RESOURCE_GROUP --startup-file "uvicorn server:app --host 0.0.0.0 --port 8000"
+
+      # 🔟 Limpar arquivos de deploy antigos
+      - name: Clean previous deploy zips
+        run: rm -f backend_deploy.zip frontend_deploy.zip
+      # 1️⃣1️⃣ Copy frontend build into backend static (integrated deploy)
+      - name: Copy frontend build into backend static
+        run: |
+          # ensure backend static dir exists
+          mkdir -p backend/static
+          rm -rf backend/static/* || true
+          cp -r frontend/build/* backend/static/
+
+      # 1️⃣2️⃣ Deploy do backend via ZIP (contendo frontend estático)
+      - name: Deploy backend
+        env:
+          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+        run: |
+          cd backend
+          zip -r ../backend_deploy.zip . -x "__pycache__/*" "*.pyc"
+          cd ..
+          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path backend_deploy.zip
+          echo "✅ Backend deployed successfully"
+      # 1️⃣3️⃣ Limpar arquivos ZIP após deploy
+      - name: Remove deploy ZIPs
+        run: rm -f backend_deploy.zip
