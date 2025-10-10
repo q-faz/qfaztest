@@ -19,11 +19,11 @@ jobs:
         with:
           node-version: '20'
 
-      # 3️⃣ Instalar dependências do frontend
+      # 3️⃣ Instalar dependências do frontend com legacy-peer-deps
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm install
+          npm install --legacy-peer-deps
 
       # 4️⃣ Build do frontend
       - name: Build frontend
