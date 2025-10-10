@@ -1,4 +1,4 @@
-name: Deploy Fullstack App to Azure Web App
+name: Deploy Fullstack Node.js + React to Azure
 
 on:
   push:
@@ -13,55 +13,78 @@ jobs:
       # 1️⃣ Checkout do repositório
       - uses: actions/checkout@v4
 
-      # 2️⃣ Setup Node.js para frontend
+      # 2️⃣ Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      # 3️⃣ Instalar dependências do frontend
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install --legacy-peer-deps
-
-      # 4️⃣ Build do frontend
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-
-      # 5️⃣ Criar server.js para servir React via Express
-      - name: Add server.js for frontend
-        run: |
-          cd frontend
-          echo "const express = require('express'); const path = require('path'); const app = express(); app.use(express.static(path.join(__dirname, 'build'))); app.get('*', (req, res) => { res.sendFile(path.join(__dirname, 'build', 'index.html')); }); const port = process.env.PORT || 8080; app.listen(port, () => console.log('Frontend server running on port ' + port));" > server.js
-          npm install express
-
-      # 6️⃣ Setup Python para backend
+      # 3️⃣ Setup Python (opcional, caso use scripts Python no backend)
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 7️⃣ Instalar dependências do backend
+      # 4️⃣ Instalar backend dependencies
       - name: Install backend dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r backend/requirements.txt
+          cd backend
+          npm install --legacy-peer-deps
 
-      # 8️⃣ Validar secrets
+      # 5️⃣ Criar server.js se não existir
+      - name: Create server.js if missing
+        run: |
+          cd backend
+          if [ ! -f server.js ]; then
+            echo "const express = require('express');
+const path = require('path');
+const app = express();
+
+// Servir frontend build
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Exemplo de rota API
+app.get('/api/hello', (req, res) => {
+  res.json({ message: 'Olá do backend!' });
+});
+
+// Rotas React
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(\`Server rodando na porta \${PORT}\`));" > server.js
+          fi
+
+      # 6️⃣ Instalar frontend dependencies
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install --legacy-peer-deps
+
+      # 7️⃣ Build frontend
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      # 8️⃣ Copiar build do frontend para backend
+      - name: Copy frontend build to backend
+        run: |
+          rm -rf backend/build
+          cp -R frontend/build backend/
+
+      # 9️⃣ Validar GitHub Secrets
       - name: Validate required GitHub Secrets
         shell: bash
         env:
           AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          MONGO_URL: ${{ secrets.MONGO_URL }}
-          DB_NAME: ${{ secrets.DB_NAME }}
         run: |
           missing=false
-          for var in AZURE_CREDENTIALS AZURE_WEBAPP_NAME AZURE_RESOURCE_GROUP MONGO_URL DB_NAME; do
+          for var in AZURE_CREDENTIALS AZURE_WEBAPP_NAME AZURE_RESOURCE_GROUP; do
             if [ -z "${!var}" ]; then
               echo "ERROR: $var is not set"
               missing=true
@@ -69,39 +92,30 @@ jobs:
           done
           if [ "$missing" = true ]; then exit 1; fi
 
-      # 9️⃣ Login no Azure
+      # 🔟 Login no Azure
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 🔟 Setar variáveis de ambiente
+      # 1️⃣1️⃣ Configurar variáveis de ambiente no Web App
       - name: Configure Azure Web App environment variables
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          MONGO_URL: ${{ secrets.MONGO_URL }}
-          DB_NAME: ${{ secrets.DB_NAME }}
         run: |
           az webapp config appsettings set \
             --name $AZURE_WEBAPP_NAME \
             --resource-group $AZURE_RESOURCE_GROUP \
-            --settings MONGO_URL=$MONGO_URL DB_NAME=$DB_NAME
+            --settings NODE_ENV=production
 
-      # 1️⃣1️⃣ Preparar ZIP único para frontend + backend
-      - name: Package fullstack app
-        run: |
-          mkdir fullstack_deploy
-          cp -r frontend/* fullstack_deploy/
-          cp -r backend/* fullstack_deploy/
-          cd fullstack_deploy
-          zip -r ../fullstack_deploy.zip .
-          cd ..
-
-      # 1️⃣2️⃣ Deploy único
-      - name: Deploy fullstack app
+      # 1️⃣2️⃣ Deploy backend + frontend
+      - name: Deploy backend + frontend
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
         run: |
-          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path fullstack_deploy.zip --type zip
+          cd backend
+          zip -r ../backend_deploy.zip . -x "node_modules/*"
+          cd ..
+          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path backend_deploy.zip --type node
