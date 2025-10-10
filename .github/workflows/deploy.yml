@@ -11,17 +11,17 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      # 1️⃣ Baixar o código do repositório
+      # 1️⃣ Checkout do código-fonte
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # 2️⃣ Configurar Node.js para o frontend
+      # 2️⃣ Configurar Node.js (Frontend)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3️⃣ Cache do Node (para builds mais rápidos)
+      # 3️⃣ Cache do Node para builds mais rápidos
       - name: Cache Node Modules
         uses: actions/cache@v4
         with:
@@ -38,13 +38,13 @@ jobs:
           npm run build
         shell: bash
 
-      # 5️⃣ Configurar Python (para o backend)
+      # 5️⃣ Configurar Python (Backend)
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 6️⃣ Cache do pip (para builds mais rápidos)
+      # 6️⃣ Cache do pip
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -59,7 +59,7 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install -r backend/requirements.txt
 
-      # 8️⃣ Validar variáveis secretas obrigatórias
+      # 8️⃣ Validar variáveis obrigatórias (GitHub Secrets)
       - name: Validar GitHub Secrets
         shell: bash
         env:
@@ -86,8 +86,8 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 🔟 Configurar ambiente do Web App
-      - name: Configurar variáveis no Azure Web App
+      # 🔟 Configurar variáveis de ambiente no Web App
+      - name: Configurar variáveis de ambiente no Azure Web App
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
@@ -99,7 +99,7 @@ jobs:
             --resource-group $AZURE_RESOURCE_GROUP \
             --settings MONGO_URL=$MONGO_URL DB_NAME=$DB_NAME
 
-      # 1️⃣1️⃣ Configurar runtime e comando de inicialização
+      # 1️⃣1️⃣ Configurar runtime e startup
       - name: Configurar runtime e startup do backend
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
@@ -110,7 +110,6 @@ jobs:
             --resource-group $AZURE_RESOURCE_GROUP \
             --linux-fx-version "PYTHON|3.11"
 
-          # usar a variável $PORT do Azure (evita erro de timeout)
           az webapp config appsettings set \
             --name $AZURE_WEBAPP_NAME \
             --resource-group $AZURE_RESOURCE_GROUP \
@@ -121,28 +120,37 @@ jobs:
             --resource-group $AZURE_RESOURCE_GROUP \
             --startup-file "python -m uvicorn server:app --host 0.0.0.0 --port \$PORT"
 
-      # 1️⃣2️⃣ Integrar o frontend no backend (estático)
+      # 1️⃣2️⃣ Reiniciar o App Service (limpa cache antigo)
+      - name: Reiniciar App Service antes do deploy
+        run: |
+          az webapp restart \
+            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
+            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
+
+      # 1️⃣3️⃣ Incorporar build do frontend ao backend
       - name: Incorporar build do frontend ao backend
         run: |
           mkdir -p backend/static
           rm -rf backend/static/*
           cp -r frontend/build/* backend/static/
 
-      # 1️⃣3️⃣ Compactar e fazer deploy do backend
+      # 1️⃣4️⃣ Compactar e fazer deploy
       - name: Deploy do backend no Azure
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
         run: |
           cd backend
-          zip -r ../backend_deploy.zip . -x "__pycache__/*" "*.pyc"
+          zip -r ../backend_deploy.zip . \
+            -x "__pycache__/*" "*.pyc" "Dockerfile" "package.json" "package-lock.json" "node_modules/*"
           cd ..
           az webapp deploy \
             --resource-group $AZURE_RESOURCE_GROUP \
             --name $AZURE_WEBAPP_NAME \
-            --src-path backend_deploy.zip
+            --src-path backend_deploy.zip \
+            --type zip
           echo "✅ Deploy concluído com sucesso!"
 
-      # 1️⃣4️⃣ Limpar arquivos temporários
+      # 1️⃣5️⃣ Limpeza final
       - name: Limpar arquivos temporários
         run: rm -f backend_deploy.zip
