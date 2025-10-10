@@ -1,4 +1,4 @@
-name: Deploy Frontend + Backend to Azure Web App
+name: Deploy Q-FAZ Backend + Frontend
 
 on:
   push:
@@ -19,57 +19,20 @@ jobs:
         with:
           node-version: '20'
 
-      # 3️⃣ Instalar dependências do frontend (React) com legacy-peer-deps
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install --legacy-peer-deps
-
-      # 4️⃣ Build do frontend
+      # 3️⃣ Build do frontend React
       - name: Build frontend
         run: |
-          cd frontend
+          cd backend/frontend
+          npm install --legacy-peer-deps
           npm run build
 
-      # 5️⃣ Configurar Python para backend (se precisar de scripts Python)
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      # 6️⃣ Instalar dependências do backend (Python)
+      # 4️⃣ Instalar dependências do backend
       - name: Install backend dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r backend/requirements.txt || echo "No Python dependencies"
+          cd backend
+          npm install
 
-      # 7️⃣ Criar server.js caso não exista
-      - name: Create server.js if missing
-        run: |
-          if [ ! -f backend/server.js ]; then
-            cat << 'EOF' > backend/server.js
-const express = require('express');
-const path = require('path');
-const app = express();
-
-app.use(express.static(path.join(__dirname, 'build')));
-
-app.get('/api/hello', (req, res) => res.json({ message: 'Olá do backend!' }));
-
-app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'build', 'index.html')));
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server rodando na porta ${PORT}`));
-EOF
-          fi
-
-      # 8️⃣ Copiar build do frontend para backend
-      - name: Copy frontend build to backend
-        run: |
-          rm -rf backend/build
-          cp -R frontend/build backend/
-
-      # 9️⃣ Validar secrets do GitHub
+      # 5️⃣ Validar secrets do Azure
       - name: Validate required GitHub Secrets
         shell: bash
         env:
@@ -88,13 +51,13 @@ EOF
           done
           if [ "$missing" = true ]; then exit 1; fi
 
-      # 🔟 Login no Azure
+      # 6️⃣ Login no Azure
       - name: Login to Azure
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 1️⃣1️⃣ Setar variáveis de ambiente no Web App
+      # 7️⃣ Configurar variáveis de ambiente no Web App
       - name: Configure Azure Web App environment variables
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
@@ -107,8 +70,8 @@ EOF
             --resource-group $AZURE_RESOURCE_GROUP \
             --settings MONGO_URL=$MONGO_URL DB_NAME=$DB_NAME
 
-      # 1️⃣2️⃣ Deploy completo via ZIP (Node.js App)
-      - name: Deploy backend + frontend
+      # 8️⃣ Deploy completo do backend + frontend via Node.js
+      - name: Deploy backend with frontend
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
@@ -116,4 +79,4 @@ EOF
           cd backend
           zip -r ../backend_deploy.zip . -x "__pycache__/*" "*.pyc"
           cd ..
-          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path backend_deploy.zip --type node
+          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path backend_deploy.zip
