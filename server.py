@@ -45,12 +45,19 @@ if os.path.exists("build"):
     logging.info("✅ Frontend React encontrado e configurado")
 
 @app.get("/")
-async def serve_frontend():
-    """Servir frontend React"""
-    if os.path.exists("build/index.html"):
-        logging.info("✅ Servindo frontend React")
-        return FileResponse("build/index.html")
-    return {"message": "Q-FAZ Backend está funcionando!", "status": "online"}
+async def root():
+    """API Root - Backend Q-FAZ puro"""
+    return {
+        "message": "Q-FAZ Backend API está funcionando!",
+        "status": "online",
+        "version": "2.0",
+        "endpoints": {
+            "/api/upload": "Upload de arquivos",
+            "/api/process": "Processamento Q-FAZ",
+            "/api/download": "Download de relatórios",
+            "/health": "Health check"
+        }
+    }
 
 # Health check endpoint for Docker
 @app.get("/health")
@@ -4956,32 +4963,19 @@ async def debug_file(file: UploadFile = File(...)):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Servir arquivos React diretamente da raiz
-import os
-
-# Mount static files (CSS, JS) que estão na raiz/static/
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Rota principal que serve React
-@app.get("/")
-async def serve_home():
-    return FileResponse("index.html")
-
-# Serve React app para outras rotas (se existir)
-@app.get("/{path:path}")
-async def serve_react_fallback(path: str):
-    # Se for uma rota da API, não intercepta
-    if path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="API route not found")
-    
-    # Serve o React que está na raiz
-    return FileResponse("index.html")
+# Backend Q-FAZ puro - sem frontend
+# O frontend será servido pelo Azure Static Web Apps
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
+    allow_origins=[
+        "http://localhost:3000",  # Desenvolvimento local
+        "https://*.azurestaticapps.net",  # Azure Static Web Apps
+        "https://*.azure.com",  # Azure custom domains
+        "*"  # Permitir todos por enquanto
+    ],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
