@@ -1,17 +1,17 @@
 const express = require('express');
 const path = require('path');
 const app = express();
+const port = process.env.PORT || 3000;
 
-const PORT = process.env.PORT || 8080;
+// Serve arquivos estáticos do build do React
+app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 
-// Serve arquivos estáticos do frontend
-app.use(express.static(path.join(__dirname, 'frontend')));
-
-// Rota principal: index.html do React
+// Qualquer rota que não seja API retorna index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+    res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Start do servidor
+app.listen(port, () => {
+    console.log(`Servidor rodando na porta ${port}`);
 });
