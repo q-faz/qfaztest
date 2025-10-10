@@ -325,8 +325,23 @@ def format_percentage_brazilian(percentage_str):
 def load_organ_mapping():
     """Carrega o mapeamento de órgãos do arquivo CSV atualizado - MELHORADO sem dependência de usuário"""
     try:
-        # Ler o arquivo de mapeamento atualizado usando caminho relativo
-        csv_path = os.path.join(os.path.dirname(__file__), 'relat_orgaos.csv')
+        # Ler o arquivo de mapeamento - tentar múltiplos caminhos
+        possible_paths = [
+            os.path.join(os.path.dirname(__file__), 'data', 'relat_orgaos.csv'),  # data/relat_orgaos.csv
+            os.path.join(os.path.dirname(__file__), 'relat_orgaos.csv'),  # relat_orgaos.csv (raiz)
+            'data/relat_orgaos.csv',  # Caminho relativo
+            'relat_orgaos.csv'  # Arquivo na raiz
+        ]
+        
+        csv_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                csv_path = path
+                logging.info(f"✅ Arquivo encontrado: {path}")
+                break
+        
+        if not csv_path:
+            raise FileNotFoundError("relat_orgaos.csv não encontrado em nenhum caminho")
         # Tentar diferentes encodings
         try:
             df = pd.read_csv(csv_path, encoding='utf-8', sep=';')
