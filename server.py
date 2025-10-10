@@ -4956,52 +4956,16 @@ async def debug_file(file: UploadFile = File(...)):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Verificar se existe a pasta build para servir React
+# Servir arquivos React diretamente da raiz
 import os
-build_exists = os.path.exists("build") and os.path.exists("build/static")
-index_html_exists = os.path.exists("build/index.html")
 
-print(f"🔍 DEBUG Railway - build exists: {build_exists}")
-print(f"🔍 DEBUG Railway - index.html exists: {index_html_exists}")
-print(f"🔍 DEBUG Railway - current dir: {os.getcwd()}")
-print(f"🔍 DEBUG Railway - files: {os.listdir('.') if os.path.exists('.') else 'No current dir'}")
+# Mount static files (CSS, JS) que estão na raiz/static/
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# FORÇAR montagem static mesmo se não existir (para debug)
-try:
-    if build_exists:
-        app.mount("/static", StaticFiles(directory="build/static"), name="static")
-        print("✅ Static files montados com sucesso!")
-    else:
-        print("❌ Pasta build/static não encontrada!")
-except Exception as e:
-    print(f"❌ Erro ao montar static: {e}")
-
-# Rota principal que serve React ou API info
+# Rota principal que serve React
 @app.get("/")
 async def serve_home():
-    print(f"🔍 Rota / acessada - index_html_exists: {index_html_exists}")
-    
-    if index_html_exists:
-        print("✅ Servindo React build/index.html")
-        return FileResponse("build/index.html")
-    else:
-        print("❌ React não encontrado, servindo API info")
-        return {
-            "status": "Q-FAZ Backend COMPLETO funcionando! 🚀",
-            "message": "Sistema pronto para processar Storm",
-            "frontend": "React build não encontrado - usando API pura",
-            "debug": {
-                "build_exists": build_exists,
-                "index_html_exists": index_html_exists,
-                "current_dir": os.getcwd(),
-                "files": os.listdir('.') if os.path.exists('.') else 'No dir'
-            },
-            "endpoints": {
-                "upload": "/api/upload",
-                "health": "/api/health", 
-                "debug": "/api/debug"
-            }
-        }
+    return FileResponse("index.html")
 
 # Serve React app para outras rotas (se existir)
 @app.get("/{path:path}")
