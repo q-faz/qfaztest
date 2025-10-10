@@ -1,249 +1,71 @@
-<<<<<<< HEAD
-name: 🚀 Deploy Frontend + Backend para Azure Web App
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      # 1️⃣ Checkout do código-fonte
-      - name: Checkout do código
-        uses: actions/checkout@v4
-
-      # 2️⃣ Configurar Node.js (Frontend)
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      # 3️⃣ Cache do Node (build mais rápido)
-      - name: Cache Node Modules
-        uses: actions/cache@v4
-        with:
-          path: frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      # 4️⃣ Instalar dependências e build do frontend
-      - name: Build do Frontend
-        run: |
-          cd frontend
-          npm ci --legacy-peer-deps
-          npm run build
-        shell: bash
-
-      # 5️⃣ Configurar Python (Backend)
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      # 6️⃣ Cache do pip
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      # 7️⃣ Instalar dependências do backend
-      - name: Instalar dependências do backend
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -r backend/requirements.txt
-
-      # 8️⃣ Validar variáveis obrigatórias (GitHub Secrets)
-      - name: Validar GitHub Secrets
-        shell: bash
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          MONGO_URL: ${{ secrets.MONGO_URL }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-        run: |
-          missing=false
-          for var in AZURE_CREDENTIALS AZURE_WEBAPP_NAME AZURE_RESOURCE_GROUP MONGO_URL DB_NAME; do
-            if [ -z "${!var}" ]; then
-              echo "❌ ERRO: $var não está definido."
-              missing=true
-            fi
-          done
-          if [ "$missing" = true ]; then
-            exit 1
-          fi
-
-      # 9️⃣ Login no Azure
-      - name: Login no Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # 🔟 Configurar variáveis de ambiente do App Service
-      - name: Configurar variáveis no Azure Web App
-        env:
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-          MONGO_URL: ${{ secrets.MONGO_URL }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-        run: |
-          az webapp config appsettings set \
-            --name $AZURE_WEBAPP_NAME \
-            --resource-group $AZURE_RESOURCE_GROUP \
-            --settings MONGO_URL=$MONGO_URL DB_NAME=$DB_NAME PORT=8000
-
-      # 1️⃣1️⃣ Configurar runtime e comando de inicialização
-      - name: Configurar runtime e startup do backend
-        env:
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-        run: |
-          az webapp config set \
-            --name $AZURE_WEBAPP_NAME \
-            --resource-group $AZURE_RESOURCE_GROUP \
-            --linux-fx-version "PYTHON|3.11"
-
-          # comando para iniciar o backend
-          az webapp config set \
-            --name $AZURE_WEBAPP_NAME \
-            --resource-group $AZURE_RESOURCE_GROUP \
-            --startup-file "python start_server.py"
-
-      # 1️⃣2️⃣ Reiniciar o App Service antes do deploy (limpa cache antigo)
-      - name: Reiniciar App Service
-        run: |
-          az webapp restart \
-            --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
-
-      # 1️⃣3️⃣ Incorporar build do frontend ao backend
-      - name: Incorporar build do frontend ao backend
-        run: |
-          mkdir -p backend/static
-          rm -rf backend/static/*
-          cp -r frontend/build/* backend/static/
-
-      # 1️⃣4️⃣ Compactar e fazer deploy
-      - name: Deploy do backend no Azure
-        env:
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
-          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
-        run: |
-          cd backend
-          zip -r ../backend_deploy.zip . \
-            -x "__pycache__/*" "*.pyc" "Dockerfile" "package.json" "package-lock.json" "node_modules/*"
-          cd ..
-          az webapp deploy \
-            --resource-group $AZURE_RESOURCE_GROUP \
-            --name $AZURE_WEBAPP_NAME \
-            --src-path backend_deploy.zip \
-            --type zip
-          echo "✅ Deploy concluído com sucesso!"
-
-      # 1️⃣5️⃣ Limpar arquivos temporários
-      - name: Limpar arquivos temporários
-        run: rm -f backend_deploy.zip
-=======
-name: Deploy Q=FAZ to Azure App Service
+﻿name: Deploy Q-FAZ to Azure App Service
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Node.js
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         
-    - name: Set up Python
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
-    - name: Cache Node.js modules
-      uses: actions/cache@v3
-      with:
-        path: frontend/node_modules
-        key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
-        
-    - name: Install frontend dependencies
+    - name: Install frontend deps
       run: |
         cd frontend
-        npm ci
+        npm ci --legacy-peer-deps
         
     - name: Build frontend
       run: |
         cd frontend
         npm run build
         
-    - name: Copy frontend build to backend/static
+    - name: Copy frontend to backend
       run: |
+        mkdir -p backend/static
         rm -rf backend/static/*
         cp -r frontend/build/* backend/static/
         
-    - name: Install backend dependencies
+    - name: Install backend deps
       run: |
         cd backend
-        python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Azure CLI Login
+    - name: Azure Login
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
         
-    - name: Deploy to Azure App Service
+    - name: Deploy to Azure
       run: |
         cd backend
         zip -r ../deploy.zip . -x "*.git*" "*/__pycache__/*" "*.pyc"
-        az webapp deployment source config-zip \
+        cd ..
+        az webapp deploy \
           --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
           --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-          --src ../deploy.zip
+          --src-path deploy.zip \
+          --type zip
           
-    - name: Configure Azure App Service startup
+    - name: Configure startup
       run: |
         az webapp config set \
           --name ${{ secrets.AZURE_WEBAPP_NAME }} \
           --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
           --startup-file "python start_server.py"
           
-    - name: Restart Azure App Service
+    - name: Restart app
       run: |
         az webapp restart \
           --name ${{ secrets.AZURE_WEBAPP_NAME }} \
           --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
-          
-    - name: Ver logs após deploy (debug)
-      run: |
-        az webapp log config --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-          --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-          --application-logging filesystem --level information
-        az webapp log tail \
-          --name ${{ secrets.AZURE_WEBAPP_NAME }} \
-          --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} &
-        sleep 10
-        
-    - name: Health Check
-      run: |
-        echo "Aguardando app estar disponível..."
-        sleep 30
-        curl -f https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net/api/health || echo "Health check falhou"
->>>>>>> 4faf4a7 (Atualizações do projeto)
