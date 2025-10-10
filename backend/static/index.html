@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q=FAZ - Sistema de Processamento</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        .status {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .api-link {
+            display: inline-block;
+            background: rgba(33, 150, 243, 0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .api-link:hover {
+            background: rgba(33, 150, 243, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Q=FAZ Backend</h1>
+        <p>Sistema de processamento de dados bancários funcionando!</p>
+        
+        <div class="status">
+            ✅ Servidor FastAPI ativo<br>
+            ✅ Frontend montado em /static<br>
+            ✅ API disponível em /api
+        </div>
+        
+        <div>
+            <a href="/docs" class="api-link">📚 Documentação API</a>
+            <a href="/api/health" class="api-link">💖 Health Check</a>
+        </div>
+        
+        <p>
+            <small>Deploy configurado para Azure App Service</small>
+        </p>
+    </div>
+</body>
+</html>

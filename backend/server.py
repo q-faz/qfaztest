@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -787,7 +788,40 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             logging.info(f"✅ SANTANDER detectado por conteúdo da coluna BANCO")
             return "SANTANDER"
     
-    # Verificar se é MERCANTIL (Banco Mercantil do Brasil) - DETECÇÃO MELHORADA
+    # Verificar se é CREFAZ (PRIORIDADE ALTA - antes do MERCANTIL)
+    # 1. Por nome do arquivo
+    if 'crefaz' in filename_lower:
+        logging.info(f"✅ CREFAZ detectado por nome do arquivo: {filename}")
+        return "CREFAZ"
+    
+    # 2. Por colunas específicas do CREFAZ
+    crefaz_column_indicators = ['data cadastro', 'número da proposta', 'cpf', 'cliente', 'cidade', 'valor liberado', 'prazo', 'status', 'agente', 'cod operação', 'produto']
+    crefaz_col_matches = sum(1 for indicator in crefaz_column_indicators if any(indicator in col for col in df_columns))
+    if crefaz_col_matches >= 5:
+        logging.info(f"✅ CREFAZ detectado por colunas ({crefaz_col_matches} matches)")
+        return "CREFAZ"
+    
+    # 3. Por conteúdo específico (indicadores únicos de energia/boleto)
+    if not df.empty:
+        # Verificar nas primeiras 3 linhas para indicadores específicos do CREFAZ
+        all_data = ""
+        for i in range(min(3, len(df))):
+            row_data = ' '.join([str(val).lower() for val in df.iloc[i].values if pd.notna(val)])
+            all_data += " " + row_data
+        
+        # Indicadores únicos do CREFAZ (energia, boleto, etc.)
+        crefaz_unique_indicators = ['crefaz', 'energia', 'boleto', 'cpfl', 'cosern', 'celpe', 'enel', 'ener', 'bol', 'luz', 'fatura']
+        found_crefaz_indicators = [ind for ind in crefaz_unique_indicators if ind in all_data]
+        
+        # Verificar se NÃO tem indicadores exclusivos do MERCANTIL
+        mercantil_exclusive_indicators = ['banco mercantil do brasil', 'credfranco', 'bmb', 'codigocorrespondente', 'nomecorrespondente']
+        found_mercantil_indicators = [ind for ind in mercantil_exclusive_indicators if ind in all_data]
+        
+        if found_crefaz_indicators and not found_mercantil_indicators:
+            logging.info(f"✅ CREFAZ detectado por conteúdo único: {found_crefaz_indicators}")
+            return "CREFAZ"
+
+    # Verificar se é MERCANTIL (Banco Mercantil do Brasil) - APÓS CREFAZ
     # 1. Por nome do arquivo
     if 'mercantil' in filename_lower or 'bmb' in filename_lower or 'credfranco' in filename_lower:
         logging.info(f"✅ MERCANTIL detectado por nome do arquivo: {filename}")
@@ -816,39 +850,25 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
         logging.info(f"✅ MERCANTIL detectado por colunas extensas ({mercantil_extended_matches}/5 matches)")
         return "MERCANTIL"
     
-    # 3. Por conteúdo dos dados (mais flexível)
+    # 3. Por conteúdo específico do MERCANTIL (mais restrito)
     if not df.empty:
-        # Verificar nas primeiras 5 linhas por indicadores do Mercantil
+        # Verificar nas primeiras 5 linhas por indicadores específicos do Mercantil
         all_data = ""
         for i in range(min(5, len(df))):
             row_data = ' '.join([str(val).lower() for val in df.iloc[i].values if pd.notna(val)])
             all_data += " " + row_data
         
-        mercantil_content_indicators = ['mercantil', 'credfranco', 'qfz solucoes', 'bmb', 'banco mercantil']
+        # Indicadores específicos do MERCANTIL (removido 'qfz solucoes' para evitar conflito)
+        mercantil_content_indicators = ['banco mercantil do brasil', 'credfranco', 'bmb', 'mercantil']
         found_content_indicators = [ind for ind in mercantil_content_indicators if ind in all_data]
         
-        if found_content_indicators:
-            logging.info(f"✅ MERCANTIL detectado por conteúdo: {found_content_indicators}")
+        # Verificar se NÃO tem indicadores do CREFAZ
+        crefaz_conflict_indicators = ['crefaz', 'energia', 'boleto', 'cpfl', 'enel', 'ener', 'bol']
+        found_crefaz_conflicts = [ind for ind in crefaz_conflict_indicators if ind in all_data]
+        
+        if found_content_indicators and not found_crefaz_conflicts:
+            logging.info(f"✅ MERCANTIL detectado por conteúdo específico: {found_content_indicators}")
             return "MERCANTIL"
-
-    # Verificar se é CREFAZ (melhorada)
-    # 1. Por nome do arquivo
-    if 'crefaz' in filename_lower:
-        return "CREFAZ"
-    
-    # 2. Por colunas específicas do CREFAZ
-    crefaz_column_indicators = ['data cadastro', 'número da proposta', 'cpf', 'cliente', 'cidade', 'valor liberado', 'prazo', 'status', 'agente']
-    crefaz_col_matches = sum(1 for indicator in crefaz_column_indicators if any(indicator in col for col in df_columns))
-    if crefaz_col_matches >= 5:
-        return "CREFAZ"
-    
-    # 3. Por conteúdo (indicadores de energia/boleto)
-    crefaz_content_indicators = ['produto', 'conveniada', 'cpfl', 'cosern', 'celpe', 'enel', 'cod operação', 'energia', 'boleto']
-    if not df.empty:
-        first_row_data = ' '.join([str(val).lower() for val in df.iloc[0].values if pd.notna(val)])
-        crefaz_matches = sum(1 for indicator in crefaz_content_indicators if indicator in first_row_data)
-        if crefaz_matches >= 2:
-            return "CREFAZ"
     
     # Verificar se é QUERO MAIS CREDITO (PRIORIDADE ALTA - antes do Paulista)
     # 1. Por nome do arquivo
@@ -2084,8 +2104,19 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 situacao = str(row.get('SITUACAO', '')).strip()
                 data_lancamento = str(row.get('DATA DE PAGAMENTO', row.get('DATA_PAGAMENTO', ''))).strip()
                 nome_orgao_raw = str(row.get('ORGAO', '')).strip()
-                usuario_digitador = str(row.get('USUARIO BANCO', row.get('USUARIO_BANCO', ''))).strip()
+                usuario_digitador_raw = str(row.get('USUARIO BANCO', row.get('USUARIO_BANCO', ''))).strip()
                 cpf_cliente = str(row.get('CPF', '')).strip()
+                
+                # � DIGIO: Pular linhas de cabeçalho também na estrutura nomeada
+                if (usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO'] or 
+                    cpf_cliente.upper() in ['CPF', 'CPF_CLIENTE'] or
+                    nome_orgao_raw.upper() in ['ORGAO', 'NOME_ORGAO']):
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho na estrutura nomeada (usuario='{usuario_digitador_raw}')")
+                    continue
+                
+                # �🔧 DIGIO: Limpar usuário digitador - remover sufixo após underscore
+                # Aplicar também na estrutura com cabeçalhos nomeados
+                usuario_digitador = usuario_digitador_raw.split('_')[0] if '_' in usuario_digitador_raw and usuario_digitador_raw else usuario_digitador_raw
                 nome_cliente = str(row.get('NOME', '')).strip()
                 data_nascimento = str(row.get('DATA DE NASCIMENTO', row.get('DATA_NASCIMENTO', ''))).strip()
                 qtd_parcelas = str(row.get('NUMERO PARCELAS', row.get('NUMERO_PARCELAS', ''))).strip()
@@ -2108,8 +2139,30 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 situacao = str(row.get('Unnamed: 9', '')).strip()
                 data_lancamento = str(row.get('Unnamed: 13', '')).strip()
                 nome_orgao_raw = str(row.get('Unnamed: 25', '')).strip()
-                usuario_digitador = str(row.get('Unnamed: 29', '')).strip()
+                usuario_digitador_raw = str(row.get('Unnamed: 29', '')).strip()
                 cpf_cliente = str(row.get('Unnamed: 31', '')).strip()
+                
+                # � DIGIO: Pular linhas de cabeçalho - detectar se é linha de header
+                if (usuario_digitador_raw.upper() in ['DESCR_USU_DIGITADOR', 'COD_USUARIO_DIGITADOR'] or 
+                    cpf_cliente.upper() in ['CPF_CLIENTE', 'CPF_USU_DIGITADOR'] or
+                    nome_orgao_raw.upper() in ['NOME_ORGAO', 'COD_ORGAO']):
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (usuario='{usuario_digitador_raw}', cpf='{cpf_cliente}')")
+                    continue
+                
+                # �🔧 DIGIO: Limpar usuário digitador - remover sufixo após underscore
+                # Exemplo: "02579846158_202902" → "02579846158"
+                def clean_digio_user(user_str):
+                    """Remove sufixo do usuário digitador do DIGIO (parte após _)"""
+                    if not user_str:
+                        return ""
+                    # Se tem underscore, pegar apenas a parte antes dele
+                    if '_' in user_str:
+                        cleaned = user_str.split('_')[0]
+                        logging.info(f"🔧 DIGIO: Usuário '{user_str}' → '{cleaned}'")
+                        return cleaned
+                    return user_str
+                
+                usuario_digitador = clean_digio_user(usuario_digitador_raw)
                 nome_cliente = str(row.get('Unnamed: 32', '')).strip()
                 data_nascimento = str(row.get('Unnamed: 33', '')).strip()
                 qtd_parcelas = str(row.get('Unnamed: 48', '')).strip()
@@ -3939,6 +3992,29 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
+        elif bank_type == "VCTEX":
+            # 🎯 VCTEX - preservar nome EXATO da tabela do arquivo para mapeamento correto
+            # O problema era que VCTEX estava passando pelo mapeamento geral que pode alterar nomes
+            tabela_original = normalized_row.get("CODIGO_TABELA", "")
+            banco_para_mapeamento = normalized_row.get("BANCO", "")
+            orgao_para_mapeamento = normalized_row.get("ORGAO", "")
+            operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
+            
+            logging.info(f"🎯 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}' será preservada para mapeamento")
+            
+            # Aplicar mapeamento específico VCTEX mantendo tabela original
+            mapping_result = apply_mapping(
+                banco_para_mapeamento,
+                orgao_para_mapeamento,
+                operacao_para_mapeamento,
+                "",  # usuario vazio
+                tabela_original  # Usar tabela EXATA do arquivo
+            )
+            
+            if mapping_result:
+                logging.info(f"✅ VCTEX: Mapeamento encontrado para '{tabela_original}' → CODIGO_STORM='{mapping_result.get('codigo_tabela', '')}', TAXA='{mapping_result.get('taxa_storm', '')}'")
+            else:
+                logging.warning(f"⚠️ VCTEX: Mapeamento NÃO encontrado para tabela '{tabela_original}' - mantendo original")
         elif bank_type == "FACTA92":
             # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
@@ -4764,6 +4840,9 @@ async def debug_file(file: UploadFile = File(...)):
 
 # Include the router in the main app
 app.include_router(api_router)
+
+# Mount static files for frontend
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 app.add_middleware(
     CORSMiddleware,
