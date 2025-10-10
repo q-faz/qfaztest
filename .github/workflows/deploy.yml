@@ -1,4 +1,4 @@
-name: Build and Deploy Q-FAZ (Frontend + Backend)
+name: Build and Deploy QFAZ Frontend + Backend
 
 on:
   push:
@@ -7,70 +7,97 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [20]
-        python-version: [3.11]
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
 
-      # ---------------------------
-      # Frontend (Node.js)
-      # ---------------------------
+      # --------------------------
+      # Frontend Build (Node.js)
+      # --------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '20'
           cache: 'npm'
 
-      - name: Instalar dependências e build do frontend
+      - name: Instalar dependências do frontend
         working-directory: frontend
         run: |
-          npm ci || npm install --legacy-peer-deps
+          npm ci
           npm run build
 
-      - name: Login no Azure Frontend
-        uses: azure/login@v1
+      # --------------------------
+      # Backend Build (Python)
+      # --------------------------
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          creds: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
+          python-version: '3.11'
 
+      - name: Criar e ativar virtualenv
+        working-directory: backend
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # --------------------------
+      # Upload Artifacts
+      # --------------------------
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-artifact
+          path: frontend/build
+
+      - name: Upload backend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-artifact
+          path: backend
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-artifact
+
+      - name: Download backend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-artifact
+
+      # --------------------------
+      # Deploy Frontend
+      # --------------------------
       - name: Deploy Frontend para Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'qfaz-frontend'
           slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
-          package: './frontend/build'
+          package: frontend/build
 
-      # ---------------------------
-      # Backend (Python/FastAPI)
-      # ---------------------------
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-
-      - name: Criar virtualenv e instalar dependências do backend
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r backend/requirements.txt
-
-      - name: Login no Azure Backend
-        uses: azure/login@v2
-        with:
-          creds: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
-
+      # --------------------------
+      # Deploy Backend
+      # --------------------------
       - name: Deploy Backend para Azure Web App
-        uses: azure/webapps-deploy@v3
+        uses: azure/webapps-deploy@v2
         with:
           app-name: 'qfaz-backend'
           slot-name: 'production'
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_BACKEND }}
-          package: './backend'
+          package: backend
