@@ -4956,18 +4956,44 @@ async def debug_file(file: UploadFile = File(...)):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Mount static files for React (CSS, JS, images)
-app.mount("/static", StaticFiles(directory="build/static"), name="static")
+# Verificar se existe a pasta build para servir React
+import os
+build_exists = os.path.exists("build") and os.path.exists("build/static")
+index_html_exists = os.path.exists("build/index.html")
 
-# Serve React app for all non-API routes
+if build_exists:
+    # Monte arquivos estáticos do React se existirem
+    app.mount("/static", StaticFiles(directory="build/static"), name="static")
+
+# Rota principal que serve React ou API info
+@app.get("/")
+async def serve_home():
+    if index_html_exists:
+        return FileResponse("build/index.html")
+    else:
+        return {
+            "status": "Q-FAZ Backend COMPLETO funcionando! 🚀",
+            "message": "Sistema pronto para processar Storm",
+            "frontend": "React build não encontrado - usando API pura",
+            "endpoints": {
+                "upload": "/api/upload",
+                "health": "/api/health", 
+                "debug": "/api/debug"
+            }
+        }
+
+# Serve React app para outras rotas (se existir)
 @app.get("/{path:path}")
-async def serve_react_app(path: str):
+async def serve_react_fallback(path: str):
     # Se for uma rota da API, não intercepta
     if path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API route not found")
     
-    # Para qualquer outra rota, serve o React app
-    return FileResponse("build/index.html")
+    # Se existe React build, serve
+    if index_html_exists:
+        return FileResponse("build/index.html")
+    else:
+        raise HTTPException(status_code=404, detail="Frontend not available")
 
 app.add_middleware(
     CORSMiddleware,
