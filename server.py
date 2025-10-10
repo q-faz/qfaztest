@@ -4956,18 +4956,18 @@ async def debug_file(file: UploadFile = File(...)):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Simple health check route
-@app.get("/")
-async def health_check():
-    return {
-        "status": "Q-FAZ Backend COMPLETO funcionando!",
-        "message": "Sistema pronto para processar Storm",
-        "endpoints": {
-            "upload": "/api/upload",
-            "health": "/api/health", 
-            "debug": "/api/debug"
-        }
-    }
+# Mount static files for React (CSS, JS, images)
+app.mount("/static", StaticFiles(directory="build/static"), name="static")
+
+# Serve React app for all non-API routes
+@app.get("/{path:path}")
+async def serve_react_app(path: str):
+    # Se for uma rota da API, não intercepta
+    if path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+    
+    # Para qualquer outra rota, serve o React app
+    return FileResponse("build/index.html")
 
 app.add_middleware(
     CORSMiddleware,
