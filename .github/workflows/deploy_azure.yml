@@ -1,0 +1,40 @@
+name: Deploy backend to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create resource group / ensure app settings (optional)
+        run: |
+          # Set MONGO_URL and DB_NAME in the Azure Web App app settings
+          az webapp config appsettings set --name ${{ secrets.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --settings MONGO_URL=${{ secrets.MONGO_URL }} DB_NAME=${{ secrets.DB_NAME }}
+
+      - name: Deploy to Azure Web App (using ZIP deploy)
+        run: |
+          # Zip the backend and deploy via az webapp deploy
+          cd backend
+          zip -r ../backend_deploy.zip . -x "__pycache__/*" "*.pyc"
+          cd ..
+          az webapp deploy --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} --name ${{ secrets.AZURE_WEBAPP_NAME }} --src-path backend_deploy.zip

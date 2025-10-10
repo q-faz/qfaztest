@@ -380,6 +380,38 @@ npm start
 REACT_APP_BACKEND_URL=http://localhost:8000
 ```
 
+### GitHub Actions / Azure / Render
+
+Para habilitar deploy automático para Azure e Render, adicione os seguintes GitHub Secrets no repositório (Settings → Secrets → Actions):
+
+- `AZURE_CREDENTIALS` — JSON do service principal (exemplo):
+
+```json
+{
+    "clientId": "<client-id>",
+    "clientSecret": "<client-secret>",
+    "subscriptionId": "<subscription-id>",
+    "tenantId": "<tenant-id>",
+    "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+    "resourceManagerEndpointUrl": "https://management.azure.com/"
+}
+```
+
+- `AZURE_WEBAPP_NAME` — nome do App Service no Azure
+- `AZURE_RESOURCE_GROUP` — resource group onde o Web App está
+- `MONGO_URL` — string de conexão MongoDB (ex: mongodb+srv://user:pass@cluster.mongodb.net)
+- `DB_NAME` — nome do banco que o app usa
+
+Opcional (para push de imagens Docker):
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_PASSWORD`
+
+Workflow disponível:
+- `.github/workflows/deploy_azure.yml` — usa `AZURE_CREDENTIALS` e faz deploy do conteúdo de `backend` para o App Service e define `MONGO_URL`/`DB_NAME` como app settings.
+- `.github/workflows/build_and_push_render.yml` — builda a imagem Docker do backend e pode enviar ao Docker Hub (opcional). Para deploy no Render, conectar o repositório em render.com e usar o `render.yaml` ou apontar para o `backend/Dockerfile`.
+
+Importante: não comite credenciais no repositório; sempre use GitHub Secrets.
+
 ## 📈 **Estatísticas de Performance**
 
 ### **Velocidade**
