@@ -1,43 +1,45 @@
-name: Build and Deploy Q-FAZ
+name: Deploy Frontend (Node.js) to Azure
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout do repositório
-      uses: actions/checkout@v4
+      - name: Checkout código
+        uses: actions/checkout@v4
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-    - name: Instalar dependências do frontend
-      working-directory: frontend
-      run: |
-        npm install
-        npm run build
+      - name: Instalar e Build do Frontend
+        working-directory: ./frontend
+        run: |
+          npm install
+          npm run build
 
-    - name: Instalar dependências do backend
-      working-directory: backend
-      run: |
-        npm install
+      - name: Copiar build para diretório raiz
+        run: |
+          mkdir -p site
+          cp -r frontend/build/* site/
 
-    - name: Login no Azure
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Login no Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Deploy para Azure Web App
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: 'nome-do-seu-app-no-azure'
-        slot-name: 'production'
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: ./backend
+      - name: Deploy Frontend para Azure App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'qfaz-frontend'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_FRONTEND }}
+          package: ./site
