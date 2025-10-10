@@ -29,6 +29,28 @@ load_dotenv(ROOT_DIR / '.env')
 # Create the main app without a prefix
 app = FastAPI()
 
+# CORS para permitir frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Servir arquivos estáticos do frontend
+if os.path.exists("build"):
+    app.mount("/static", StaticFiles(directory="build/static"), name="static")
+    logging.info("✅ Frontend React encontrado e configurado")
+
+@app.get("/")
+async def serve_frontend():
+    """Servir frontend React"""
+    if os.path.exists("build/index.html"):
+        logging.info("✅ Servindo frontend React")
+        return FileResponse("build/index.html")
+    return {"message": "Q-FAZ Backend está funcionando!", "status": "online"}
+
 # Health check endpoint for Docker
 @app.get("/health")
 async def health_check():
@@ -37,17 +59,12 @@ async def health_check():
         return {
             "status": "healthy",
             "timestamp": datetime.utcnow().isoformat(),
-            "service": "Q-FAZ Backend",
-            "version": "1.0.0"
+            "service": "Q-FAZ Backend COMPLETO",
+            "version": "1.0.0",
+            "features": "Storm, Bancos, Mapeamento, Relatórios"
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
-
-# Root endpoint para verificação básica
-@app.get("/")
-async def root():
-    """Endpoint raiz"""
-    return {"message": "Q-FAZ Backend está funcionando!", "status": "online"}
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
