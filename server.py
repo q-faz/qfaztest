@@ -4974,11 +4974,8 @@ async def serve_react_fallback(path: str):
     if path.startswith("api/"):
         raise HTTPException(status_code=404, detail="API route not found")
     
-    # Se existe React build, serve
-    if index_html_exists:
-        return FileResponse("build/index.html")
-    else:
-        raise HTTPException(status_code=404, detail="Frontend not available")
+    # Serve o React que está na raiz
+    return FileResponse("index.html")
 
 app.add_middleware(
     CORSMiddleware,
