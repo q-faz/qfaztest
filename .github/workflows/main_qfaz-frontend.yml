@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '20'
 
-      # 3️⃣ Instalar dependências do frontend com legacy-peer-deps
+      # 3️⃣ Instalar dependências do frontend
       - name: Install frontend dependencies
         run: |
           cd frontend
@@ -42,6 +42,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r backend/requirements.txt
+          pip install uvicorn  # para rodar o backend
 
       # 7️⃣ Validar secrets
       - name: Validate required GitHub Secrets
@@ -68,7 +69,7 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # 9️⃣ Setar variáveis de ambiente no Web App
+      # 9️⃣ Configurar variáveis de ambiente
       - name: Configure Azure Web App environment variables
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
@@ -81,7 +82,7 @@ jobs:
             --resource-group $AZURE_RESOURCE_GROUP \
             --settings MONGO_URL=$MONGO_URL DB_NAME=$DB_NAME
 
-      # 🔟 Deploy do backend via ZIP
+      # 🔟 Deploy do backend (startup command com uvicorn)
       - name: Deploy backend
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
@@ -90,9 +91,14 @@ jobs:
           cd backend
           zip -r ../backend_deploy.zip . -x "__pycache__/*" "*.pyc"
           cd ..
-          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path backend_deploy.zip
+          az webapp deploy \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --name $AZURE_WEBAPP_NAME \
+            --src-path backend_deploy.zip \
+            --type startup \
+            --startup-file "uvicorn server:app --host 0.0.0.0 --port 8000"
 
-      # 1️⃣1️⃣ Deploy do frontend via ZIP
+      # 1️⃣1️⃣ Deploy do frontend como site estático
       - name: Deploy frontend
         env:
           AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
@@ -101,4 +107,8 @@ jobs:
           cd frontend/build
           zip -r ../../frontend_deploy.zip .
           cd ../..
-          az webapp deploy --resource-group $AZURE_RESOURCE_GROUP --name $AZURE_WEBAPP_NAME --src-path frontend_deploy.zip
+          az webapp deploy \
+            --resource-group $AZURE_RESOURCE_GROUP \
+            --name $AZURE_WEBAPP_NAME \
+            --src-path frontend_deploy.zip \
+            --type static
