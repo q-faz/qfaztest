@@ -25,9 +25,13 @@ jobs:
           node-version: '18'
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci
+        # allow legacy peer deps to avoid ERESOLVE failures in CI for this project's deps
+        run: npm ci --no-audit --no-fund --legacy-peer-deps
       - name: Build frontend
         working-directory: frontend
+        # set build-time backend env to be explicit (also runtime override exists in index.html)
+        env:
+          REACT_APP_BACKEND_URL: "https://qfaztest-production.up.railway.app"
         run: npm run build
       # NOTE: Do not remove files from the repo in CI (git rm) — just build the frontend
       - name: Build And Deploy
