@@ -33,6 +33,17 @@
         
         <!-- Script para remover badge do Emergent caso apareça -->
         <script>
+          // Runtime override: define a backend base URL for the SPA so we don't
+          // need to rebuild to change the backend target. Primary: Railway.
+          (function(){
+            try{
+              window.__BACKEND_URL__ = "https://qfaztest-production.up.railway.app";
+            }catch(e){/* ignore */}
+          })();
+
+        </script>
+
+        <script>
           // Remove o badge do Emergent assim que a página carregar
           (function() {
             function removeBadge() {
