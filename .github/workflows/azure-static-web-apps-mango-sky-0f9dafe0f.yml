@@ -29,13 +29,7 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
-      - name: Remove prebuilt repo artifacts
-        run: |
-          git rm -r --cached build || true
-          git rm -r --cached static || true
-          # ensure they won't be re-added in CI
-          echo "build/" >> .gitignore || true
-          echo "static/" >> .gitignore || true
+      # NOTE: Do not remove files from the repo in CI (git rm) — just build the frontend
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -47,7 +41,7 @@ jobs:
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
           app_location: "frontend" # App source code path
           api_location: "" # Api source code path - optional
-          output_location: "frontend/build" # Built app content directory - optional
+          output_location: "build" # Built app content directory - relative to app_location
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
