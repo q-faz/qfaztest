@@ -3,8 +3,26 @@ import { createPortal } from 'react-dom';
 import './App.css';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Resolve BACKEND URL with fallbacks:
+// 1) build-time env variable REACT_APP_BACKEND_URL
+// 2) runtime override window.__BACKEND_URL__ (allows changing backend without rebuilding)
+// 3) empty string -> fallback to relative '/api' (same origin / proxy)
+const getRuntimeBackendUrl = () => {
+  try {
+    // runtime override (can be injected into index.html in production)
+    if (typeof window !== 'undefined' && window.__BACKEND_URL__) {
+      return window.__BACKEND_URL__;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  if (process.env.REACT_APP_BACKEND_URL) return process.env.REACT_APP_BACKEND_URL;
+  return '';
+};
+
+const BACKEND_URL = getRuntimeBackendUrl();
+const API = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
 
 const THEME_OPTIONS = [
   { 
