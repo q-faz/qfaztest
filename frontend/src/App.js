@@ -22,7 +22,42 @@ const getRuntimeBackendUrl = () => {
 };
 
 const BACKEND_URL = getRuntimeBackendUrl();
-const API = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
+// Support runtime list of backends injected via index.html
+const getRuntimeBackendList = () => {
+  try {
+    if (typeof window !== 'undefined' && window.__BACKEND_URLS__ && Array.isArray(window.__BACKEND_URLS__)) {
+      return window.__BACKEND_URLS__;
+    }
+  } catch (e) {}
+  return BACKEND_URL ? [BACKEND_URL] : [];
+};
+
+const BACKEND_LIST = getRuntimeBackendList();
+const API = (base) => base ? `${base}/api` : '/api';
+
+// Helper: try primary backend, on network error/timeout try next
+const apiPostWithFallback = async (path, formData, config = {}) => {
+  const list = BACKEND_LIST.length ? BACKEND_LIST : [''];
+  let lastError = null;
+  for (let i = 0; i < list.length; i++) {
+    const base = list[i];
+    const url = base ? `${API(base)}${path}` : `${API('')}${path}`;
+    try {
+      const resp = await axios.post(url, formData, config);
+      // set global chosen backend for download links
+      try { if (typeof window !== 'undefined') window.__BACKEND_USED__ = base || ''; } catch(e){}
+      return resp;
+    } catch (err) {
+      lastError = err;
+      // if it's a network error or timeout, try next backend
+      const isNetwork = err.message && (err.message.includes('Network Error') || err.message.includes('timeout'));
+      if (!isNetwork) throw err; // server responded with 4xx/5xx - don't fallback
+      // otherwise continue to next
+    }
+  }
+  // all tried
+  throw lastError;
+};
 
 const THEME_OPTIONS = [
   { 
@@ -331,7 +366,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', stormFile);
 
-      const response = await axios.post(`${API}/upload-storm`, formData, {
+      const response = await apiPostWithFallback('/upload-storm', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -386,7 +421,7 @@ function App() {
         formData.append('files', file);
       });
 
-      const response = await axios.post(`${API}/process-banks`, formData, {
+      const response = await apiPostWithFallback('/process-banks', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -422,8 +457,10 @@ function App() {
 
   const downloadResult = () => {
     if (results && results.download_url) {
+      // Prefer the backend that answered (set by apiPostWithFallback) or runtime primary
+      const used = (typeof window !== 'undefined' && window.__BACKEND_USED__) ? window.__BACKEND_USED__ : (BACKEND_LIST[0] || '');
       const link = document.createElement('a');
-      link.href = `${BACKEND_URL}${results.download_url}`;
+      link.href = `${used}${results.download_url}`;
       link.click();
     }
   };

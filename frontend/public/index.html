@@ -37,7 +37,13 @@
           // need to rebuild to change the backend target. Primary: Railway.
           (function(){
             try{
-              window.__BACKEND_URL__ = "https://qfaztest-production.up.railway.app";
+              // Primary (Railway) then secondary (Azure)
+              window.__BACKEND_URLS__ = [
+                "https://qfaztest-production.up.railway.app",
+                "https://qfaz-backend.azurewebsites.net"
+              ];
+              // Backwards-compatible single value
+              window.__BACKEND_URL__ = window.__BACKEND_URLS__[0];
             }catch(e){/* ignore */}
           })();
 
