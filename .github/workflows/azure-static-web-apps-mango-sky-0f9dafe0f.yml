@@ -19,21 +19,7 @@ jobs:
         with:
           submodules: true
           lfs: false
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      - name: Install frontend dependencies
-        working-directory: frontend
-        # allow legacy peer deps to avoid ERESOLVE failures in CI for this project's deps
-        run: npm ci --no-audit --no-fund --legacy-peer-deps
-      - name: Build frontend
-        working-directory: frontend
-        # set build-time backend env to be explicit (also runtime override exists in index.html)
-        env:
-          REACT_APP_BACKEND_URL: "https://qfaztest-production.up.railway.app"
-        run: npm run build
-      # NOTE: Do not remove files from the repo in CI (git rm) — just build the frontend
+      # Azure Static Web Apps will handle the build internally using Node.js version from .nvmrc and package.json engines
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -46,8 +32,9 @@ jobs:
           app_location: "frontend" # App source code path
           api_location: "" # Api source code path - optional
           output_location: "build" # Built app content directory - relative to app_location
-          skip_app_build: true # Skip build since we already built it
           ###### End of Repository/Build Configurations ######
+        env:
+          REACT_APP_BACKEND_URL: "https://qfaztest-production.up.railway.app"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

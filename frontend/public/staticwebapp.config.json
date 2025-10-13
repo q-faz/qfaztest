@@ -2,6 +2,10 @@
   "platform": {
     "apiRuntime": "node:20"
   },
+  "buildCommands": {
+    "pre": "npm ci --legacy-peer-deps",
+    "build": "npm run build"
+  },
   "routes": [
     {
       "route": "/api/*",
