@@ -33,6 +33,23 @@
         
         <!-- Script para remover badge do Emergent caso apareça -->
         <script>
+          // Runtime override: define a backend base URL for the SPA so we don't
+          // need to rebuild to change the backend target. Primary: Railway.
+          (function(){
+            try{
+              // Primary (Railway) then secondary (Azure)
+              window.__BACKEND_URLS__ = [
+                "https://qfaztest-production.up.railway.app",
+                "https://qfaz-backend.azurewebsites.net"
+              ];
+              // Backwards-compatible single value
+              window.__BACKEND_URL__ = window.__BACKEND_URLS__[0];
+            }catch(e){/* ignore */}
+          })();
+
+        </script>
+
+        <script>
           // Remove o badge do Emergent assim que a página carregar
           (function() {
             function removeBadge() {
@@ -74,6 +91,9 @@
 
       You can add webfonts, meta tags, or analytics to this file.
       The build step will place the bundled scripts into the <body> tag.
+
+      NOTE: small non-functional comment below used to force a rebuild/deploy
+      when changes are pushed so runtime backend override is published.
 
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.

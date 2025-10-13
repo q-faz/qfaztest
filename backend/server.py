@@ -4908,13 +4908,29 @@ app.include_router(api_router)
 # Mount static files for frontend
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Configure CORS with a safe default.
+# If CORS_ORIGINS is set to '*' or empty, we allow all origins but disable credentials
+# because Starlette does not allow allow_credentials=True with '*' origin.
+cors_origins_env = os.environ.get('CORS_ORIGINS', '').strip()
+if not cors_origins_env or cors_origins_env == '*':
+    # Allow all origins (no credentials)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # Parse a comma-separated list of allowed origins and enable credentials
+    origins_list = [o.strip() for o in cors_origins_env.split(',') if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=origins_list,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Configure logging
 logging.basicConfig(
