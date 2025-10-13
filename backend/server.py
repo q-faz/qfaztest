@@ -2125,8 +2125,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho na estrutura nomeada (usuario='{usuario_digitador_raw}')")
                     continue
                 
-                # 🔧 DIGIO: Manter usuário digitador no formato original com underscore
-                usuario_digitador = usuario_digitador_raw
+                # 🔧 DIGIO: Remover underscore do usuário digitador para padronizar
+                # Ex: "39891947807_901064" → "39891947807901064"
+                usuario_digitador = usuario_digitador_raw.replace('_', '') if usuario_digitador_raw else ""
                 nome_cliente = str(row.get('NOME', '')).strip()
                 data_nascimento = str(row.get('DATA DE NASCIMENTO', row.get('DATA_NASCIMENTO', ''))).strip()
                 qtd_parcelas = str(row.get('NUMERO PARCELAS', row.get('NUMERO_PARCELAS', ''))).strip()
@@ -2159,9 +2160,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (usuario='{usuario_digitador_raw}', cpf='{cpf_cliente}')")
                     continue
                 
-                # 🔧 DIGIO: Manter usuário digitador no formato original com underscore
-                # Exemplo: "02579846158_202902" (manter como está)
-                usuario_digitador = usuario_digitador_raw
+                # 🔧 DIGIO: Remover underscore do usuário digitador para padronizar
+                # Exemplo: "02579846158_202902" → "02579846158202902"
+                usuario_digitador = usuario_digitador_raw.replace('_', '') if usuario_digitador_raw else ""
                 nome_cliente = str(row.get('Unnamed: 32', '')).strip()
                 data_nascimento = str(row.get('Unnamed: 33', '')).strip()
                 qtd_parcelas = str(row.get('Unnamed: 48', '')).strip()
@@ -3331,7 +3332,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "NUMERO_PARCELAS": str(row.get('Quantidade de Parcelas', '')).strip(),
                 "VALOR_OPERACAO": str(row.get('Valor Financiado', '')).strip(),
                 "VALOR_LIBERADO": str(row.get('VLR_LIB1', row.get('Valor Financiado', ''))).strip(),
-                "USUARIO_BANCO": str(row.get('Nome do Usuário Digitador', '')).strip(),
+                "USUARIO_BANCO": str(row.get('Nome do Usuário Digitador', '')).strip().replace('_', ''),
                 "SITUACAO": str(row.get('Nome da Atividade', row.get('Situação da Proposta', ''))).strip(),
                 "DATA_PAGAMENTO": str(row.get('Data do Lançamento', '')).strip(),
                 "CPF": str(row.get('CPF do Cliente', '')).strip(),
@@ -3365,7 +3366,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "NUMERO_PARCELAS": str(row.get('Prazo proposta', row.get('Parcelas', ''))).strip(),
                 "VALOR_OPERACAO": str(row.get('Valor Liberado', row.get('Valor', ''))).strip(),
                 "VALOR_LIBERADO": str(row.get('Valor Liberado', '')).strip(),
-                "USUARIO_BANCO": str(row.get('Usuário (acesso login)', row.get('Usuario', ''))).strip(),
+                "USUARIO_BANCO": str(row.get('Usuário (acesso login)', row.get('Usuario', ''))).strip().replace('_', ''),
                 "SITUACAO": str(row.get('Status', row.get('Situacao', ''))).strip(),
                 "DATA_PAGAMENTO": str(row.get('Data pagamento Operação', row.get('Data Pagamento', ''))).strip(),
                 "CPF": str(row.get('CPF', '')).strip(),
