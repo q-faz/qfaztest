@@ -2524,11 +2524,21 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     return table_clean
                 
                 # Casos especiais que precisam do prefixo "Tabela"
-                prefixed_cases = ["Exponencial", "EXP", "Linear", "Diferenciada", "Especial", "Padrão", "Padrao"]
+                # CORREÇÃO: EXP deve manter como "EXP", não virar "Exponencial"
+                prefixed_cases = {
+                    "EXPONENCIAL": "Exponencial",
+                    "EXP": "EXP", 
+                    "LINEAR": "Linear",
+                    "DIFERENCIADA": "Diferenciada", 
+                    "ESPECIAL": "Especial",
+                    "PADRÃO": "Padrão",
+                    "PADRAO": "Padrão"
+                }
                 
-                for case in prefixed_cases:
-                    if table_clean.upper() == case.upper():
-                        normalized = f"Tabela {table_clean}"
+                table_upper = table_clean.upper()
+                for key, value in prefixed_cases.items():
+                    if table_upper == key:
+                        normalized = f"Tabela{value}"  # SEM ESPAÇO: TabelaEXP
                         logging.info(f"🔧 VCTEX: Tabela normalizada '{table_clean}' → '{normalized}'")
                         return normalized
                 
