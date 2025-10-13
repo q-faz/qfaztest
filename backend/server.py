@@ -3103,6 +3103,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     normalized_row = None
         
         elif bank_type == "CREFAZ":
+            # 🔍 CREFAZ: Log das colunas disponíveis para debug
+            logging.info(f"🏦 CREFAZ - Colunas disponíveis: {list(row.keys())}")
+            
             # Mapeamento BANCO CREFAZ - Campos reais baseados no mapeamento
             # Colunas reais: Data Cadastro, Número da Proposta, CPF, Cliente, Cidade, Status, Agente, etc.
             
@@ -3156,8 +3159,18 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.warning(f"⚠️ CREFAZ: Erro ao formatar valor '{value_str}': {e}")
                     return str(value_str)  # Retornar original se houver erro
             
-            # Extrair campos
-            proposta = str(row.get('Número da Proposta', row.get('Proposta', ''))).strip()
+            # 🔧 CREFAZ: Extrair ADE da coluna correta "Co Operação"
+            proposta = str(row.get('Co Operação', '')).strip()
+            if not proposta:
+                # Fallback: tentar variações da coluna Co Operação
+                for prop_col in ['Co Operacao', 'CoOperacao', 'Número da Proposta', 'Numero da Proposta', 'Proposta']:
+                    if prop_col in row and str(row[prop_col]).strip():
+                        proposta = str(row[prop_col]).strip()
+                        logging.info(f"🔄 CREFAZ: ADE encontrado em fallback '{prop_col}': {proposta}")
+                        break
+            
+            logging.info(f"🎯 CREFAZ: ADE extraído de 'Co Operação': {proposta}")
+            
             cod_operacao = str(row.get('Cod Operação', row.get('Tabela', ''))).strip()
             produto = str(row.get('Produto', '')).strip()
             
@@ -3166,10 +3179,14 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"⏭️ CREFAZ: Pulando proposta {proposta} - código de operação vazio")
                 continue
             
-            # Extrair código digitador
-            agente = str(row.get('Agente', row.get('Login Agente', ''))).strip()
-            codigo_digitador = str(row.get('Codigo Digitador', row.get('Código Digitador', ''))).strip()
-            usuario_banco = codigo_digitador if codigo_digitador else agente
+            # 🔧 CREFAZ: Extrair usuário digitador da coluna correta "Login Agente"
+            usuario_banco = str(row.get('Login Agente', '')).strip()
+            if not usuario_banco:
+                # Fallback: tentar outras variações
+                usuario_banco = str(row.get('Agente', row.get('Código Digitador', row.get('Codigo Digitador', '')))).strip()
+                logging.info(f"🔄 CREFAZ: Usuário encontrado em fallback: {usuario_banco}")
+            
+            logging.info(f"🎯 CREFAZ: Usuário digitador extraído de 'Login Agente': {usuario_banco}")
             
             # 🔍 CREFAZ: Detectar ÓRGÃO baseado no CÓDIGO (não no produto)
             # Os códigos já vêm corretos do arquivo: ENER, CPAUTO, LUZ, BOL, CSD
