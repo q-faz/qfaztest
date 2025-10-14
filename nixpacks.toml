@@ -1,11 +1,14 @@
 [phases.setup]
-nixPkgs = ['python39', 'python39Packages.pip']
+nixPkgs = ["python311", "python311Packages.pip", "python311Packages.setuptools", "python311Packages.wheel"]
 
 [phases.install]
-cmds = ['python -m pip install --upgrade pip', 'python -m pip install -r requirements.txt']
+cmds = [
+    "python3.11 -m pip install --upgrade pip setuptools wheel",
+    "python3.11 -m pip install -r requirements.txt"
+]
 
 [phases.build]
-cmds = ['echo "Build completed"']
+cmds = ["echo 'Build completed'"]
 
 [start]
-cmd = 'cd backend && python start_server.py'
+cmd = "cd backend && python3.11 start_server.py"
