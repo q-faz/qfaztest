@@ -2654,11 +2654,12 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 table_clean = str(table_name).strip()
                 
                 # 🎯 CASOS ESPECÍFICOS COMPLETOS (com "Tabela" no nome)
+                # EXP e Exponencial são DIFERENTES!
                 if table_clean.upper() == "TABELA EXP":
-                    logging.info(f"🔧 VCTEX: 'Tabela EXP' → 'TabelaEXP'")
+                    logging.info(f"🔧 VCTEX: 'Tabela EXP' → 'TabelaEXP' (EXP é diferente de Exponencial)")
                     return "TabelaEXP"
                 elif table_clean.upper() == "TABELA EXPONENCIAL":
-                    logging.info(f"🔧 VCTEX: 'Tabela Exponencial' → 'TabelaExponencial'")
+                    logging.info(f"🔧 VCTEX: 'Tabela Exponencial' → 'TabelaExponencial' (Exponencial é diferente de EXP)")
                     return "TabelaExponencial"
                 elif table_clean.upper() == "TABELA LINEAR":
                     return "TabelaLinear"
@@ -2676,21 +2677,21 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 # 🎯 CASOS SEM PREFIXO "Tabela"
                 table_upper = table_clean.upper()
                 
-                # Casos que devem manter nome original
+                # EXP e Exponencial são DIFERENTES - tratar separadamente
                 if table_upper == "EXP":
-                    logging.info(f"🔧 VCTEX: 'EXP' → 'TabelaEXP'")
+                    logging.info(f"🔧 VCTEX: 'EXP' → 'TabelaEXP' (mantém EXP, não confundir com Exponencial)")
                     return "TabelaEXP"
+                elif table_upper == "EXPONENCIAL":
+                    logging.info(f"🔧 VCTEX: 'Exponencial' → 'TabelaExponencial' (mantém Exponencial, não confundir com EXP)")
+                    return "TabelaExponencial"
+                
+                # Outros casos específicos
                 elif table_upper == "VCT":
                     return "TabelaVCT"
                 elif table_upper == "RELAX":
                     return "TabelaRelax" 
                 elif table_upper == "VAMO":
                     return "TabelaVamo"
-                
-                # Casos que precisam conversão
-                elif table_upper == "EXPONENCIAL":
-                    logging.info(f"🔧 VCTEX: 'Exponencial' → 'TabelaExponencial'")
-                    return "TabelaExponencial"
                 elif table_upper == "LINEAR":
                     return "TabelaLinear"
                 elif table_upper in ["DIFERENCIADA", "ESPECIAL", "PADRÃO", "PADRAO"]:
@@ -2703,6 +2704,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             tabela_normalized = normalize_vctex_table_name(tabela_raw)
             logging.info(f"📋 VCTEX: Tabela original: '{tabela_raw}' → Normalizada: '{tabela_normalized}' (será usada para buscar CODIGO TABELA STORM no CSV)")
+            logging.info(f"🔍 VCTEX DEBUG: tabela_raw='{tabela_raw}' | tabela_normalized='{tabela_normalized}' | EXP≠Exponencial")
             
             # Normalizar ORGAO usando CONVENIO e TABELA como indicadores
             orgao_vctex = ""
@@ -3188,8 +3190,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     elif any(palavra in status_clean for palavra in ['AGUARDANDO', 'ANALISE', 'PENDENTE', 'ABERTO', 'ABERTA', 'DIGITACAO', 'PROCESSAMENTO', 'EM PROCESSAMENTO']):
                         return "AGUARDANDO"
                     else:
-                        # Se não reconhecer, manter status original limpo
-                        return status_clean if status_clean else "AGUARDANDO"
+                        # Se não reconhecer nenhuma palavra-chave, retornar AGUARDANDO
+                        logging.info(f"🔍 SANTANDER: Status não reconhecido '{status_clean}' → AGUARDANDO")
+                        return "AGUARDANDO"
                         
                 except Exception as e:
                     logging.warning(f"⚠️ SANTANDER: Erro ao normalizar status '{status_str}': {e}")
