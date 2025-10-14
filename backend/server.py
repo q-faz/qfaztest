@@ -3173,20 +3173,21 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.warning(f"⚠️ CREFAZ: Erro ao formatar valor '{value_str}': {e}")
                     return str(value_str)  # Retornar original se houver erro
             
-            # 🔧 CREFAZ: Extrair ADE da coluna correta "Co Operação" 
-            proposta = str(row.get('Co Operação', '')).strip()
+            # 🔧 CREFAZ: CORREÇÃO DEFINITIVA - CAMPOS ESTAVAM INVERTIDOS!
+            # PROPOSTA (ADE) deve vir de "Cod Operação" (ex: 3915740)
+            proposta = str(row.get('Cod Operação', '')).strip()
             if not proposta:
-                # Fallback: tentar variações da coluna Co Operação
-                for prop_col in ['Co Operacao', 'CoOperacao', 'Número da Proposta', 'Numero da Proposta', 'Proposta']:
-                    if prop_col in row and str(row[prop_col]).strip():
-                        proposta = str(row[prop_col]).strip()
-                        logging.info(f"🔄 CREFAZ: ADE encontrado em fallback '{prop_col}': {proposta}")
+                # Fallback para ADE
+                for ade_col in ['Cod Operacao', 'CodOperacao', 'Número da Proposta', 'Numero da Proposta']:
+                    if ade_col in row and str(row[ade_col]).strip():
+                        proposta = str(row[ade_col]).strip()
+                        logging.info(f"🔄 CREFAZ: ADE encontrado em fallback '{ade_col}': {proposta}")
                         break
             
-            logging.info(f"🎯 CREFAZ: ADE extraído de 'Co Operação': {proposta}")
+            logging.info(f"🎯 CREFAZ: ADE (PROPOSTA) extraído de 'Cod Operação': {proposta}")
             
-            # 🔧 CREFAZ: Extrair código de tabela da coluna correta "Cod Operação" (diferente de Co Operação)
-            cod_operacao = str(row.get('Cod Operação', row.get('Tabela', ''))).strip()
+            # 🔧 CREFAZ: CÓDIGO DE TABELA deve vir de "Co Operação" (ex: ENER, BOL, CPAUTO)
+            cod_operacao = str(row.get('Co Operação', row.get('Tabela', ''))).strip()
             produto = str(row.get('Produto', '')).strip()
             
             # ✅ VALIDAÇÃO: Pular linhas com código de operação vazio
