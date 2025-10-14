@@ -223,7 +223,7 @@ QUALIBANKING;INSS;000098 Loas 88 Entrante Plus 96x 1,85%;98;Margem Livre (Novo);
 QUALIBANKING;INSS;000146 Entrante Max 96x 1,85%;146;Margem Livre (Novo);1,85%
 QUALIBANKING;INSS;000158 Portabilidade + Refinanciamento 1,75% 96x;158;Refinanciamento da Portabilidade;1,85%
 QUALIBANKING;INSS;000158 Portabilidade + Refinanciamento 1,75% 96x;158;Portabilidade + Refinanciamento;1,85%
-BANCO VCTEX;FGTS;Tabela Exponencial;TabelaEXP;Margem Livre (Novo);1,83%
+BANCO VCTEX;FGTS;Tabela Exponencial;TabelaExponencial;Margem Livre (Novo);1,83%
 QUALIBANKING;INSS;000109 Novo Sem Seguro 96x 1,85%;109;Margem Livre (Novo);1,85%
 BRB - CR�DITO, FINANCIAMENTO E INVESTIMENTO;INSS;INSSDIG21 (Normal e LOAS) Tx. 1,79%;DIG21;Refinanciamento da Portabilidade;1,79%
 BRB - CR�DITO, FINANCIAMENTO E INVESTIMENTO;INSS;INSSDIG103 (Normal e LOAS) Tx. 1,85%;DIG103;Portabilidade + Refin;1,85%
@@ -243,7 +243,7 @@ BANCO DIGIO S.A.;INSS;REFIN-96X-1,65-TKT 1000;1717;Refinanciamento;1,65%
 BRB - CR�DITO, FINANCIAMENTO E INVESTIMENTO;INSS;INSSDIG102 (Normal e LOAS) Tx. 1,85%;DIG103;Portabilidade + Refin;1,85%
 BANCO TOTALCASH;INSS;INSS - Port/Refin - Tx. 1,80% - Com Seguro;TCREFINPORT180SEG;Portabilidade + Refinanciamento;1,80%
 BANCO TOTALCASH;INSS;INSS - Port/Refin - Tx. 1,85% - Com Seguro;TCREFINPORT185SEG;Portabilidade + Refinanciamento;1,85%
-BANCO VCTEX;FGTS;Tabela EXP;TabelaExponencial;Margem Livre (Novo);1,83%
+BANCO VCTEX;FGTS;Tabela EXP;TabelaEXP;Margem Livre (Novo);1,83%
 BANCO C6 BANK;FGTS;610001 - FGTS NORMAL WEB;610001;Margem Livre (Novo);1,79%
 BANCO C6 BANK;INSS;230026 - INSS Port Tx1,679 ~ 1,350 Flex2 - Web;230026;Refinanciamento da Portabilidade;1,35%
 BRB - CR�DITO, FINANCIAMENTO E INVESTIMENTO;INSS;INSSDIG102 (Normal e LOAS) Tx. 1,85%;DIG102;Refinanciamento;1,85%
