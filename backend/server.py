@@ -2140,10 +2140,24 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             logging.info(f"🔍 DIGIO estrutura: {unnamed_count} Unnamed de {total_count} colunas ({unnamed_count/total_count*100:.1f}%)")
             
-            # ⚠️ DIGIO: Se TODAS as colunas são Unnamed, o arquivo pode estar corrompido
-            if unnamed_count == total_count and total_count > 50:
-                logging.error(f"❌ DIGIO: Arquivo parece corrompido - TODAS as {total_count} colunas são Unnamed!")
-                continue
+            # 🔍 DIGIO: Arquivos DIGIO podem ter TODAS as colunas como Unnamed (isso é normal!)
+            # Só rejeitar se não tem nenhum conteúdo válido nas primeiras colunas
+            if unnamed_count == total_count and total_count > 100:
+                # Verificar se tem conteúdo nas primeiras colunas importantes
+                has_valid_content = False
+                for i in range(min(10, total_count)):
+                    col_name = f'Unnamed: {i}'
+                    if col_name in row.index:
+                        value = str(row.get(col_name, '')).strip()
+                        if value and value not in ['nan', 'None', '', 'NaN']:
+                            has_valid_content = True
+                            break
+                
+                if not has_valid_content:
+                    logging.error(f"❌ DIGIO: Arquivo sem conteúdo válido nas primeiras colunas - {total_count} colunas Unnamed!")
+                    continue
+                else:
+                    logging.info(f"✅ DIGIO: Arquivo com {total_count} colunas Unnamed mas tem conteúdo válido - prosseguindo")
             
             if not has_unnamed_structure:
                 # Estrutura com cabeçalhos nomeados (CSV exportado)
@@ -2157,17 +2171,20 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 usuario_digitador_raw = str(row.get('USUARIO BANCO', row.get('USUARIO_BANCO', ''))).strip()
                 cpf_cliente = str(row.get('CPF', '')).strip()
                 
-                # 🔍 DIGIO: Pular linhas de cabeçalho também na estrutura nomeada (menos restritivo)
-                if (usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO', 'USER', 'LOGIN'] or 
+                # 🔍 DIGIO: Pular linhas de cabeçalho também na estrutura nomeada
+                # Verificar se tem "BANCO DIGIO" em qualquer posição da linha
+                row_values = ' '.join([str(val) for val in row.values if pd.notna(val)]).upper()
+                if ('BANCO DIGIO' in row_values or
+                    usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO', 'USER', 'LOGIN'] or 
                     cpf_cliente.upper() in ['CPF', 'CPF_CLIENTE', 'DOCUMENTO'] or
                     nome_orgao_raw.upper() in ['ORGAO', 'NOME_ORGAO', 'ORGAN'] or
                     proposta.upper() in ['PROPOSTA', 'ID', 'NUMERO', 'CODE']):
-                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho na estrutura nomeada (proposta='{proposta}', usuario='{usuario_digitador_raw}')")
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho (contém: 'BANCO DIGIO' ou outros indicadores)")
                     continue
                 
-                # ✅ DIGIO: Validar se proposta tem conteúdo válido
-                if not proposta or proposta.strip() == '' or proposta.strip() in ['nan', 'None', 'NaN']:
-                    logging.info(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
+                # ✅ DIGIO: Validar se proposta tem conteúdo válido (estrutura nomeada)
+                if not proposta or str(proposta).strip() == '' or str(proposta).strip().lower() in ['nan', 'none']:
+                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
                     continue
                 
                 # 🔧 DIGIO: Manter underscore do usuário digitador no formato original
@@ -2198,17 +2215,20 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 usuario_digitador_raw = str(row.get('Unnamed: 29', '')).strip()
                 cpf_cliente = str(row.get('Unnamed: 31', '')).strip()
                 
-                # 🔍 DIGIO: Pular linhas de cabeçalho - detectar se é linha de header (menos restritivo)
-                if (usuario_digitador_raw.upper() in ['DESCR_USU_DIGITADOR', 'COD_USUARIO_DIGITADOR', 'USER', 'LOGIN'] or 
+                # 🔍 DIGIO: Pular linhas de cabeçalho - detectar se é linha de header
+                # Verificar se tem "BANCO DIGIO" em qualquer posição da linha
+                row_values = ' '.join([str(val) for val in row.values if pd.notna(val)]).upper()
+                if ('BANCO DIGIO' in row_values or 
+                    usuario_digitador_raw.upper() in ['DESCR_USU_DIGITADOR', 'COD_USUARIO_DIGITADOR', 'USER', 'LOGIN'] or 
                     cpf_cliente.upper() in ['CPF_CLIENTE', 'CPF_USU_DIGITADOR', 'CPF', 'DOCUMENTO'] or
                     nome_orgao_raw.upper() in ['NOME_ORGAO', 'COD_ORGAO', 'ORGAO'] or
                     proposta.upper() in ['PROPOSTA', 'ID', 'NUMERO', 'CODE']):
-                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (proposta='{proposta}', usuario='{usuario_digitador_raw}', cpf='{cpf_cliente}')")
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (contém: 'BANCO DIGIO' ou outros indicadores)")
                     continue
                 
-                # ✅ DIGIO: Validar se proposta tem conteúdo válido
-                if not proposta or proposta.strip() == '' or proposta.strip() in ['nan', 'None', 'NaN']:
-                    logging.info(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
+                # ✅ DIGIO: Validar se proposta tem conteúdo válido (estrutura Unnamed)  
+                if not proposta or str(proposta).strip() == '' or str(proposta).strip().lower() in ['nan', 'none']:
+                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
                     continue
                 
                 # 🔧 DIGIO: Manter underscore do usuário digitador no formato original
