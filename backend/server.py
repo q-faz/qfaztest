@@ -3178,16 +3178,20 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.warning(f"⚠️ CREFAZ: Erro ao formatar valor '{value_str}': {e}")
                     return str(value_str)  # Retornar original se houver erro
             
-            # 🔧 CREFAZ: CORREÇÃO - Pegar ADE de "Número da Proposta" e filtrar vazios
-            # PROPOSTA (ADE) deve vir de "Número da Proposta" (ex: 1054049239)
-            proposta = str(row.get('Número da Proposta', '')).strip()
+            # 🔧 CREFAZ: CORREÇÃO - ADE deve vir da coluna "Cod Operação" (ex: 3915740)
+            # O ADE correto está em "Cod Operação", não em "Número da Proposta"
+            proposta = str(row.get('Cod Operação', '')).strip()
+            
+            # Fallback: tentar outras variações da coluna se não encontrar
+            if not proposta or proposta in ['nan', 'None', '', 'NaN', '0']:
+                proposta = str(row.get('Cod Operacao', row.get('COD_OPERACAO', ''))).strip()
             
             # ✅ FILTRAR LINHAS VAZIAS - Pular se ADE for vazio/nan
-            if not proposta or proposta in ['nan', 'None', '', 'NaN']:
-                logging.info(f"⏭️ CREFAZ: Pulando linha com ADE vazio/nan: '{proposta}'")
+            if not proposta or proposta in ['nan', 'None', '', 'NaN', '0']:
+                logging.info(f"⏭️ CREFAZ: Pulando linha - ADE vazio na coluna 'Cod Operação': '{proposta}'")
                 continue
                 
-            logging.info(f"🎯 CREFAZ: ADE válido encontrado: {proposta}")
+            logging.info(f"🎯 CREFAZ: ADE correto encontrado em 'Cod Operação': {proposta}")
             
             # 🔧 CREFAZ: CÓDIGO DE TABELA - gerar baseado no produto
             produto_raw = str(row.get('Produto', '')).strip().upper()
@@ -3211,14 +3215,30 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"⏭️ CREFAZ: Pulando proposta {proposta} - código de operação vazio")
                 continue
             
-            # 🔧 CREFAZ: Extrair usuário digitador da coluna correta "Login Agente"
-            usuario_banco = str(row.get('Login Agente', '')).strip()
-            if not usuario_banco:
-                # Fallback: tentar outras variações
-                usuario_banco = str(row.get('Agente', row.get('Código Digitador', row.get('Codigo Digitador', '')))).strip()
-                logging.info(f"🔄 CREFAZ: Usuário encontrado em fallback: {usuario_banco}")
+            # 🔧 CREFAZ: Extrair usuário digitador - tentar múltiplas colunas
+            usuario_candidates = [
+                'Login Agente', 'login agente', 'LOGIN_AGENTE',
+                'Agente', 'agente', 'AGENTE',
+                'Código Digitador', 'Codigo Digitador', 'COD_DIGITADOR',
+                'Usuario', 'USUARIO', 'usuario',
+                'Digitador', 'DIGITADOR', 'digitador'
+            ]
             
-            logging.info(f"🎯 CREFAZ: Usuário digitador extraído de 'Login Agente': {usuario_banco}")
+            usuario_banco = ""
+            col_usuario_usada = ""
+            for col_name in usuario_candidates:
+                temp_usuario = str(row.get(col_name, '')).strip()
+                if temp_usuario and temp_usuario not in ['nan', 'None', '', 'NaN']:
+                    usuario_banco = temp_usuario
+                    col_usuario_usada = col_name
+                    break
+            
+            # Se não encontrou usuário válido, usar valor padrão
+            if not usuario_banco:
+                usuario_banco = "SISTEMA"
+                col_usuario_usada = "DEFAULT"
+            
+            logging.info(f"🎯 CREFAZ: Usuário digitador: '{usuario_banco}' (coluna: '{col_usuario_usada}')")
             
             # 🔍 CREFAZ: Detectar ÓRGÃO baseado no CÓDIGO (não no produto)
             # Os códigos já vêm corretos do arquivo: ENER, CPAUTO, LUZ, BOL, CSD
