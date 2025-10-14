@@ -3074,7 +3074,31 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             data_averbacao = str(row.get('DATA AVERBACAO', row.get('DATA DE PAGAMENTO', ''))).strip()
             cod_digitador = str(row.get('COD DIGITADOR NO BANCO', row.get('USUARIO BANCO', ''))).strip()
             
+            # 🎯 SANTANDER: Formatar usuário digitador no padrão CPF_código se necessário
+            def format_santander_usuario(cod_digitador_raw):
+                """Formatar usuário digitador SANTANDER no padrão esperado"""
+                if not cod_digitador_raw or cod_digitador_raw in ['', 'nan', 'NaN']:
+                    return ""
+                
+                cod_clean = str(cod_digitador_raw).strip()
+                
+                # Se já tem formato CPF_código (underscore), manter
+                if '_' in cod_clean:
+                    return cod_clean
+                
+                # Se é só número (código), tentar formar CPF_código usando CPF do cliente
+                if cod_clean.isdigit() and len(cod_clean) <= 10:
+                    cpf_cliente_clean = ''.join(filter(str.isdigit, cpf)) if cpf else ""
+                    if len(cpf_cliente_clean) >= 11:
+                        return f"{cpf_cliente_clean[:11]}_{cod_clean}"
+                
+                # Se não conseguir formar, manter original
+                return cod_clean
+            
+            usuario_digitador_formatado = format_santander_usuario(cod_digitador)
+            
             logging.info(f"📋 SANTANDER extraído: Proposta={proposta}, Cliente={cliente[:20] if cliente else 'N/A'}, CPF={cpf[:6] if cpf else 'N/A'}...")
+            logging.info(f"👤 SANTANDER usuário: '{cod_digitador}' → '{usuario_digitador_formatado}'")
             logging.info(f"🔍 SANTANDER validações: proposta='{proposta}', convenio='{convenio[:30] if convenio else 'N/A'}', produto='{produto[:50] if produto else 'N/A'}'")
             
             # ✅ VALIDAÇÃO: Verificar se linha deve ser processada
@@ -3149,7 +3173,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                         "NUMERO_PARCELAS": parcelas,
                         "VALOR_OPERACAO": format_santander_value(valor_bruto),
                         "VALOR_LIBERADO": format_santander_value(valor_liquido),
-                        "USUARIO_BANCO": cod_digitador,
+                        "USUARIO_BANCO": usuario_digitador_formatado,
                         "SITUACAO": normalize_santander_status(status),
                         "DATA_PAGAMENTO": data_averbacao if normalize_santander_status(status) == "PAGO" else "",
                         "CPF": cpf,
