@@ -2123,6 +2123,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,  # CPF já extraído e validado
                 "NOME": str(row.get('NomeCliente', '')).strip(),
                 "DATA_NASCIMENTO": str(row.get('DataNascimento', '')).strip() if 'DataNascimento' in df.columns else "",
+                "TELEFONE": "",    # AVERBAI não tem dados de telefone
+                "ENDERECO": "",    # AVERBAI não tem dados de endereço
+                "BAIRRO": "",      # AVERBAI não tem dados de bairro
+                "CEP": "",         # AVERBAI não tem dados de CEP
+                "UF": "",          # AVERBAI não tem dados de UF
                 "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
                 "CODIGO_TABELA": codigo_tabela_direto,  # 🎯 CÓDIGO DIRETO DO ARQUIVO!
                 "TAXA": taxa_formatada,  # 📊 TAXA ORGANIZADA CONFORME TABELA
@@ -2848,6 +2853,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de nascimento', '')).strip() if 'Data de nascimento' in df.columns else "",
+                "TELEFONE": "",    # VCTEX não tem dados de telefone
+                "ENDERECO": "",    # VCTEX não tem dados de endereço
+                "BAIRRO": "",      # VCTEX não tem dados de bairro
+                "CEP": "",         # VCTEX não tem dados de CEP
+                "UF": "",          # VCTEX não tem dados de UF
                 "VALOR_PARCELAS": valor_parcela_formatado,  # 💰 FORMATADO
                 "CODIGO_TABELA": tabela_normalized,  # Nome NORMALIZADO da tabela (usado para buscar no dicionário)
                 "TAXA": taxa_raw,  # Taxa do arquivo (mas será substituída pelo mapeamento se encontrar)
@@ -2880,6 +2890,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CPF": str(row.get('CPF', '')).strip(),
                     "NOME": str(row.get('NOME', '')).strip().upper(),
                     "DATA_NASCIMENTO": str(row.get('DATA DE NASCIMENTO', '')).strip(),
+                    "TELEFONE": str(row.get('TELEFONE', '')).strip(),
+                    "ENDERECO": str(row.get('ENDERECO', row.get('ENDEREÇO', ''))).strip(),
+                    "BAIRRO": str(row.get('BAIRRO', '')).strip(),
+                    "CEP": str(row.get('CEP', '')).strip(),
+                    "UF": str(row.get('UF', '')).strip(),
                     "CODIGO_TABELA": str(row.get('CODIGO TABELA', '')).strip(),
                     "VALOR_PARCELAS": str(row.get('VALOR PARCELAS', '')).strip(),
                     "TAXA": str(row.get('TAXA', '')).strip(),
@@ -3533,6 +3548,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,
                 "NOME": nome_cliente,
                 "DATA_NASCIMENTO": data_nascimento,
+                "TELEFONE": "",    # QUERO MAIS não tem dados de telefone
+                "ENDERECO": "",    # QUERO MAIS não tem dados de endereço
+                "BAIRRO": "",      # QUERO MAIS não tem dados de bairro
+                "CEP": "",         # QUERO MAIS não tem dados de CEP
+                "UF": "",          # QUERO MAIS não tem dados de UF
                 "CODIGO_TABELA": codigo_tabela_final,  # Código sem zeros à esquerda (4717)
                 "VALOR_PARCELAS": valor_parcela,
                 "TAXA": "0,00%",  # Taxa fixa para QUERO MAIS
@@ -3559,6 +3579,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF do Cliente', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', '')).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de Nascimento', '')).strip(),
+                "TELEFONE": "",    # PAN não tem dados de telefone
+                "ENDERECO": "",    # PAN não tem dados de endereço
+                "BAIRRO": "",      # PAN não tem dados de bairro
+                "CEP": "",         # PAN não tem dados de CEP
+                "UF": "",          # PAN não tem dados de UF
                 "CODIGO_TABELA": str(row.get('Nome do Convênio', row.get('Código do Convênio', ''))).strip(),
                 "VALOR_PARCELAS": str(row.get('Valor da Parcela', '')).strip(),
                 "TAXA": "",
