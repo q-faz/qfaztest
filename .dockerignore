@@ -1,5 +1,9 @@
 # Arquivos a serem ignorados no build do Docker
 
+# IMPORTANTE: Incluir arquivos essenciais do backend
+!backend/relat_orgaos.csv
+!backend/*.csv
+
 # Diretórios desnecessários
 node_modules/
 frontend/

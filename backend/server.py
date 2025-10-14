@@ -2130,6 +2130,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             logging.info(f"🔍 DIGIO estrutura: {unnamed_count} Unnamed de {total_count} colunas ({unnamed_count/total_count*100:.1f}%)")
             
+            # ⚠️ DIGIO: Se TODAS as colunas são Unnamed, o arquivo pode estar corrompido
+            if unnamed_count == total_count and total_count > 50:
+                logging.error(f"❌ DIGIO: Arquivo parece corrompido - TODAS as {total_count} colunas são Unnamed!")
+                continue
+            
             if not has_unnamed_structure:
                 # Estrutura com cabeçalhos nomeados (CSV exportado)
                 logging.info("🔍 DIGIO: Detectada estrutura com cabeçalhos nomeados")
