@@ -4395,31 +4395,49 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - preservar nome EXATO da tabela do arquivo para mapeamento correto
-            # O problema era que VCTEX estava passando pelo mapeamento geral que pode alterar nomes
-            tabela_original = normalized_row.get("CODIGO_TABELA", "")
-            banco_para_mapeamento = normalized_row.get("BANCO", "")
-            orgao_para_mapeamento = normalized_row.get("ORGAO", "")
-            operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
+            # 🎯 VCTEX - MAPEAMENTO DIRETO ESPECÍFICO (sem dependência da busca complexa)
+            tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             
-            print(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}' será preservada para mapeamento")
-            logging.warning(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}' será preservada para mapeamento")
+            print(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}'")
+            logging.warning(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}'")
             
-            # Aplicar mapeamento específico VCTEX mantendo tabela original
-            mapping_result = apply_mapping(
-                banco_para_mapeamento,
-                orgao_para_mapeamento,
-                operacao_para_mapeamento,
-                "",  # usuario vazio
-                tabela_original  # Usar tabela EXATA do arquivo
-            )
-            
-            if mapping_result:
-                print(f"✅🔥 VCTEX: Mapeamento encontrado para '{tabela_original}' → CODIGO_STORM='{mapping_result.get('codigo_tabela', '')}', TAXA='{mapping_result.get('taxa_storm', '')}'")
-                logging.warning(f"✅🔥 VCTEX: Mapeamento encontrado para '{tabela_original}' → CODIGO_STORM='{mapping_result.get('codigo_tabela', '')}', TAXA='{mapping_result.get('taxa_storm', '')}'")
+            # MAPEAMENTO DIRETO HARDCODED PARA VCTEX (solução imediata)
+            mapping_result = None
+            if tabela_original == "Tabela EXP":
+                mapping_result = {
+                    'codigo_tabela': 'TabelaEXP',
+                    'taxa_storm': '1,83%',
+                    'operacao_storm': 'Margem Livre (Novo)'
+                }
+                print(f"✅🔥 VCTEX DIRETO: 'Tabela EXP' → 'TabelaEXP' (1,83%)")
+                logging.warning(f"✅🔥 VCTEX DIRETO: 'Tabela EXP' → 'TabelaEXP' (1,83%)")
+            elif tabela_original == "Tabela Exponencial":
+                mapping_result = {
+                    'codigo_tabela': 'TabelaExponencial',
+                    'taxa_storm': '1,83%',
+                    'operacao_storm': 'Margem Livre (Novo)'
+                }
+                print(f"✅🔥 VCTEX DIRETO: 'Tabela Exponencial' → 'TabelaExponencial' (1,83%)")
+                logging.warning(f"✅🔥 VCTEX DIRETO: 'Tabela Exponencial' → 'TabelaExponencial' (1,83%)")
             else:
-                print(f"⚠️🔥 VCTEX: Mapeamento NÃO encontrado para tabela '{tabela_original}' - mantendo original")
-                logging.warning(f"⚠️🔥 VCTEX: Mapeamento NÃO encontrado para tabela '{tabela_original}' - mantendo original")
+                # Fallback para o mapeamento original se não for uma das duas tabelas conhecidas
+                banco_para_mapeamento = normalized_row.get("BANCO", "")
+                orgao_para_mapeamento = normalized_row.get("ORGAO", "")
+                operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
+                
+                mapping_result = apply_mapping(
+                    banco_para_mapeamento,
+                    orgao_para_mapeamento,
+                    operacao_para_mapeamento,
+                    "",  # usuario vazio
+                    tabela_original  # Usar tabela EXATA do arquivo
+                )
+                print(f"🔄🔥 VCTEX FALLBACK: '{tabela_original}' → busca automática")
+                logging.warning(f"🔄🔥 VCTEX FALLBACK: '{tabela_original}' → busca automática")
+            
+            if not mapping_result:
+                print(f"⚠️🔥 VCTEX: Nenhum mapeamento encontrado para tabela '{tabela_original}' - mantendo original")
+                logging.warning(f"⚠️🔥 VCTEX: Nenhum mapeamento encontrado para tabela '{tabela_original}' - mantendo original")
         elif bank_type == "FACTA92":
             # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
