@@ -685,7 +685,8 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
         return "STORM"
     elif 'averbai' in filename_lower:
         return "AVERBAI"
-    elif 'digio' in filename_lower:
+    elif any(indicator in filename_lower for indicator in ['digio', 'wfsic', 'wfi']):
+        logging.info(f"✅ DIGIO detectado por nome do arquivo: {filename}")
         return "DIGIO"
     elif 'prata' in filename_lower:
         return "PRATA"
@@ -723,10 +724,10 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             # Indicadores únicos do DIGIO (expandidos para melhor detecção)
             digio_unique_indicators = [
                 'banco digio', 'digio s.a', 'digio s/a', 'digio bank', 'digio',
-                'propostas cadastradas', 'tkt', 'ticket', 
-                'status: ativo', 'status: cancelado', 'status: pago',
-                'ativo', 'cancelado', 'pago', 'liberado',
-                'digio.com', 'app digio', 'digital bank'
+                'propostas cadastradas', 'relatório de propostas', 'relatorio de propostas',
+                'sic - v.', 'mprlprcd', 'proc.:', 'sist.:', 'cont.:',
+                'tipo: por data', 'por data de liberação', 'periodo:',
+                'tkt', 'ticket', 'ativo', 'cancelado', 'pago', 'liberado'
             ]
             found_digio_indicators = [ind for ind in digio_unique_indicators if ind in all_data]
             
