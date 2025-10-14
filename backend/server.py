@@ -2750,7 +2750,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "NOME": str(row.get('Nome do Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de nascimento', '')).strip() if 'Data de nascimento' in df.columns else "",
                 "VALOR_PARCELAS": valor_parcela_formatado,  # 💰 FORMATADO
-                "CODIGO_TABELA": tabela_normalized,  # Nome NORMALIZADO da tabela (usado para buscar no dicionário)
+                "CODIGO_TABELA": tabela_normalized.replace(" ", "") if tabela_normalized else "",  # 🔧 REMOVER ESPAÇOS: "Tabela Exponencial" → "TabelaExponencial"
                 "TAXA": taxa_raw,  # Taxa do arquivo (mas será substituída pelo mapeamento se encontrar)
                 "OBSERVACOES": str(row.get('Observação', row.get('Observações', row.get('Observacoes', row.get('Obs', ''))))).strip()  # Campo observações do VCTEX
             }
