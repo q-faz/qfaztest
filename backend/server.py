@@ -3173,21 +3173,32 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.warning(f"⚠️ CREFAZ: Erro ao formatar valor '{value_str}': {e}")
                     return str(value_str)  # Retornar original se houver erro
             
-            # 🔧 CREFAZ: CORREÇÃO DEFINITIVA - CAMPOS ESTAVAM INVERTIDOS!
-            # PROPOSTA (ADE) deve vir de "Cod Operação" (ex: 3915740)
-            proposta = str(row.get('Cod Operação', '')).strip()
-            if not proposta:
-                # Fallback para ADE
-                for ade_col in ['Cod Operacao', 'CodOperacao', 'Número da Proposta', 'Numero da Proposta']:
-                    if ade_col in row and str(row[ade_col]).strip():
-                        proposta = str(row[ade_col]).strip()
-                        logging.info(f"🔄 CREFAZ: ADE encontrado em fallback '{ade_col}': {proposta}")
-                        break
+            # 🔧 CREFAZ: CORREÇÃO - Pegar ADE de "Número da Proposta" e filtrar vazios
+            # PROPOSTA (ADE) deve vir de "Número da Proposta" (ex: 1054049239)
+            proposta = str(row.get('Número da Proposta', '')).strip()
             
-            logging.info(f"🎯 CREFAZ: ADE (PROPOSTA) extraído de 'Cod Operação': {proposta}")
+            # ✅ FILTRAR LINHAS VAZIAS - Pular se ADE for vazio/nan
+            if not proposta or proposta in ['nan', 'None', '', 'NaN']:
+                logging.info(f"⏭️ CREFAZ: Pulando linha com ADE vazio/nan: '{proposta}'")
+                continue
+                
+            logging.info(f"🎯 CREFAZ: ADE válido encontrado: {proposta}")
             
-            # 🔧 CREFAZ: CÓDIGO DE TABELA deve vir de "Co Operação" (ex: ENER, BOL, CPAUTO)
-            cod_operacao = str(row.get('Co Operação', row.get('Tabela', ''))).strip()
+            # 🔧 CREFAZ: CÓDIGO DE TABELA - gerar baseado no produto
+            produto_raw = str(row.get('Produto', '')).strip().upper()
+            
+            if 'ENERGIA' in produto_raw or 'LUZ' in produto_raw:
+                cod_operacao = "ENER"
+            elif 'BOLETO' in produto_raw:
+                cod_operacao = "BOL" 
+            elif 'VEICULO' in produto_raw or 'AUTO' in produto_raw:
+                cod_operacao = "CPAUTO"
+            elif 'TRABALHADOR' in produto_raw or 'CLT' in produto_raw:
+                cod_operacao = "CSD"
+            else:
+                cod_operacao = "ENER"  # Default para energia
+                
+            logging.info(f"🎯 CREFAZ: Código gerado do produto '{produto_raw}': {cod_operacao}")
             produto = str(row.get('Produto', '')).strip()
             
             # ✅ VALIDAÇÃO: Pular linhas com código de operação vazio
