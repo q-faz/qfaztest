@@ -720,23 +720,33 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
                 
             logging.info(f"🔍 DIGIO check - dados: {all_data[:200]}...")
             
-            # Indicadores únicos do DIGIO (não confundem com DAYCOVAL)
-            digio_unique_indicators = ['banco digio', 'digio s.a', 'propostas cadastradas', 'tkt', 'status: ativo', 'status: cancelado', 'status: pago']
+            # Indicadores únicos do DIGIO (expandidos para melhor detecção)
+            digio_unique_indicators = [
+                'banco digio', 'digio s.a', 'digio s/a', 'digio bank', 'digio',
+                'propostas cadastradas', 'tkt', 'ticket', 
+                'status: ativo', 'status: cancelado', 'status: pago',
+                'ativo', 'cancelado', 'pago', 'liberado',
+                'digio.com', 'app digio', 'digital bank'
+            ]
             found_digio_indicators = [ind for ind in digio_unique_indicators if ind in all_data]
             
+            # Verificar também na estrutura de colunas
+            digio_column_patterns = ['unnamed:', 'proposta', 'tipo_operacao', 'data_cadastro', 'situacao', 'cpf_cliente']
+            digio_col_count = sum(1 for pattern in digio_column_patterns if any(pattern in str(col).lower() for col in df_columns))
+            
             if found_digio_indicators:
-                logging.info(f"✅ DIGIO detectado! Indicadores únicos: {found_digio_indicators}")
+                logging.info(f"✅ DIGIO detectado por indicadores: {found_digio_indicators}")
                 return "DIGIO"
                 
-            # Se não tem indicadores únicos, verificar se NÃO é DAYCOVAL
-            # DAYCOVAL tem indicadores específicos que DIGIO não tem
-            daycoval_exclusive_indicators = ['banco daycoval', 'qfz solucoes', 'tp. operação']
-            found_daycoval_indicators = [ind for ind in daycoval_exclusive_indicators if ind in all_data]
-            
-            if not found_daycoval_indicators:
-                # Não é DAYCOVAL, pode ser DIGIO se tem estrutura similar
-                logging.info(f"📊 DIGIO assumido por estrutura (sem indicadores DAYCOVAL)")
-                return "DIGIO"
+            # Verificar estrutura típica do DIGIO (colunas Unnamed)
+            if digio_col_count >= 3:
+                # Se não tem indicadores únicos, verificar se NÃO é DAYCOVAL
+                daycoval_exclusive_indicators = ['banco daycoval', 'qfz solucoes', 'tp. operação', 'daycoval']
+                found_daycoval_indicators = [ind for ind in daycoval_exclusive_indicators if ind in all_data]
+                
+                if not found_daycoval_indicators:
+                    logging.info(f"✅ DIGIO detectado por estrutura (sem indicadores DAYCOVAL, {digio_col_count} colunas)")
+                    return "DIGIO"
     
     # Verificar se é PRATA (tem colunas específicas)
     prata_indicators = ['corban master', 'número da proposta', 'prata digital', 'shake de morango']
@@ -3186,15 +3196,33 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             if not proposta or proposta in ['nan', 'None', '', 'NaN', '0']:
                 proposta = str(row.get('Cod Operacao', row.get('COD_OPERACAO', ''))).strip()
             
-            # ✅ FILTRAR LINHAS VAZIAS - Pular se ADE for vazio/nan
+            # ✅ FILTRAR LINHAS VAZIAS - Validações mais robustas
             if not proposta or proposta in ['nan', 'None', '', 'NaN', '0']:
                 logging.info(f"⏭️ CREFAZ: Pulando linha - ADE vazio na coluna 'Cod Operação': '{proposta}'")
+                continue
+            
+            # Validar campos essenciais antes de prosseguir
+            cpf_cliente = str(row.get('CPF', '')).strip()
+            nome_cliente = str(row.get('Cliente', row.get('Nome', ''))).strip()
+            
+            # Pular linhas com campos críticos vazios
+            if not cpf_cliente or cpf_cliente in ['nan', 'None', '', 'NaN']:
+                logging.info(f"⏭️ CREFAZ: Pulando linha - CPF vazio (ADE: {proposta})")
+                continue
+                
+            if not nome_cliente or nome_cliente in ['nan', 'None', '', 'NaN']:
+                logging.info(f"⏭️ CREFAZ: Pulando linha - Nome vazio (ADE: {proposta})")
                 continue
                 
             logging.info(f"🎯 CREFAZ: ADE correto encontrado em 'Cod Operação': {proposta}")
             
             # 🔧 CREFAZ: CÓDIGO DE TABELA - gerar baseado no produto
             produto_raw = str(row.get('Produto', '')).strip().upper()
+            
+            # Validar se produto não está vazio
+            if not produto_raw or produto_raw in ['NAN', 'NONE', '']:
+                logging.info(f"⏭️ CREFAZ: Pulando linha - Produto vazio (ADE: {proposta})")
+                continue
             
             if 'ENERGIA' in produto_raw or 'LUZ' in produto_raw:
                 cod_operacao = "ENER"
