@@ -334,7 +334,7 @@ def load_organ_mapping():
             logging.warning(f"Arquivo relat_orgaos.csv não encontrado em: {csv_path}")
             logging.warning(f"Diretório atual: {os.getcwd()}")
             logging.warning(f"Arquivos no diretório backend: {os.listdir(os.path.dirname(__file__))}")
-            return {}
+            return {}, {}, {}, {}
             
         # Tentar diferentes encodings
         try:
