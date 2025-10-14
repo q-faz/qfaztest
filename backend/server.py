@@ -2464,11 +2464,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF do Cliente', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', '')).strip(),
                 "DATA_NASCIMENTO": "",
-                "TELEFONE": "",    # PRATA não tem dados de telefone
-                "ENDERECO": "",    # PRATA não tem dados de endereço
-                "BAIRRO": "",      # PRATA não tem dados de bairro
-                "CEP": "",         # PRATA não tem dados de CEP
-                "UF": "",          # PRATA não tem dados de UF
+                "TELEFONE": str(row.get('Telefone', row.get('Tel', row.get('Fone', '')))).strip(),
+                "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(), 
+                "BAIRRO": str(row.get('Bairro', '')).strip(),
+                "CEP": str(row.get('CEP', '')).strip(),
+                "UF": str(row.get('UF', row.get('Estado', '')))).strip()
                 "VALOR_PARCELAS": "",  # PRATA não fornece valor da parcela
                 "CODIGO_TABELA": str(row.get('Tabela', '')).strip(),  # Nome da tabela do banco
                 "TAXA": "",  # Vazio para buscar no relat_orgaos.csv
@@ -2652,10 +2652,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     return table_clean
                 
                 # Casos especiais que precisam do prefixo "Tabela"
-                # CORREÇÃO: EXP deve manter como "EXP", não virar "Exponencial"
+                # CORREÇÃO: "Exponencial" no arquivo deve virar "TabelaExponencial", não "TabelaEXP"
                 prefixed_cases = {
-                    "EXPONENCIAL": "Exponencial",
-                    "EXP": "EXP", 
+                    "EXPONENCIAL": "Exponencial",  # "Exponencial" → "TabelaExponencial"
                     "LINEAR": "Linear",
                     "DIFERENCIADA": "Diferenciada", 
                     "ESPECIAL": "Especial",
@@ -2663,15 +2662,28 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "PADRAO": "Padrão"
                 }
                 
+                # Casos que devem manter o nome original sem conversão
+                keep_original_cases = ["EXP", "VCT", "RELAX", "VAMO"]
+                
                 table_upper = table_clean.upper()
+                
+                # Primeiro verificar se deve manter original
+                if table_upper in keep_original_cases:
+                    normalized = f"Tabela{table_clean}"  # TabelaEXP, TabelaVCT, etc.
+                    logging.info(f"🔧 VCTEX: Tabela mantida original '{table_clean}' → '{normalized}'")
+                    return normalized
+                
+                # Depois verificar se precisa de conversão
                 for key, value in prefixed_cases.items():
                     if table_upper == key:
-                        normalized = f"Tabela{value}"  # SEM ESPAÇO: TabelaEXP
-                        logging.info(f"🔧 VCTEX: Tabela normalizada '{table_clean}' → '{normalized}'")
+                        normalized = f"Tabela{value}"  # TabelaExponencial, TabelaLinear, etc.
+                        logging.info(f"🔧 VCTEX: Tabela convertida '{table_clean}' → '{normalized}'")
                         return normalized
                 
-                # Para outros casos, manter original
-                return table_clean
+                # Para outros casos, adicionar prefixo Tabela
+                normalized = f"Tabela{table_clean}"
+                logging.info(f"🔧 VCTEX: Tabela com prefixo '{table_clean}' → '{normalized}'")
+                return normalized
             
             tabela_normalized = normalize_vctex_table_name(tabela_raw)
             logging.info(f"📋 VCTEX: Tabela original: '{tabela_raw}' → Normalizada: '{tabela_normalized}' (será usada para buscar CODIGO TABELA STORM no CSV)")
@@ -2853,11 +2865,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de nascimento', '')).strip() if 'Data de nascimento' in df.columns else "",
-                "TELEFONE": "",    # VCTEX não tem dados de telefone
-                "ENDERECO": "",    # VCTEX não tem dados de endereço
-                "BAIRRO": "",      # VCTEX não tem dados de bairro
-                "CEP": "",         # VCTEX não tem dados de CEP
-                "UF": "",          # VCTEX não tem dados de UF
+                "TELEFONE": str(row.get('Telefone', row.get('Tel', row.get('Fone', '')))).strip(),
+                "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(),
+                "BAIRRO": str(row.get('Bairro', '')).strip(), 
+                "CEP": str(row.get('CEP', '')).strip(),
+                "UF": str(row.get('UF', row.get('Estado', ''))) UF
                 "VALOR_PARCELAS": valor_parcela_formatado,  # 💰 FORMATADO
                 "CODIGO_TABELA": tabela_normalized,  # Nome NORMALIZADO da tabela (usado para buscar no dicionário)
                 "TAXA": taxa_raw,  # Taxa do arquivo (mas será substituída pelo mapeamento se encontrar)
@@ -3041,6 +3053,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CPF": cpf_final,  # ✅ Formatado brasileiro (XXX.XXX.XXX-XX)
                     "NOME": nome_final,  # ✅ Maiúsculas
                     "DATA_NASCIMENTO": "",  # Não disponível no DAYCOVAL
+                    "TELEFONE": str(row.get('Unnamed: 20', '')).strip(),  # Tentar extrair telefone (possível coluna)
+                    "ENDERECO": str(row.get('Unnamed: 21', '')).strip(),  # Tentar extrair endereço (possível coluna)
+                    "BAIRRO": str(row.get('Unnamed: 22', '')).strip(),    # Tentar extrair bairro (possível coluna)
+                    "CEP": "",          # DAYCOVAL não tem dados de CEP identificados
+                    "UF": "",           # DAYCOVAL não tem dados de UF identificados
                     "CODIGO_TABELA": str(row.get('Unnamed: 38', '')).strip() if row.get('Unnamed: 38') else "",  # Código da tabela
                     "VALOR_PARCELAS": valor_parcela_formatted,  # ✅ Formatado brasileiro
                     "TAXA": taxa_formatted,  # ✅ Formatado brasileiro (X,XX%)
@@ -3077,62 +3094,117 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 return numbers[0] if numbers else ""
             
             def format_santander_value(value_str):
-                """Formata valores no padrão brasileiro"""
-                if not value_str or str(value_str).strip() in ['', 'nan', 'NaN', 'None']:
+                """Formata valores no padrão brasileiro - VERSÃO ROBUSTA"""
+                if not value_str or str(value_str).strip() in ['', 'nan', 'NaN', 'None', '0']:
                     return "0,00"
                 
                 try:
-                    value_clean = str(value_str).replace(',', '.')
-                    value_float = float(value_clean)
+                    # Limpeza mais cuidadosa
+                    clean_value = str(value_str).strip()
+                    clean_value = clean_value.replace('R$', '').replace(' ', '').replace('\xa0', '').replace('\u00a0', '')
                     
+                    # Se está vazio após limpeza
+                    if not clean_value or clean_value == '0':
+                        return "0,00"
+                        
+                    # Tratar formatos comuns
+                    if ',' in clean_value and '.' in clean_value:
+                        # Formato: 1.234,56 (brasileiro) ou 1,234.56 (americano)
+                        if clean_value.rfind(',') > clean_value.rfind('.'):
+                            # Formato brasileiro: 1.234,56
+                            clean_value = clean_value.replace('.', '').replace(',', '.')
+                        else:
+                            # Formato americano: 1,234.56
+                            clean_value = clean_value.replace(',', '')
+                    elif ',' in clean_value:
+                        # Apenas vírgula - formato brasileiro
+                        clean_value = clean_value.replace(',', '.')
+                        
+                    value_float = float(clean_value)
+                    
+                    # Formatar no padrão brasileiro
                     if value_float >= 1000:
-                        return f"{value_float:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+                        formatted = f"{value_float:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
                     else:
-                        return f"{value_float:.2f}".replace('.', ',')
-                except (ValueError, TypeError):
-                    return str(value_str)
+                        formatted = f"{value_float:.2f}".replace('.', ',')
+                        
+                    return formatted
+                    
+                except (ValueError, TypeError) as e:
+                    logging.warning(f"⚠️ SANTANDER: Erro ao formatar valor '{value_str}': {e}")
+                    # Retornar valor original limpo ao invés de erro
+                    clean_fallback = str(value_str).replace('R$', '').replace('  ', ' ').strip()
+                    return clean_fallback if clean_fallback else "0,00"
             
             def normalize_santander_status(status_str):
-                """Normaliza status para padrão Storm"""
+                """Normaliza status para padrão Storm - VERSÃO ROBUSTA"""
                 if not status_str:
                     return "AGUARDANDO"
                 
-                # Limpar caracteres especiais e encoding problems
-                import unicodedata
-                status_clean = str(status_str).strip()
-                
-                # Remover caracteres de encoding corrompido (� e similares)
-                status_clean = ''.join(c for c in status_clean if ord(c) < 65536 and c.isprintable() or c.isspace())
-                
-                # Normalizar para maiúsculas e remover acentos
-                status_clean = ''.join(
-                    c for c in unicodedata.normalize('NFD', status_clean.upper())
-                    if unicodedata.category(c) != 'Mn'
-                )
-                
-                # Verificar palavras-chave
-                if any(palavra in status_clean for palavra in ['PAG', 'AVERBAD', 'LIBERAD', 'DESEMBOLSA']):
-                    return "PAGO"
-                elif any(palavra in status_clean for palavra in ['CANCEL', 'REPROV', 'REJEITA', 'NEGAD']):
-                    return "CANCELADO"
-                elif any(palavra in status_clean for palavra in ['AGUARD', 'ANALISE', 'PENDENT', 'ABERTO', 'DIGITAL']):
+                try:
+                    # Conversão segura para string
+                    status_clean = str(status_str).strip().upper()
+                    
+                    # Remover apenas caracteres problemáticos específicos, preservar texto
+                    status_clean = status_clean.replace('�', '').replace('\x00', '').replace('\ufffd', '')
+                    
+                    # Remover acentos de forma mais segura
+                    import unicodedata
+                    status_clean = unicodedata.normalize('NFKD', status_clean)
+                    status_clean = ''.join(c for c in status_clean if not unicodedata.combining(c))
+                    
+                    logging.info(f"🔍 SANTANDER status original: '{status_str}' → normalizado: '{status_clean}'")
+                    
+                    # Verificar palavras-chave de forma mais robusta
+                    if any(palavra in status_clean for palavra in ['PAGO', 'AVERBADO', 'LIBERADO', 'DESEMBOLSADO', 'FINALIZADO']):
+                        return "PAGO"
+                    elif any(palavra in status_clean for palavra in ['CANCELADO', 'REPROVADO', 'REJEITADO', 'NEGADO', 'RECUSADO']):
+                        return "CANCELADO"  
+                    elif any(palavra in status_clean for palavra in ['AGUARDANDO', 'ANALISE', 'PENDENTE', 'ABERTO', 'DIGITACAO', 'PROCESSAMENTO']):
+                        return "AGUARDANDO"
+                    else:
+                        # Se não reconhecer, manter status original limpo
+                        return status_clean if status_clean else "AGUARDANDO"
+                        
+                except Exception as e:
+                    logging.warning(f"⚠️ SANTANDER: Erro ao normalizar status '{status_str}': {e}")
                     return "AGUARDANDO"
-                else:
-                    return "AGUARDANDO"  # Padrão se não reconhecer
             
-            # Extrair campos do arquivo
-            proposta = str(row.get('COD. BANCO', row.get('COD', row.get('PROPOSTA', '')))).strip()
-            cliente = str(row.get('CLIENTE', row.get('NOME', ''))).strip()
-            cpf = str(row.get('CPF', '')).strip()
-            convenio = str(row.get('CONVENIO', '')).strip().upper()
-            produto = str(row.get('PRODUTO', '')).strip()
-            parcelas = str(row.get('QTDE PARCELAS', row.get('NUMERO PARCELAS', '96'))).strip()
-            valor_bruto = str(row.get('VALOR BRUTO', row.get('VALOR OPERACAO', '0'))).strip()
-            valor_liquido = str(row.get('VALOR LIQUIDO', row.get('VALOR LIBERADO', '0'))).strip()
-            valor_parcela = str(row.get('VALOR PARCELA', row.get('VALOR PARCELAS', '0'))).strip()
-            data_cadastro = str(row.get('DATA', row.get('DATA CADASTRO', ''))).strip()
-            status = str(row.get('STATUS', row.get('SITUACAO', 'AGUARDANDO'))).strip()
-            data_averbacao = str(row.get('DATA AVERBACAO', row.get('DATA DE PAGAMENTO', ''))).strip()
+            # Função para limpar texto "quebrado" do SANTANDER
+            def clean_santander_text(text_str):
+                """Limpa texto quebrado/corrompido do relatório SANTANDER"""
+                if not text_str:
+                    return ""
+                
+                try:
+                    # Converter para string e limpar
+                    clean_text = str(text_str).strip()
+                    
+                    # Remover caracteres problemáticos comuns
+                    clean_text = clean_text.replace('�', '').replace('\ufffd', '').replace('\x00', '')
+                    clean_text = clean_text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
+                    
+                    # Remover espaços múltiplos
+                    while '  ' in clean_text:
+                        clean_text = clean_text.replace('  ', ' ')
+                    
+                    return clean_text.strip()
+                except:
+                    return str(text_str).strip() if text_str else ""
+            
+            # Extrair campos do arquivo com limpeza
+            proposta = clean_santander_text(row.get('COD. BANCO', row.get('COD', row.get('PROPOSTA', ''))))
+            cliente = clean_santander_text(row.get('CLIENTE', row.get('NOME', '')))
+            cpf = clean_santander_text(row.get('CPF', ''))
+            convenio = clean_santander_text(row.get('CONVENIO', '')).upper()
+            produto = clean_santander_text(row.get('PRODUTO', ''))
+            parcelas = clean_santander_text(row.get('QTDE PARCELAS', row.get('NUMERO PARCELAS', '96')))
+            valor_bruto = clean_santander_text(row.get('VALOR BRUTO', row.get('VALOR OPERACAO', '0')))
+            valor_liquido = clean_santander_text(row.get('VALOR LIQUIDO', row.get('VALOR LIBERADO', '0')))
+            valor_parcela = clean_santander_text(row.get('VALOR PARCELA', row.get('VALOR PARCELAS', '0')))
+            data_cadastro = clean_santander_text(row.get('DATA', row.get('DATA CADASTRO', '')))
+            status = clean_santander_text(row.get('STATUS', row.get('SITUACAO', 'AGUARDANDO')))
+            data_averbacao = clean_santander_text(row.get('DATA AVERBACAO', row.get('DATA DE PAGAMENTO', '')))
             cod_digitador = str(row.get('COD DIGITADOR NO BANCO', row.get('USUARIO BANCO', ''))).strip()
             
             # 🎯 SANTANDER: Extrair CPF do campo "COD DIGITADOR NO BANCO" 
@@ -3237,11 +3309,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                         "CPF": cpf,
                         "NOME": cliente.upper(),
                         "DATA_NASCIMENTO": "",
-                        "TELEFONE": "",  # SANTANDER não tem dados de telefone
-                        "ENDERECO": "",  # SANTANDER não tem dados de endereço
-                        "BAIRRO": "",    # SANTANDER não tem dados de bairro
-                        "CEP": "",       # SANTANDER não tem dados de CEP
-                        "UF": "",        # SANTANDER não tem dados de UF
+                        "TELEFONE": clean_santander_text(row.get('TELEFONE', row.get('TEL', row.get('FONE', '')))),
+                        "ENDERECO": clean_santander_text(row.get('ENDERECO', row.get('END', row.get('ENDEREÇO', '')))),
+                        "BAIRRO": clean_santander_text(row.get('BAIRRO', '')),
+                        "CEP": clean_santander_text(row.get('CEP', '')),
+                        "UF": clean_santander_text(row.get('UF', row.get('ESTADO', '')))
                         "CODIGO_TABELA": codigo_tabela,
                         "VALOR_PARCELAS": format_santander_value(valor_parcela),
                         "TAXA": "0,00%",
@@ -3443,11 +3515,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": "",
-                "TELEFONE": "",    # CREFAZ não tem dados de telefone
-                "ENDERECO": "",    # CREFAZ não tem dados de endereço
-                "BAIRRO": "",      # CREFAZ não tem dados de bairro
-                "CEP": "",         # CREFAZ não tem dados de CEP
-                "UF": "",          # CREFAZ não tem dados de UF
+                "TELEFONE": str(row.get('Telefone', row.get('Fone', row.get('Tel', '')))).strip(),
+                "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(),
+                "BAIRRO": str(row.get('Bairro', '')).strip(),
+                "CEP": str(row.get('CEP', row.get('Cep', ''))).strip(),
+                "UF": str(row.get('UF', row.get('Estado', row.get('Uf', '')))).strip()
                 "CODIGO_TABELA": cod_operacao,  # ✅ Usar código diretamente do arquivo (ENER, CPAUTO, LUZ, BOL, CSD)
                 "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
                 "TAXA": "0,00%",  # CREFAZ não tem taxa no relat_orgaos (sempre 0,00%)
