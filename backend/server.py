@@ -2171,21 +2171,24 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 usuario_digitador_raw = str(row.get('USUARIO BANCO', row.get('USUARIO_BANCO', ''))).strip()
                 cpf_cliente = str(row.get('CPF', '')).strip()
                 
-                # 🔍 DIGIO: Pular linhas de cabeçalho também na estrutura nomeada
-                # Verificar se tem "BANCO DIGIO" em qualquer posição da linha
+                # 🔍 DIGIO: Pular linhas de cabeçalho na estrutura nomeada
                 row_values = ' '.join([str(val) for val in row.values if pd.notna(val)]).upper()
-                if ('BANCO DIGIO' in row_values or
-                    usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO', 'USER', 'LOGIN'] or 
-                    cpf_cliente.upper() in ['CPF', 'CPF_CLIENTE', 'DOCUMENTO'] or
-                    nome_orgao_raw.upper() in ['ORGAO', 'NOME_ORGAO', 'ORGAN'] or
-                    proposta.upper() in ['PROPOSTA', 'ID', 'NUMERO', 'CODE']):
-                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho (contém: 'BANCO DIGIO' ou outros indicadores)")
+                if ('BANCO DIGIO' in row_values or 'RELATÓRIO' in row_values or 'RELATORIO' in row_values or
+                    proposta == 'PROPOSTA' or  # Header da tabela
+                    usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO'] or 
+                    cpf_cliente.upper() in ['CPF', 'CPF_CLIENTE'] or
+                    nome_orgao_raw.upper() in ['ORGAO', 'NOME_ORGAO']):
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho (estrutura nomeada) - Proposta='{proposta}'")
                     continue
                 
-                # ✅ DIGIO: Validar se proposta tem conteúdo válido (estrutura nomeada)
-                if not proposta or str(proposta).strip() == '' or str(proposta).strip().lower() in ['nan', 'none']:
-                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
+                # ✅ DIGIO: Validar se proposta é número válido (estrutura nomeada)
+                proposta_str = str(proposta).strip()
+                if (not proposta_str or proposta_str.lower() in ['nan', 'none', ''] or 
+                    not proposta_str.replace('.', '').isdigit()):
+                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta inválida: '{proposta}' (não é número)")
                     continue
+                
+                logging.info(f"✅ DIGIO: Proposta válida encontrada: {proposta}")
                 
                 # 🔧 DIGIO: Manter underscore do usuário digitador no formato original
                 # Ex: "39891947807_901064" (manter como está)
@@ -2215,21 +2218,30 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 usuario_digitador_raw = str(row.get('Unnamed: 29', '')).strip()
                 cpf_cliente = str(row.get('Unnamed: 31', '')).strip()
                 
-                # 🔍 DIGIO: Pular linhas de cabeçalho - detectar se é linha de header
-                # Verificar se tem "BANCO DIGIO" em qualquer posição da linha
+                # 🔍 DIGIO: Pular linhas de cabeçalho baseado no MAP
+                # Verificar se tem "BANCO DIGIO", "RELATÓRIO", "PROPOSTA" (como header), etc.
                 row_values = ' '.join([str(val) for val in row.values if pd.notna(val)]).upper()
-                if ('BANCO DIGIO' in row_values or 
-                    usuario_digitador_raw.upper() in ['DESCR_USU_DIGITADOR', 'COD_USUARIO_DIGITADOR', 'USER', 'LOGIN'] or 
-                    cpf_cliente.upper() in ['CPF_CLIENTE', 'CPF_USU_DIGITADOR', 'CPF', 'DOCUMENTO'] or
-                    nome_orgao_raw.upper() in ['NOME_ORGAO', 'COD_ORGAO', 'ORGAO'] or
-                    proposta.upper() in ['PROPOSTA', 'ID', 'NUMERO', 'CODE']):
-                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (contém: 'BANCO DIGIO' ou outros indicadores)")
+                
+                # Linha é cabeçalho se:
+                # 1. Contém "BANCO DIGIO", "RELATÓRIO" 
+                # 2. Proposta = "PROPOSTA" (header da tabela de dados)
+                # 3. Campos são nomes de colunas
+                if ('BANCO DIGIO' in row_values or 'RELATÓRIO' in row_values or 'RELATORIO' in row_values or
+                    proposta == 'PROPOSTA' or  # Header da tabela de dados
+                    usuario_digitador_raw in ['DESCR_USU_DIGITADOR'] or
+                    cpf_cliente in ['CPF_CLIENTE'] or
+                    nome_orgao_raw in ['NOME_ORGAO']):
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada - Proposta='{proposta}', Conteúdo: {row_values[:100]}...")
                     continue
                 
-                # ✅ DIGIO: Validar se proposta tem conteúdo válido (estrutura Unnamed)  
-                if not proposta or str(proposta).strip() == '' or str(proposta).strip().lower() in ['nan', 'none']:
-                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
+                # ✅ DIGIO: Validar se proposta é número válido (estrutura Unnamed)
+                proposta_str = str(proposta).strip()
+                if (not proposta_str or proposta_str.lower() in ['nan', 'none', ''] or 
+                    not proposta_str.replace('.', '').isdigit()):
+                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta inválida: '{proposta}' (não é número)")
                     continue
+                
+                logging.info(f"✅ DIGIO: Proposta válida encontrada: {proposta}")
                 
                 # 🔧 DIGIO: Manter underscore do usuário digitador no formato original
                 # Exemplo: "02579846158_202902" (manter como está)
