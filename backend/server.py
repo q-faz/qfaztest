@@ -2359,6 +2359,41 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 tipo_operacao_norm = detect_digio_operation(tipo_operacao, nome_convenio)
                 logging.info(f"🔍 DIGIO tipo detectado: '{tipo_operacao_norm}'")
                 
+            # 📞 DIGIO: Extrair dados de contato e endereço (se disponível)
+            telefone = ""
+            if not has_unnamed_structure:
+                # Estrutura CSV nomeada
+                tel_cliente = str(row.get('TEL_CLIENTE', '')).strip()
+                cel_cliente = str(row.get('CEL_CLIENTE', '')).strip()
+                telefone = cel_cliente if cel_cliente else tel_cliente
+                
+                endereco = str(row.get('END_CLIENTE', '')).strip()
+                num_endereco = str(row.get('NUM_END_CLIENTE', '')).strip()
+                complemento = str(row.get('COMPLEMENTO', '')).strip()
+                endereco_completo = f"{endereco}, {num_endereco}".strip(", ")
+                if complemento:
+                    endereco_completo += f", {complemento}"
+                
+                bairro = str(row.get('BAIRRO', '')).strip()
+                cep = str(row.get('CEP_CLIENTE', '')).strip()
+                uf = str(row.get('UF_CLIENTE', '')).strip()
+            else:
+                # Estrutura XLS com Unnamed (baseado no MAP)
+                tel_cliente = str(row.get('Unnamed: 43', '')).strip()  # TEL_CLIENTE
+                cel_cliente = str(row.get('Unnamed: 44', '')).strip()  # CEL_CLIENTE
+                telefone = cel_cliente if cel_cliente else tel_cliente
+                
+                endereco = str(row.get('Unnamed: 37', '')).strip()  # END_CLIENTE
+                num_endereco = str(row.get('Unnamed: 38', '')).strip()  # NUM_END_CLIENTE
+                complemento = str(row.get('Unnamed: 39', '')).strip()  # COMPLEMENTO
+                endereco_completo = f"{endereco}, {num_endereco}".strip(", ")
+                if complemento and complemento not in ['nan', '']:
+                    endereco_completo += f", {complemento}"
+                
+                bairro = str(row.get('Unnamed: 40', '')).strip()  # BAIRRO
+                cep = str(row.get('Unnamed: 42', '')).strip()  # CEP_CLIENTE  
+                uf = str(row.get('Unnamed: 41', '')).strip()  # UF_CLIENTE
+            
             normalized_row = {
                 "PROPOSTA": proposta,
                 "DATA_CADASTRO": data_cadastro,
@@ -2374,6 +2409,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,
                 "NOME": nome_cliente,
                 "DATA_NASCIMENTO": data_nascimento,
+                "TELEFONE": telefone,
+                "ENDERECO": endereco_completo.strip(", "),
+                "BAIRRO": bairro,
+                "CEP": cep,
+                "UF": uf,
                 "VALOR_PARCELAS": vlr_parcela,
                 "CODIGO_TABELA": cod_convenio,  # ✅ DIGIO: Usar COD_CONVENIO direto (5076, 5077, 1720, etc)
                 "TAXA": "",  # Taxa deve vir do arquivo ou ser buscada depois
@@ -2419,6 +2459,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF do Cliente', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', '')).strip(),
                 "DATA_NASCIMENTO": "",
+                "TELEFONE": "",    # PRATA não tem dados de telefone
+                "ENDERECO": "",    # PRATA não tem dados de endereço
+                "BAIRRO": "",      # PRATA não tem dados de bairro
+                "CEP": "",         # PRATA não tem dados de CEP
+                "UF": "",          # PRATA não tem dados de UF
                 "VALOR_PARCELAS": "",  # PRATA não fornece valor da parcela
                 "CODIGO_TABELA": str(row.get('Tabela', '')).strip(),  # Nome da tabela do banco
                 "TAXA": "",  # Vazio para buscar no relat_orgaos.csv
@@ -3177,6 +3222,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                         "CPF": cpf,
                         "NOME": cliente.upper(),
                         "DATA_NASCIMENTO": "",
+                        "TELEFONE": "",  # SANTANDER não tem dados de telefone
+                        "ENDERECO": "",  # SANTANDER não tem dados de endereço
+                        "BAIRRO": "",    # SANTANDER não tem dados de bairro
+                        "CEP": "",       # SANTANDER não tem dados de CEP
+                        "UF": "",        # SANTANDER não tem dados de UF
                         "CODIGO_TABELA": codigo_tabela,
                         "VALOR_PARCELAS": format_santander_value(valor_parcela),
                         "TAXA": "0,00%",
@@ -3378,6 +3428,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": "",
+                "TELEFONE": "",    # CREFAZ não tem dados de telefone
+                "ENDERECO": "",    # CREFAZ não tem dados de endereço
+                "BAIRRO": "",      # CREFAZ não tem dados de bairro
+                "CEP": "",         # CREFAZ não tem dados de CEP
+                "UF": "",          # CREFAZ não tem dados de UF
                 "CODIGO_TABELA": cod_operacao,  # ✅ Usar código diretamente do arquivo (ENER, CPAUTO, LUZ, BOL, CSD)
                 "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
                 "TAXA": "0,00%",  # CREFAZ não tem taxa no relat_orgaos (sempre 0,00%)
@@ -4626,6 +4681,7 @@ def format_csv_for_storm(df: pd.DataFrame) -> str:
         "TIPO DE OPERACAO", "NUMERO PARCELAS", "VALOR PARCELAS", "VALOR OPERACAO",
         "VALOR LIBERADO", "VALOR QUITAR", "USUARIO BANCO", "CODIGO LOJA",
         "SITUACAO", "DATA DE PAGAMENTO", "CPF", "NOME", "DATA DE NASCIMENTO",
+        "TELEFONE", "ENDERECO", "BAIRRO", "CEP", "UF",
         "TIPO DE CONTA", "TIPO DE PAGAMENTO", "AGENCIA CLIENTE", "CONTA CLIENTE",
         "FORMALIZACAO DIGITAL", "TAXA", "OBSERVACOES"
     ]
