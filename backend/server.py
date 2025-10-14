@@ -332,6 +332,8 @@ def load_organ_mapping():
         # Verificar se arquivo existe antes de tentar ler
         if not os.path.exists(csv_path):
             logging.warning(f"Arquivo relat_orgaos.csv não encontrado em: {csv_path}")
+            logging.warning(f"Diretório atual: {os.getcwd()}")
+            logging.warning(f"Arquivos no diretório backend: {os.listdir(os.path.dirname(__file__))}")
             return {}
             
         # Tentar diferentes encodings
@@ -340,7 +342,8 @@ def load_organ_mapping():
         except UnicodeDecodeError:
             try:
                 df = pd.read_csv(csv_path, encoding='latin-1', sep=';')
-            except:
+            except Exception as e:
+                logging.warning(f"Erro ao ler CSV: {e}")
                 df = pd.read_csv(csv_path, encoding='iso-8859-1', sep=';')
         
         # Formato REAL do arquivo: BANCO;ORGÃO STORM;TABELA BANCO;CODIGO TABELA STORM;OPERAÇÃO STORM;TAXA STORM
@@ -435,7 +438,12 @@ def load_organ_mapping():
         return {}, {}, {}, {}
 
 # Carregar mapeamento global - ATUALIZADO sem dependência de usuário
-ORGAN_MAPPING, DETAILED_MAPPING, TABELA_MAPPING, BANK_ORGAN_MAPPING = load_organ_mapping()
+try:
+    ORGAN_MAPPING, DETAILED_MAPPING, TABELA_MAPPING, BANK_ORGAN_MAPPING = load_organ_mapping()
+    logging.info("✅ Mapeamento de órgãos carregado com sucesso!")
+except Exception as e:
+    logging.error(f"❌ Erro ao carregar mapeamento: {e}")
+    ORGAN_MAPPING, DETAILED_MAPPING, TABELA_MAPPING, BANK_ORGAN_MAPPING = {}, {}, {}, {}
 
 def reload_organ_mapping():
     """Recarrega o mapeamento de órgãos para pegar novos códigos de tabela adicionados"""
