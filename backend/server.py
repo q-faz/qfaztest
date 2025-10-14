@@ -1631,10 +1631,14 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
             best_match = None
             best_match_score = 0
             
-            # Log detalhado para AVERBAI
+            # Log detalhado para AVERBAI e VCTEX
             is_averbai = bank_normalized == "AVERBAI"
+            is_vctex = bank_normalized == "BANCO VCTEX"
             if is_averbai:
                 logging.info(f"🔎 AVERBAI - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
+            elif is_vctex:
+                logging.info(f"🔎 VCTEX - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
+                logging.info(f"🔎 VCTEX - Parâmetros: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized}")
             
             for key, details in TABELA_MAPPING.items():
                 parts = key.split('|')
@@ -1646,8 +1650,15 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
                     key_operacao_norm = ' '.join(key_operacao.upper().split())
                     key_tabela_norm = ' '.join(key_tabela.upper().split())
                     
+                    # Debug para VCTEX
+                    if is_vctex and 'VCTEX' in key:
+                        logging.info(f"🔎 VCTEX - Testando chave: '{key}'")
+                        logging.info(f"   Key Tabela: '{key_tabela_norm}' vs Busca: '{tabela_normalized}'")
+                    
                     # Busca EXATA para banco
                     if bank_normalized != key_banco_norm:
+                        if is_vctex and 'VCTEX' in key:
+                            logging.info(f"   ❌ BANCO não match: '{bank_normalized}' != '{key_banco_norm}'")
                         continue
                     
                     # Busca FLEXÍVEL para órgão (pode variar ligeiramente)
