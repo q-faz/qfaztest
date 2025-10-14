@@ -1622,6 +1622,11 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
             else:
                 logging.warning(f"⚠️ SANTANDER sem código válido ({tabela_normalized}), usando busca tradicional")
         
+        # Log especial para VCTEX
+        if bank_normalized == "BANCO VCTEX":
+            print(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+            logging.warning(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+        
         logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
         
         logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
@@ -1637,8 +1642,10 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
             if is_averbai:
                 logging.info(f"🔎 AVERBAI - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
             elif is_vctex:
-                logging.info(f"🔎 VCTEX - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
-                logging.info(f"🔎 VCTEX - Parâmetros: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized}")
+                print(f"🔎🔥 VCTEX - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
+                print(f"🔎🔥 VCTEX - Parâmetros: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized}")
+                logging.warning(f"🔎🔥 VCTEX - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
+                logging.warning(f"🔎🔥 VCTEX - Parâmetros: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized}")
             
             for key, details in TABELA_MAPPING.items():
                 parts = key.split('|')
@@ -1652,13 +1659,16 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
                     
                     # Debug para VCTEX
                     if is_vctex and 'VCTEX' in key:
-                        logging.info(f"🔎 VCTEX - Testando chave: '{key}'")
-                        logging.info(f"   Key Tabela: '{key_tabela_norm}' vs Busca: '{tabela_normalized}'")
+                        print(f"🔎🔥 VCTEX - Testando chave: '{key}'")
+                        print(f"   🔥 Key Tabela: '{key_tabela_norm}' vs Busca: '{tabela_normalized}'")
+                        logging.warning(f"🔎🔥 VCTEX - Testando chave: '{key}'")
+                        logging.warning(f"   🔥 Key Tabela: '{key_tabela_norm}' vs Busca: '{tabela_normalized}'")
                     
                     # Busca EXATA para banco
                     if bank_normalized != key_banco_norm:
                         if is_vctex and 'VCTEX' in key:
-                            logging.info(f"   ❌ BANCO não match: '{bank_normalized}' != '{key_banco_norm}'")
+                            print(f"   ❌🔥 BANCO não match: '{bank_normalized}' != '{key_banco_norm}'")
+                            logging.warning(f"   ❌🔥 BANCO não match: '{bank_normalized}' != '{key_banco_norm}'")
                         continue
                     
                     # Busca FLEXÍVEL para órgão (pode variar ligeiramente)
@@ -4392,7 +4402,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             orgao_para_mapeamento = normalized_row.get("ORGAO", "")
             operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
             
-            logging.info(f"🎯 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}' será preservada para mapeamento")
+            print(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}' será preservada para mapeamento")
+            logging.warning(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}' será preservada para mapeamento")
             
             # Aplicar mapeamento específico VCTEX mantendo tabela original
             mapping_result = apply_mapping(
@@ -4404,9 +4415,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             )
             
             if mapping_result:
-                logging.info(f"✅ VCTEX: Mapeamento encontrado para '{tabela_original}' → CODIGO_STORM='{mapping_result.get('codigo_tabela', '')}', TAXA='{mapping_result.get('taxa_storm', '')}'")
+                print(f"✅🔥 VCTEX: Mapeamento encontrado para '{tabela_original}' → CODIGO_STORM='{mapping_result.get('codigo_tabela', '')}', TAXA='{mapping_result.get('taxa_storm', '')}'")
+                logging.warning(f"✅🔥 VCTEX: Mapeamento encontrado para '{tabela_original}' → CODIGO_STORM='{mapping_result.get('codigo_tabela', '')}', TAXA='{mapping_result.get('taxa_storm', '')}'")
             else:
-                logging.warning(f"⚠️ VCTEX: Mapeamento NÃO encontrado para tabela '{tabela_original}' - mantendo original")
+                print(f"⚠️🔥 VCTEX: Mapeamento NÃO encontrado para tabela '{tabela_original}' - mantendo original")
+                logging.warning(f"⚠️🔥 VCTEX: Mapeamento NÃO encontrado para tabela '{tabela_original}' - mantendo original")
         elif bank_type == "FACTA92":
             # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
