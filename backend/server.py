@@ -3075,25 +3075,28 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             data_averbacao = str(row.get('DATA AVERBACAO', row.get('DATA DE PAGAMENTO', ''))).strip()
             cod_digitador = str(row.get('COD DIGITADOR NO BANCO', row.get('USUARIO BANCO', ''))).strip()
             
-            # 🎯 SANTANDER: Usar CPF do cliente como usuário digitador (formato CPF normal)
-            def format_santander_usuario(cpf_cliente):
-                """Usar CPF do cliente como usuário digitador no SANTANDER"""
-                if not cpf_cliente or cpf_cliente in ['', 'nan', 'NaN']:
+            # 🎯 SANTANDER: Extrair CPF do campo "COD DIGITADOR NO BANCO" 
+            def format_santander_usuario_from_cod(cod_digitador_raw):
+                """Extrair CPF dos primeiros 11 dígitos do COD DIGITADOR NO BANCO
+                Ex: '37375205850030700' → '373.752.058-50'
+                """
+                if not cod_digitador_raw or cod_digitador_raw in ['', 'nan', 'NaN']:
                     return "000.000.000-00"
                 
                 # Limpar e usar apenas dígitos
-                cpf_digits = ''.join(filter(str.isdigit, str(cpf_cliente)))
+                digits_only = ''.join(filter(str.isdigit, str(cod_digitador_raw)))
                 
-                if len(cpf_digits) >= 11:
-                    cpf_final = cpf_digits[:11]
-                    return f"{cpf_final[:3]}.{cpf_final[3:6]}.{cpf_final[6:9]}-{cpf_final[9:11]}"
+                if len(digits_only) >= 11:
+                    # Pegar apenas os primeiros 11 dígitos (CPF)
+                    cpf_digits = digits_only[:11]
+                    return f"{cpf_digits[:3]}.{cpf_digits[3:6]}.{cpf_digits[6:9]}-{cpf_digits[9:11]}"
                 else:
-                    return cpf_cliente  # Manter original se não conseguir formatar
+                    return cod_digitador_raw  # Manter original se não conseguir formatar
             
-            usuario_digitador_formatado = format_santander_usuario(cpf)
+            usuario_digitador_formatado = format_santander_usuario_from_cod(cod_digitador)
             
             logging.info(f"📋 SANTANDER extraído: Proposta={proposta}, Cliente={cliente[:20] if cliente else 'N/A'}, CPF={cpf[:6] if cpf else 'N/A'}...")
-            logging.info(f"👤 SANTANDER usuário: '{cod_digitador}' → '{usuario_digitador_formatado}'")
+            logging.info(f"👤 SANTANDER COD DIGITADOR: '{cod_digitador}' → CPF: '{usuario_digitador_formatado}'")
             logging.info(f"🔍 SANTANDER validações: proposta='{proposta}', convenio='{convenio[:30] if convenio else 'N/A'}', produto='{produto[:50] if produto else 'N/A'}'")
             
             # ✅ VALIDAÇÃO: Verificar se linha deve ser processada
