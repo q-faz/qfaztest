@@ -2641,48 +2641,64 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # O relat_orgaos.csv tem: "TABELA BANCO" (ex: "Tabela Exponencial") → "CODIGO TABELA STORM" (ex: "TabelaExponencial")
             # Normalizar tabela_raw para garantir prefixo "Tabela" quando necessário
             def normalize_vctex_table_name(table_name):
-                """Normaliza nome da tabela VCTEX para matching no mapeamento"""
+                """Normaliza nome da tabela VCTEX para matching no mapeamento
+                REGRAS:
+                - "Tabela EXP" → "TabelaEXP"  
+                - "Tabela Exponencial" → "TabelaExponencial"
+                - "EXP" → "TabelaEXP"
+                - "Exponencial" → "TabelaExponencial"
+                """
                 if not table_name:
                     return ""
                 
                 table_clean = str(table_name).strip()
                 
-                # Se já começa com "Tabela", manter como está
+                # 🎯 CASOS ESPECÍFICOS COMPLETOS (com "Tabela" no nome)
+                if table_clean.upper() == "TABELA EXP":
+                    logging.info(f"🔧 VCTEX: 'Tabela EXP' → 'TabelaEXP'")
+                    return "TabelaEXP"
+                elif table_clean.upper() == "TABELA EXPONENCIAL":
+                    logging.info(f"🔧 VCTEX: 'Tabela Exponencial' → 'TabelaExponencial'")
+                    return "TabelaExponencial"
+                elif table_clean.upper() == "TABELA LINEAR":
+                    return "TabelaLinear"
+                elif table_clean.upper() == "TABELA VCT":
+                    return "TabelaVCT"
+                elif table_clean.upper() == "TABELA RELAX":
+                    return "TabelaRelax"
+                elif table_clean.upper() == "TABELA VAMO":
+                    return "TabelaVamo"
+                
+                # Se já começa com "Tabela" e não foi tratado acima, manter como está
                 if table_clean.startswith("Tabela"):
                     return table_clean
                 
-                # Casos especiais que precisam do prefixo "Tabela"
-                # CORREÇÃO: "Exponencial" no arquivo deve virar "TabelaExponencial", não "TabelaEXP"
-                prefixed_cases = {
-                    "EXPONENCIAL": "Exponencial",  # "Exponencial" → "TabelaExponencial"
-                    "LINEAR": "Linear",
-                    "DIFERENCIADA": "Diferenciada", 
-                    "ESPECIAL": "Especial",
-                    "PADRÃO": "Padrão",
-                    "PADRAO": "Padrão"
-                }
-                
-                # Casos que devem manter o nome original sem conversão
-                keep_original_cases = ["EXP", "VCT", "RELAX", "VAMO"]
-                
+                # 🎯 CASOS SEM PREFIXO "Tabela"
                 table_upper = table_clean.upper()
                 
-                # Primeiro verificar se deve manter original
-                if table_upper in keep_original_cases:
-                    normalized = f"Tabela{table_clean}"  # TabelaEXP, TabelaVCT, etc.
-                    logging.info(f"🔧 VCTEX: Tabela mantida original '{table_clean}' → '{normalized}'")
-                    return normalized
+                # Casos que devem manter nome original
+                if table_upper == "EXP":
+                    logging.info(f"🔧 VCTEX: 'EXP' → 'TabelaEXP'")
+                    return "TabelaEXP"
+                elif table_upper == "VCT":
+                    return "TabelaVCT"
+                elif table_upper == "RELAX":
+                    return "TabelaRelax" 
+                elif table_upper == "VAMO":
+                    return "TabelaVamo"
                 
-                # Depois verificar se precisa de conversão
-                for key, value in prefixed_cases.items():
-                    if table_upper == key:
-                        normalized = f"Tabela{value}"  # TabelaExponencial, TabelaLinear, etc.
-                        logging.info(f"🔧 VCTEX: Tabela convertida '{table_clean}' → '{normalized}'")
-                        return normalized
+                # Casos que precisam conversão
+                elif table_upper == "EXPONENCIAL":
+                    logging.info(f"🔧 VCTEX: 'Exponencial' → 'TabelaExponencial'")
+                    return "TabelaExponencial"
+                elif table_upper == "LINEAR":
+                    return "TabelaLinear"
+                elif table_upper in ["DIFERENCIADA", "ESPECIAL", "PADRÃO", "PADRAO"]:
+                    return f"Tabela{table_clean}"
                 
-                # Para outros casos, adicionar prefixo Tabela
+                # Para outros casos, adicionar prefixo Tabela mantendo nome original
                 normalized = f"Tabela{table_clean}"
-                logging.info(f"🔧 VCTEX: Tabela com prefixo '{table_clean}' → '{normalized}'")
+                logging.info(f"🔧 VCTEX: Tabela genérica '{table_clean}' → '{normalized}'")
                 return normalized
             
             tabela_normalized = normalize_vctex_table_name(tabela_raw)
@@ -3155,12 +3171,21 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     
                     logging.info(f"🔍 SANTANDER status original: '{status_str}' → normalizado: '{status_clean}'")
                     
-                    # Verificar palavras-chave de forma mais robusta
-                    if any(palavra in status_clean for palavra in ['PAGO', 'AVERBADO', 'LIBERADO', 'DESEMBOLSADO', 'FINALIZADO']):
+                    # Verificar palavras-chave SANTANDER - ORDEM ESPECÍFICA
+                    # 1. PAGO: Operações finalizadas/averbadas
+                    if any(palavra in status_clean for palavra in ['PAGO', 'LIBERADO', 'DESEMBOLSADO', 'FINALIZADO', 'LIQUIDADO']):
                         return "PAGO"
-                    elif any(palavra in status_clean for palavra in ['CANCELADO', 'REPROVADO', 'REJEITADO', 'NEGADO', 'RECUSADO']):
-                        return "CANCELADO"  
-                    elif any(palavra in status_clean for palavra in ['AGUARDANDO', 'ANALISE', 'PENDENTE', 'ABERTO', 'DIGITACAO', 'PROCESSAMENTO']):
+                    elif 'AVERBADA' in status_clean and 'ANALISE' not in status_clean:
+                        # "AVERBADA" sozinha = PAGO, mas "AVERBADA EM ANALISE" = AGUARDANDO  
+                        return "PAGO"
+                    elif ('AVERBADA' in status_clean and 'ANALISE' in status_clean) or ('AVERBACAO' in status_clean and 'ANALISE' in status_clean):
+                        # "AVERBADA EM ANALISE" ou "AVERBACAO EM ANALISE" = ainda em processamento
+                        return "AGUARDANDO"
+                    # 2. CANCELADO: Operações rejeitadas/negadas
+                    elif any(palavra in status_clean for palavra in ['CANCELADO', 'CANCELADA', 'REPROVADO', 'REPROVADA', 'REJEITADO', 'REJEITADA', 'NEGADO', 'NEGADA', 'RECUSADO', 'RECUSADA']):
+                        return "CANCELADO"
+                    # 3. AGUARDANDO: Operações em processamento/análise
+                    elif any(palavra in status_clean for palavra in ['AGUARDANDO', 'ANALISE', 'PENDENTE', 'ABERTO', 'ABERTA', 'DIGITACAO', 'PROCESSAMENTO', 'EM PROCESSAMENTO']):
                         return "AGUARDANDO"
                     else:
                         # Se não reconhecer, manter status original limpo
