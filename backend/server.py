@@ -3074,28 +3074,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             data_averbacao = str(row.get('DATA AVERBACAO', row.get('DATA DE PAGAMENTO', ''))).strip()
             cod_digitador = str(row.get('COD DIGITADOR NO BANCO', row.get('USUARIO BANCO', ''))).strip()
             
-            # 🎯 SANTANDER: Formatar usuário digitador no padrão CPF_código se necessário
-            def format_santander_usuario(cod_digitador_raw):
-                """Formatar usuário digitador SANTANDER no padrão esperado"""
-                if not cod_digitador_raw or cod_digitador_raw in ['', 'nan', 'NaN']:
-                    return ""
+            # 🎯 SANTANDER: Usar CPF do cliente como usuário digitador (formato CPF normal)
+            def format_santander_usuario(cpf_cliente):
+                """Usar CPF do cliente como usuário digitador no SANTANDER"""
+                if not cpf_cliente or cpf_cliente in ['', 'nan', 'NaN']:
+                    return "000.000.000-00"
                 
-                cod_clean = str(cod_digitador_raw).strip()
+                # Limpar e usar apenas dígitos
+                cpf_digits = ''.join(filter(str.isdigit, str(cpf_cliente)))
                 
-                # Se já tem formato CPF_código (underscore), manter
-                if '_' in cod_clean:
-                    return cod_clean
-                
-                # Se é só número (código), tentar formar CPF_código usando CPF do cliente
-                if cod_clean.isdigit() and len(cod_clean) <= 10:
-                    cpf_cliente_clean = ''.join(filter(str.isdigit, cpf)) if cpf else ""
-                    if len(cpf_cliente_clean) >= 11:
-                        return f"{cpf_cliente_clean[:11]}_{cod_clean}"
-                
-                # Se não conseguir formar, manter original
-                return cod_clean
+                if len(cpf_digits) >= 11:
+                    cpf_final = cpf_digits[:11]
+                    return f"{cpf_final[:3]}.{cpf_final[3:6]}.{cpf_final[6:9]}-{cpf_final[9:11]}"
+                else:
+                    return cpf_cliente  # Manter original se não conseguir formatar
             
-            usuario_digitador_formatado = format_santander_usuario(cod_digitador)
+            usuario_digitador_formatado = format_santander_usuario(cpf)
             
             logging.info(f"📋 SANTANDER extraído: Proposta={proposta}, Cliente={cliente[:20] if cliente else 'N/A'}, CPF={cpf[:6] if cpf else 'N/A'}...")
             logging.info(f"👤 SANTANDER usuário: '{cod_digitador}' → '{usuario_digitador_formatado}'")
@@ -4683,33 +4677,30 @@ def format_csv_for_storm(df: pd.DataFrame) -> str:
     # 🔧 FIX: Corrigir formatação do CPF digitador (USUARIO BANCO) no relatório final
     if "USUARIO BANCO" in df_ordered.columns:
         def format_cpf_usuario_banco(cpf_str):
-            """Formatar CPF do digitador OU manter código de usuário original
-            DIGIO/PAN/C6: Códigos como '39891947807_901064' devem virar '39891947807901064' (sem underscore)
-            OUTROS: CPFs normais devem ser formatados como XXX.XXX.XXX-XX
+            """Manter formato original dos bancos que já vêm corretos
+            QUERO MAIS, C6, PAULISTA, DIGIO, etc: Códigos como '12345678901_202902' MANTÉM com underscore
+            Apenas formatar como CPF se for CPF puro sem código
             """
             if not cpf_str or cpf_str in ['', '0', '000.000.000-00']:
                 return '000.000.000-00'
             
             cpf_clean = str(cpf_str).strip()
             
-            # 🎯 DIGIO/PAN/C6: Se contém underscore, é código de usuário - remover underscore apenas
+            # 🎯 Se contém underscore, é formato banco correto - MANTER COMO ESTÁ
             if '_' in cpf_clean:
-                # Ex: "39891947807_901064" → "39891947807901064"
-                return cpf_clean.replace('_', '')
+                # Ex: "12345678901_202902" → "12345678901_202902" (manter original)
+                return cpf_clean
             
-            # 🎯 Se tem mais de 14 dígitos, provavelmente é código longo - manter como está
+            # 🎯 Se tem mais de 14 dígitos, provavelmente é código longo - manter como está  
             cpf_digits = ''.join(filter(str.isdigit, cpf_clean))
             if len(cpf_digits) > 14:
                 return cpf_clean  # Manter códigos longos originais
             
-            # 🎯 CPF normal: formatar no padrão brasileiro
-            if len(cpf_digits) >= 11:
-                cpf_final = cpf_digits[:11]  # Pegar apenas os primeiros 11 para CPF
-                return f"{cpf_final[:3]}.{cpf_final[3:6]}.{cpf_final[6:9]}-{cpf_final[9:11]}"
-            elif len(cpf_digits) == 11:
+            # 🎯 CPF normal (sem código): formatar no padrão brasileiro
+            if len(cpf_digits) == 11:
                 return f"{cpf_digits[:3]}.{cpf_digits[3:6]}.{cpf_digits[6:9]}-{cpf_digits[9:11]}"
             else:
-                # Menos de 11 dígitos, manter original
+                # Menos de 11 dígitos ou formato especial, manter original
                 return cpf_clean
         
         df_ordered["USUARIO BANCO"] = df_ordered["USUARIO BANCO"].apply(format_cpf_usuario_banco)
