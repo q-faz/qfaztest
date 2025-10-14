@@ -2157,11 +2157,17 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 usuario_digitador_raw = str(row.get('USUARIO BANCO', row.get('USUARIO_BANCO', ''))).strip()
                 cpf_cliente = str(row.get('CPF', '')).strip()
                 
-                # � DIGIO: Pular linhas de cabeçalho também na estrutura nomeada
-                if (usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO'] or 
-                    cpf_cliente.upper() in ['CPF', 'CPF_CLIENTE'] or
-                    nome_orgao_raw.upper() in ['ORGAO', 'NOME_ORGAO']):
-                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho na estrutura nomeada (usuario='{usuario_digitador_raw}')")
+                # 🔍 DIGIO: Pular linhas de cabeçalho também na estrutura nomeada (menos restritivo)
+                if (usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO', 'USER', 'LOGIN'] or 
+                    cpf_cliente.upper() in ['CPF', 'CPF_CLIENTE', 'DOCUMENTO'] or
+                    nome_orgao_raw.upper() in ['ORGAO', 'NOME_ORGAO', 'ORGAN'] or
+                    proposta.upper() in ['PROPOSTA', 'ID', 'NUMERO', 'CODE']):
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho na estrutura nomeada (proposta='{proposta}', usuario='{usuario_digitador_raw}')")
+                    continue
+                
+                # ✅ DIGIO: Validar se proposta tem conteúdo válido
+                if not proposta or proposta.strip() == '' or proposta.strip() in ['nan', 'None', 'NaN']:
+                    logging.info(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
                     continue
                 
                 # 🔧 DIGIO: Manter underscore do usuário digitador no formato original
@@ -2192,11 +2198,17 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 usuario_digitador_raw = str(row.get('Unnamed: 29', '')).strip()
                 cpf_cliente = str(row.get('Unnamed: 31', '')).strip()
                 
-                # � DIGIO: Pular linhas de cabeçalho - detectar se é linha de header
-                if (usuario_digitador_raw.upper() in ['DESCR_USU_DIGITADOR', 'COD_USUARIO_DIGITADOR'] or 
-                    cpf_cliente.upper() in ['CPF_CLIENTE', 'CPF_USU_DIGITADOR'] or
-                    nome_orgao_raw.upper() in ['NOME_ORGAO', 'COD_ORGAO']):
-                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (usuario='{usuario_digitador_raw}', cpf='{cpf_cliente}')")
+                # 🔍 DIGIO: Pular linhas de cabeçalho - detectar se é linha de header (menos restritivo)
+                if (usuario_digitador_raw.upper() in ['DESCR_USU_DIGITADOR', 'COD_USUARIO_DIGITADOR', 'USER', 'LOGIN'] or 
+                    cpf_cliente.upper() in ['CPF_CLIENTE', 'CPF_USU_DIGITADOR', 'CPF', 'DOCUMENTO'] or
+                    nome_orgao_raw.upper() in ['NOME_ORGAO', 'COD_ORGAO', 'ORGAO'] or
+                    proposta.upper() in ['PROPOSTA', 'ID', 'NUMERO', 'CODE']):
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho detectada (proposta='{proposta}', usuario='{usuario_digitador_raw}', cpf='{cpf_cliente}')")
+                    continue
+                
+                # ✅ DIGIO: Validar se proposta tem conteúdo válido
+                if not proposta or proposta.strip() == '' or proposta.strip() in ['nan', 'None', 'NaN']:
+                    logging.info(f"⏭️ DIGIO: Pulando linha - proposta vazia: '{proposta}'")
                     continue
                 
                 # 🔧 DIGIO: Manter underscore do usuário digitador no formato original
@@ -2220,10 +2232,20 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 
                 nome_tabela_para_busca = nome_convenio if nome_convenio else cod_convenio
             
-            # Log para debug do DIGIO
-            logging.info(f"🔍 DIGIO campos principais: Proposta={proposta}, TipoOp='{tipo_operacao}', Orgao='{nome_orgao_raw}'")
+            # Log para debug do DIGIO - EXPANDIDO
+            logging.info(f"🔍 DIGIO campos principais: Proposta='{proposta}', TipoOp='{tipo_operacao}', Orgao='{nome_orgao_raw}'")
             logging.info(f"🔍 DIGIO tabela: COD_CONVENIO='{cod_convenio}' | NOME_CONVENIO='{nome_convenio}'")
-            logging.info(f"🔍 DIGIO QtdParc={qtd_parcelas}, VlrFinanc={vlr_financiado}")
+            logging.info(f"🔍 DIGIO valores: QtdParc={qtd_parcelas}, VlrFinanc={vlr_financiado}, VlrLib={vlr_lib1}")
+            logging.info(f"🔍 DIGIO cliente: CPF='{cpf_cliente}', Nome='{nome_cliente}', Usuario='{usuario_digitador}'")
+            logging.info(f"🔍 DIGIO estrutura: has_unnamed={has_unnamed_structure}, unnamed_count={unnamed_count}/{total_count}")
+            
+            # ✅ DIGIO: Validações mínimas para prosseguir com o processamento
+            if not proposta or len(str(proposta).strip()) == 0:
+                logging.error(f"❌ DIGIO: Proposta vazia ou inválida - pulando linha")
+                continue
+                
+            # Log final antes de prosseguir
+            logging.info(f"✅ DIGIO: Linha válida encontrada - prosseguindo com processamento")
 
             
             # MELHORADO: Detecção inteligente de ORGAO DIGIO baseada no map_relat_atualizados.txt
