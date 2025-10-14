@@ -3313,7 +3313,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                         "ENDERECO": clean_santander_text(row.get('ENDERECO', row.get('END', row.get('ENDEREÇO', '')))),
                         "BAIRRO": clean_santander_text(row.get('BAIRRO', '')),
                         "CEP": clean_santander_text(row.get('CEP', '')),
-                        "UF": clean_santander_text(row.get('UF', row.get('ESTADO', '')))
+                        "UF": clean_santander_text(row.get('UF', row.get('ESTADO', ''))),
                         "CODIGO_TABELA": codigo_tabela,
                         "VALOR_PARCELAS": format_santander_value(valor_parcela),
                         "TAXA": "0,00%",
@@ -3519,7 +3519,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(),
                 "BAIRRO": str(row.get('Bairro', '')).strip(),
                 "CEP": str(row.get('CEP', row.get('Cep', ''))).strip(),
-                "UF": str(row.get('UF', row.get('Estado', row.get('Uf', '')))).strip()
+                "UF": str(row.get('UF', row.get('Estado', row.get('Uf', '')))).strip(),
                 "CODIGO_TABELA": cod_operacao,  # ✅ Usar código diretamente do arquivo (ENER, CPAUTO, LUZ, BOL, CSD)
                 "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
                 "TAXA": "0,00%",  # CREFAZ não tem taxa no relat_orgaos (sempre 0,00%)
