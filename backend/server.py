@@ -3173,7 +3173,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     logging.warning(f"⚠️ CREFAZ: Erro ao formatar valor '{value_str}': {e}")
                     return str(value_str)  # Retornar original se houver erro
             
-            # 🔧 CREFAZ: Extrair ADE da coluna correta "Co Operação"
+            # 🔧 CREFAZ: Extrair ADE da coluna correta "Co Operação" 
             proposta = str(row.get('Co Operação', '')).strip()
             if not proposta:
                 # Fallback: tentar variações da coluna Co Operação
@@ -3185,6 +3185,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             logging.info(f"🎯 CREFAZ: ADE extraído de 'Co Operação': {proposta}")
             
+            # 🔧 CREFAZ: Extrair código de tabela da coluna correta "Cod Operação" (diferente de Co Operação)
             cod_operacao = str(row.get('Cod Operação', row.get('Tabela', ''))).strip()
             produto = str(row.get('Produto', '')).strip()
             
