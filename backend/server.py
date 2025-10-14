@@ -2468,7 +2468,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(), 
                 "BAIRRO": str(row.get('Bairro', '')).strip(),
                 "CEP": str(row.get('CEP', '')).strip(),
-                "UF": str(row.get('UF', row.get('Estado', '')))).strip()
+                "UF": str(row.get('UF', row.get('Estado', ''))).strip(),
                 "VALOR_PARCELAS": "",  # PRATA não fornece valor da parcela
                 "CODIGO_TABELA": str(row.get('Tabela', '')).strip(),  # Nome da tabela do banco
                 "TAXA": "",  # Vazio para buscar no relat_orgaos.csv
@@ -2869,7 +2869,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(),
                 "BAIRRO": str(row.get('Bairro', '')).strip(), 
                 "CEP": str(row.get('CEP', '')).strip(),
-                "UF": str(row.get('UF', row.get('Estado', ''))) UF
+                "UF": str(row.get('UF', row.get('Estado', ''))).strip(),
                 "VALOR_PARCELAS": valor_parcela_formatado,  # 💰 FORMATADO
                 "CODIGO_TABELA": tabela_normalized,  # Nome NORMALIZADO da tabela (usado para buscar no dicionário)
                 "TAXA": taxa_raw,  # Taxa do arquivo (mas será substituída pelo mapeamento se encontrar)
