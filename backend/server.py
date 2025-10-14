@@ -328,6 +328,12 @@ def load_organ_mapping():
     try:
         # Ler o arquivo de mapeamento atualizado usando caminho relativo
         csv_path = os.path.join(os.path.dirname(__file__), 'relat_orgaos.csv')
+        
+        # Verificar se arquivo existe antes de tentar ler
+        if not os.path.exists(csv_path):
+            logging.warning(f"Arquivo relat_orgaos.csv não encontrado em: {csv_path}")
+            return {}
+            
         # Tentar diferentes encodings
         try:
             df = pd.read_csv(csv_path, encoding='utf-8', sep=';')
@@ -4952,8 +4958,8 @@ async def debug_file(file: UploadFile = File(...)):
 # Include the router in the main app
 app.include_router(api_router)
 
-# Mount static files for frontend
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Mount static files for frontend (comentado para Railway - frontend está no Azure)
+# app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 # Configure CORS with a safe default.
 # If CORS_ORIGINS is set to '*' or empty, we allow all origins but disable credentials

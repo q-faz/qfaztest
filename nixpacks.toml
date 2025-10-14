@@ -8,7 +8,12 @@ cmds = [
 ]
 
 [phases.build]
-cmds = ["echo 'Build completed'"]
+cmds = [
+    "echo 'Build completed'",
+    "ls -la backend/",
+    "echo 'Checking for relat_orgaos.csv:'",
+    "ls -la backend/relat_orgaos.csv || echo 'File not found'"
+]
 
 [start]
 cmd = "cd backend && python3.11 start_server.py"
