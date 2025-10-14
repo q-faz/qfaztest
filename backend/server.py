@@ -738,14 +738,15 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
                 logging.info(f"✅ DIGIO detectado por indicadores: {found_digio_indicators}")
                 return "DIGIO"
                 
-            # Verificar estrutura típica do DIGIO (colunas Unnamed)
-            if digio_col_count >= 3:
-                # Se não tem indicadores únicos, verificar se NÃO é DAYCOVAL
+            # Verificar estrutura típica do DIGIO (muitas colunas Unnamed)
+            unnamed_count = sum(1 for col in df_columns if 'unnamed:' in str(col).lower())
+            if unnamed_count >= 50:  # DIGIO tem ~105 colunas Unnamed
+                # Verificar se NÃO é DAYCOVAL
                 daycoval_exclusive_indicators = ['banco daycoval', 'qfz solucoes', 'tp. operação', 'daycoval']
                 found_daycoval_indicators = [ind for ind in daycoval_exclusive_indicators if ind in all_data]
                 
                 if not found_daycoval_indicators:
-                    logging.info(f"✅ DIGIO detectado por estrutura (sem indicadores DAYCOVAL, {digio_col_count} colunas)")
+                    logging.info(f"✅ DIGIO detectado por estrutura ({unnamed_count} colunas Unnamed)")
                     return "DIGIO"
     
     # Verificar se é PRATA (tem colunas específicas)
@@ -2140,33 +2141,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             logging.info(f"🔍 DIGIO estrutura: {unnamed_count} Unnamed de {total_count} colunas ({unnamed_count/total_count*100:.1f}%)")
             
-            # 🔍 DIGIO: Arquivos DIGIO podem ter TODAS as colunas como Unnamed (isso é normal!)
-            # Verificar se tem conteúdo válido em QUALQUER coluna (não só as primeiras)
-            if unnamed_count == total_count and total_count > 100:
-                # Verificar se tem conteúdo válido em QUALQUER coluna Unnamed
-                has_valid_content = False
-                row_values_str = ' '.join([str(val) for val in row.values if pd.notna(val) and str(val).strip()]).upper()
-                
-                # Se tem conteúdo DIGIO típico em qualquer lugar da linha
-                if ('BANCO DIGIO' in row_values_str or 'DIGIO S/A' in row_values_str or 
-                    'DIGIO S.A' in row_values_str or 'RELATÓRIO' in row_values_str or
-                    'RELATORIO' in row_values_str or row_values_str.strip()):
-                    has_valid_content = True
-                
-                # Se não encontrou, verificar colunas específicas que sabemos que têm dados
-                if not has_valid_content:
-                    for col_name in row.index:
-                        if 'unnamed:' in str(col_name).lower():
-                            value = str(row.get(col_name, '')).strip()
-                            if value and value not in ['nan', 'None', '', 'NaN']:
-                                has_valid_content = True
-                                break
-                
-                if not has_valid_content:
-                    logging.error(f"❌ DIGIO: Arquivo realmente sem conteúdo válido - {total_count} colunas Unnamed!")
-                    continue
-                else:
-                    logging.info(f"✅ DIGIO: Arquivo com {total_count} colunas Unnamed mas tem conteúdo válido - prosseguindo")
+            # 🔍 DIGIO: Se tem 100+ colunas Unnamed, aceitar - é a estrutura normal
+            if unnamed_count == total_count and total_count >= 100:
+                logging.info(f"✅ DIGIO: Estrutura normal detectada - {total_count} colunas Unnamed")
             
             if not has_unnamed_structure:
                 # Estrutura com cabeçalhos nomeados (CSV exportado)
