@@ -2146,49 +2146,47 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"✅ DIGIO: Estrutura normal detectada - {total_count} colunas Unnamed")
             
             if not has_unnamed_structure:
-                # Estrutura com cabeçalhos nomeados (CSV exportado)
-                logging.info("🔍 DIGIO: Detectada estrutura com cabeçalhos nomeados")
-                proposta = str(row.get('PROPOSTA', '')).strip()
-                tipo_operacao = str(row.get('TIPO DE OPERACAO', row.get('TIPO_OPERACAO', ''))).strip()
-                data_cadastro = str(row.get('DATA CADASTRO', row.get('DATA_CADASTRO', ''))).strip()
-                situacao = str(row.get('SITUACAO', '')).strip()
-                data_lancamento = str(row.get('DATA DE PAGAMENTO', row.get('DATA_PAGAMENTO', ''))).strip()
-                nome_orgao_raw = str(row.get('ORGAO', '')).strip()
-                usuario_digitador_raw = str(row.get('USUARIO BANCO', row.get('USUARIO_BANCO', ''))).strip()
-                cpf_cliente = str(row.get('CPF', '')).strip()
+                # Estrutura com cabeçalhos nomeados (CSV exportado do banco)
+                logging.info("🔍 DIGIO: Detectada estrutura CSV com cabeçalhos nomeados")
                 
-                # 🔍 DIGIO: Pular linhas de cabeçalho na estrutura nomeada
+                # Mapeamento baseado na estrutura real do CSV DIGIO
+                proposta = str(row.get('PROPOSTA', '')).strip()
+                tipo_operacao = str(row.get('TIPO_OPERACAO', '')).strip()
+                data_cadastro = str(row.get('DATA_CADASTRO', '')).strip()
+                situacao = str(row.get('SITUACAO_PROPOSTA', '')).strip()
+                data_lancamento = str(row.get('DATA_LANCAMENTO', '')).strip()
+                nome_orgao_raw = str(row.get('NOME_ORGAO', '')).strip()
+                usuario_digitador_raw = str(row.get('DESCR_USU_DIGITADOR', '')).strip()
+                cpf_cliente = str(row.get('CPF_CLIENTE', '')).strip()
+                
+                # 🔍 DIGIO: Pular linhas de cabeçalho (identificar pelo conteúdo)
                 row_values = ' '.join([str(val) for val in row.values if pd.notna(val)]).upper()
                 if ('BANCO DIGIO' in row_values or 'RELATÓRIO' in row_values or 'RELATORIO' in row_values or
+                    'PROPOSTAS CADASTRADAS' in row_values or 'PROC.:' in row_values or
                     proposta == 'PROPOSTA' or  # Header da tabela
-                    usuario_digitador_raw.upper() in ['USUARIO BANCO', 'USUARIO_BANCO'] or 
-                    cpf_cliente.upper() in ['CPF', 'CPF_CLIENTE'] or
-                    nome_orgao_raw.upper() in ['ORGAO', 'NOME_ORGAO']):
-                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho (estrutura nomeada) - Proposta='{proposta}'")
+                    not proposta or proposta.upper() in ['PROPOSTA', 'NAN']):
+                    logging.info(f"⏭️ DIGIO: Pulando linha de cabeçalho - Conteúdo: {row_values[:100]}")
                     continue
                 
-                # ✅ DIGIO: Validar se proposta é número válido (estrutura nomeada)
-                proposta_str = str(proposta).strip()
-                if (not proposta_str or proposta_str.lower() in ['nan', 'none', ''] or 
-                    not proposta_str.replace('.', '').isdigit()):
-                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta inválida: '{proposta}' (não é número)")
+                # ✅ DIGIO: Validar se proposta é número válido 
+                if (not proposta or not proposta.replace('.', '').isdigit()):
+                    logging.debug(f"⏭️ DIGIO: Pulando linha - proposta inválida: '{proposta}'")
                     continue
                 
                 logging.info(f"✅ DIGIO: Proposta válida encontrada: {proposta}")
                 
-                # 🔧 DIGIO: Manter underscore do usuário digitador no formato original
-                # Ex: "39891947807_901064" (manter como está)
+                # 🔧 DIGIO: Extrair campos da estrutura CSV real
                 usuario_digitador = usuario_digitador_raw if usuario_digitador_raw else ""
-                nome_cliente = str(row.get('NOME', '')).strip()
-                data_nascimento = str(row.get('DATA DE NASCIMENTO', row.get('DATA_NASCIMENTO', ''))).strip()
-                qtd_parcelas = str(row.get('NUMERO PARCELAS', row.get('NUMERO_PARCELAS', ''))).strip()
-                vlr_parcela = str(row.get('VALOR PARCELAS', row.get('VALOR_PARCELAS', ''))).strip()
-                vlr_financiado = str(row.get('VALOR OPERACAO', row.get('VALOR_OPERACAO', ''))).strip()
-                vlr_lib1 = str(row.get('VALOR LIBERADO', row.get('VALOR_LIBERADO', ''))).strip()
+                nome_cliente = str(row.get('NOMECLI', '')).strip()
+                data_nascimento = str(row.get('DATA_NASCIMENTO', '')).strip()
+                qtd_parcelas = str(row.get('QTD_PARCELAS', '')).strip()
+                vlr_parcela = str(row.get('VALOR_PARCELA', '')).strip()
+                vlr_financiado = str(row.get('VLR FINANCIADO', '')).strip()
+                vlr_lib1 = str(row.get('VLR_LIB1', '')).strip()
                 
-                # Código de tabela e nome de convênio
-                cod_convenio = str(row.get('CODIGO TABELA', row.get('CODIGO_TABELA', ''))).strip()
-                nome_convenio = cod_convenio  # No CSV exportado, só temos o código
+                # Código e nome de convênio
+                cod_convenio = str(row.get('COD_CONVENIO', '')).strip()
+                nome_convenio = str(row.get('NOME_CONVENIO', '')).strip()
                 
                 nome_tabela_para_busca = cod_convenio
                 
