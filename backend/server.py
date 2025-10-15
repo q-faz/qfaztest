@@ -4395,32 +4395,29 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - MAPEAMENTO DIRETO ESPECÍFICO (sem dependência da busca complexa)
+            # 🎯 VCTEX - MAPEAMENTO DIRETO E IMEDIATO (aplicação direta no registro)
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             
             print(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}'")
             logging.warning(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}'")
             
-            # MAPEAMENTO DIRETO HARDCODED PARA VCTEX (solução imediata)
-            mapping_result = None
+            # APLICAÇÃO DIRETA NO REGISTRO (força a substituição imediata)
             if tabela_original == "Tabela EXP":
-                mapping_result = {
-                    'codigo_tabela': 'TabelaEXP',
-                    'taxa_storm': '1,83%',
-                    'operacao_storm': 'Margem Livre (Novo)'
-                }
-                print(f"✅🔥 VCTEX DIRETO: 'Tabela EXP' → 'TabelaEXP' (1,83%)")
-                logging.warning(f"✅🔥 VCTEX DIRETO: 'Tabela EXP' → 'TabelaEXP' (1,83%)")
+                normalized_row["CODIGO_TABELA"] = "TabelaEXP"
+                normalized_row["TAXA"] = "1,83%"
+                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
+                print(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela EXP' → 'TabelaEXP' APLICADO NO REGISTRO!")
+                logging.warning(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela EXP' → 'TabelaEXP' APLICADO NO REGISTRO!")
+                mapping_result = True  # Marca que foi processado
             elif tabela_original == "Tabela Exponencial":
-                mapping_result = {
-                    'codigo_tabela': 'TabelaExponencial',
-                    'taxa_storm': '1,83%',
-                    'operacao_storm': 'Margem Livre (Novo)'
-                }
-                print(f"✅🔥 VCTEX DIRETO: 'Tabela Exponencial' → 'TabelaExponencial' (1,83%)")
-                logging.warning(f"✅🔥 VCTEX DIRETO: 'Tabela Exponencial' → 'TabelaExponencial' (1,83%)")
+                normalized_row["CODIGO_TABELA"] = "TabelaExponencial"
+                normalized_row["TAXA"] = "1,83%"
+                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
+                print(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela Exponencial' → 'TabelaExponencial' APLICADO NO REGISTRO!")
+                logging.warning(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela Exponencial' → 'TabelaExponencial' APLICADO NO REGISTRO!")
+                mapping_result = True  # Marca que foi processado
             else:
-                # Fallback para o mapeamento original se não for uma das duas tabelas conhecidas
+                # Para outras tabelas VCTEX, usar mapeamento automático
                 banco_para_mapeamento = normalized_row.get("BANCO", "")
                 orgao_para_mapeamento = normalized_row.get("ORGAO", "")
                 operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
@@ -4435,9 +4432,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 print(f"🔄🔥 VCTEX FALLBACK: '{tabela_original}' → busca automática")
                 logging.warning(f"🔄🔥 VCTEX FALLBACK: '{tabela_original}' → busca automática")
             
-            if not mapping_result:
-                print(f"⚠️🔥 VCTEX: Nenhum mapeamento encontrado para tabela '{tabela_original}' - mantendo original")
-                logging.warning(f"⚠️🔥 VCTEX: Nenhum mapeamento encontrado para tabela '{tabela_original}' - mantendo original")
+            # Log do estado final
+            print(f"🔥 VCTEX ESTADO FINAL: CODIGO_TABELA='{normalized_row.get('CODIGO_TABELA', '')}', TAXA='{normalized_row.get('TAXA', '')}', OPERACAO='{normalized_row.get('TIPO_OPERACAO', '')}'")
+            logging.warning(f"🔥 VCTEX ESTADO FINAL: CODIGO_TABELA='{normalized_row.get('CODIGO_TABELA', '')}', TAXA='{normalized_row.get('TAXA', '')}', OPERACAO='{normalized_row.get('TIPO_OPERACAO', '')}')")
         elif bank_type == "FACTA92":
             # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
@@ -4551,7 +4548,20 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             # 2. CODIGO TABELA (Storm) - SEMPRE substituir se encontrou mapeamento
             if mapping_result.get('codigo_tabela'):
-                normalized_row["CODIGO_TABELA"] = mapping_result.get('codigo_tabela', '')
+                codigo_anterior = normalized_row.get("CODIGO_TABELA", "")
+                codigo_novo = mapping_result.get('codigo_tabela', '')
+                normalized_row["CODIGO_TABELA"] = codigo_novo
+                
+                # Log específico para VCTEX
+                if bank_type == "VCTEX":
+                    print(f"🔄🔥 VCTEX APLICANDO MAPEAMENTO: '{codigo_anterior}' → '{codigo_novo}'")
+                    logging.warning(f"🔄🔥 VCTEX APLICANDO MAPEAMENTO: '{codigo_anterior}' → '{codigo_novo}'")
+                    print(f"🔥 VCTEX CODIGO_TABELA FINAL: '{normalized_row.get('CODIGO_TABELA', '')}'")
+                    logging.warning(f"🔥 VCTEX CODIGO_TABELA FINAL: '{normalized_row.get('CODIGO_TABELA', '')}'")
+            elif bank_type == "VCTEX":
+                # Se é VCTEX mas não tem mapping_result, manter original e avisar
+                print(f"⚠️🔥 VCTEX SEM MAPEAMENTO: mantendo '{normalized_row.get('CODIGO_TABELA', '')}'")
+                logging.warning(f"⚠️🔥 VCTEX SEM MAPEAMENTO: mantendo '{normalized_row.get('CODIGO_TABELA', '')}')")
             
             # 3. TAXA (Storm) - SEMPRE substituir se encontrou mapeamento
             if mapping_result.get('taxa_storm'):
