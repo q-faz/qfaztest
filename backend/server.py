@@ -427,7 +427,7 @@ def load_organ_mapping():
         
         for encoding in encodings_to_try:
             try:
-                df = pd.read_csv(csv_path, encoding=encoding, sep=';', errors='replace')
+                df = pd.read_csv(csv_path, encoding=encoding, sep=';')
                 logging.info(f"✅ Arquivo CSV carregado com encoding: {encoding}")
                 break
             except Exception as e:
@@ -435,10 +435,10 @@ def load_organ_mapping():
                 continue
         
         if df is None:
-            # Fallback final com errors='ignore'
+            # Fallback final 
             try:
-                df = pd.read_csv(csv_path, encoding='utf-8', sep=';', errors='ignore')
-                logging.warning("⚠️ Arquivo CSV carregado com encoding UTF-8 ignorando erros")
+                df = pd.read_csv(csv_path, encoding='utf-8', sep=';')
+                logging.warning("⚠️ Arquivo CSV carregado com encoding UTF-8 como fallback")
             except Exception as e:
                 logging.error(f"❌ Erro crítico ao ler CSV: {e}")
                 return {}, {}, {}, {}
@@ -571,8 +571,7 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                             sep=sep,
                             low_memory=False,
                             na_values=['', 'NaN', 'NULL', 'null', 'N/A', 'n/a'],
-                            dtype=str,  # Manter tudo como string inicialmente
-                            errors='replace'  # Substituir caracteres problemáticos
+                            dtype=str  # Manter tudo como string inicialmente
                         )
                         
                         # Verificar se temos múltiplas colunas ou se precisa dividir
@@ -584,7 +583,6 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                         
                         if len(df.columns) > 1 or (len(df.columns) == 1 and len(df) > 0):
                             logging.info(f"Arquivo lido com encoding {encoding} e separador '{sep}', {len(df.columns)} colunas")
-                            
                             return apply_character_cleaning_to_dataframe(df, filename)
                             
                     except (UnicodeDecodeError, pd.errors.ParserError, Exception) as e:
