@@ -4395,8 +4395,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             proposta_num = normalized_row.get("PROPOSTA", "").strip()
             
-            print(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}' (len={len(tabela_original)})")
-            logging.warning(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}' (len={len(tabela_original)})")
+            print(f"🎯 VCTEX PROPOSTA {proposta_num}: Tabela='{tabela_original}'")
+            logging.warning(f"🎯 VCTEX PROPOSTA {proposta_num}: Tabela='{tabela_original}'")
             
             # 🔄 MAPEAMENTO DIRETO - FORÇAR SEMPRE A CONVERSÃO CORRETA
             # Usar apply_mapping para todas as tabelas VCTEX
@@ -4412,8 +4412,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 tabela_original  # tabela exata do arquivo
             )
             
-            print(f"🔍🔥 VCTEX MAPEAMENTO RESULTADO: {mapping_result}")
-            logging.warning(f"🔍🔥 VCTEX MAPEAMENTO RESULTADO: {mapping_result}")
+            print(f"🔍 VCTEX MAPEAMENTO: {mapping_result}")
+            logging.warning(f"🔍 VCTEX MAPEAMENTO: {mapping_result}")
             
             # 🧪 TESTE ADICIONAL: Se não encontrou, testar variações da tabela
             if not mapping_result:
@@ -4438,8 +4438,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 # Aplicar mapeamento encontrado no CSV
                 if "codigo_tabela" in mapping_result and mapping_result["codigo_tabela"]:
                     normalized_row["CODIGO_TABELA"] = mapping_result["codigo_tabela"]
-                    print(f"✅🔥 VCTEX CSV APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
-                    logging.warning(f"✅🔥 VCTEX CSV APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
+                    print(f"✅ VCTEX APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
+                    logging.warning(f"✅ VCTEX APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
                 
                 if "taxa_storm" in mapping_result and mapping_result["taxa_storm"]:
                     normalized_row["TAXA"] = mapping_result["taxa_storm"]
