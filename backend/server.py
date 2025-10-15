@@ -1622,21 +1622,10 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
             else:
                 logging.warning(f"⚠️ SANTANDER sem código válido ({tabela_normalized}), usando busca tradicional")
         
-            # Log especial para VCTEX - mostrar TODAS as entradas disponíveis
+            # Log básico para VCTEX
             if bank_normalized == "BANCO VCTEX":
-                print(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
-                logging.warning(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
-                
-                # Mostrar TODAS as opções VCTEX disponíveis no CSV
-                vctex_count = 0
-                for key, details_list in detailed_mapping.items():
-                    if "BANCO VCTEX" in key:
-                        for details in details_list:
-                            vctex_count += 1
-                            print(f"   📋 VCTEX OPÇÃO {vctex_count}: '{details['tabela_banco']}' → '{details['codigo_tabela']}'")
-                            logging.warning(f"   📋 VCTEX OPÇÃO {vctex_count}: '{details['tabela_banco']}' → '{details['codigo_tabela']}'")
-                print(f"🔢 TOTAL VCTEX DISPONÍVEL: {vctex_count} opções")
-                logging.warning(f"🔢 TOTAL VCTEX DISPONÍVEL: {vctex_count} opções")        logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+                print(f"🔍 VCTEX: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+                logging.warning(f"🔍 VCTEX: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")        logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
         
         logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
         
@@ -1651,10 +1640,8 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
             if is_averbai:
                 logging.info(f"🔎 AVERBAI - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
             elif is_vctex:
-                print(f"🔎🔥 VCTEX - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
-                print(f"🔎🔥 VCTEX - Parâmetros: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized}")
-                logging.warning(f"🔎🔥 VCTEX - Iniciando busca por tabela: '{tabela_normalized}' (len={len(tabela_normalized)})")
-                logging.warning(f"🔎🔥 VCTEX - Parâmetros: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized}")
+                print(f"🔎 VCTEX: '{tabela_normalized}'")
+                logging.warning(f"🔎 VCTEX: '{tabela_normalized}'")
             
             for key, details in TABELA_MAPPING.items():
                 parts = key.split('|')
