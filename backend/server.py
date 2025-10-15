@@ -332,6 +332,87 @@ def clean_special_characters(text):
         return ""
     
     text_str = str(text).strip()
+
+    # Primeiro tentar corrigir casos de mojibake comum (ex: 'CRï¿½DITO' -> 'CRÉDITO')
+    def fix_mojibake(s: str) -> str:
+        # Tentar desfazer múltiplas camadas de codificação (até 3 iterações)
+        candidate = s
+        for _ in range(3):
+            try:
+                decoded = candidate.encode('latin-1', errors='replace').decode('utf-8', errors='replace')
+                # Se a decodificação produziu mais caracteres válidos, adotar
+                if len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", decoded)) > len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", candidate)):
+                    candidate = decoded
+                    continue
+            except Exception:
+                pass
+
+            try:
+                decoded2 = candidate.encode('utf-8', errors='replace').decode('latin-1', errors='replace')
+                if len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", decoded2)) > len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", candidate)):
+                    candidate = decoded2
+                    continue
+            except Exception:
+                pass
+
+            # Se nenhuma melhoria, parar
+            break
+
+        best = candidate
+
+        # Substituições simples e seguras residuais
+        safe_replacements = {'–': '-', '—': '-', '•': '-', '…': '...', '\u00A0': ' ', '\t': ' ', '\r': ''}
+        for k, v in safe_replacements.items():
+            best = best.replace(k, v)
+
+        residual = {'Ã¡': 'á', 'Ã©': 'é', 'Ãª': 'ê', 'Ã§': 'ç', 'Ã£': 'ã', 'Ãµ': 'õ', 'Ãº': 'ú', 'Ã³': 'ó', 'Ã­': 'í'}
+        for k, v in residual.items():
+            if k in best:
+                best = best.replace(k, v)
+
+        # Hotfix: Mapeamentos específicos para casos comuns conhecidos
+        hotfix_map = {
+            'CRï¿½DITO DO TRABALHADOR': 'CRÉDITO DO TRABALHADOR',
+            'CRï¿½DITO': 'CRÉDITO',
+            'CRÃ‰DITO DO TRABALHADOR': 'CRÉDITO DO TRABALHADOR',
+            'CRÃ‰DITO': 'CRÉDITO',
+            'TRABALHADORï¿½': 'TRABALHADOR',
+            'Cartï¿½o': 'Cartão',
+            'operaï¿½ï¿½o': 'operação',
+            'situaï¿½ï¿½o': 'situação',
+            'órgï¿½o': 'órgão',
+            'ÓRGï¿½O': 'ÓRGÃO',
+            'orgï¿½o': 'órgão',
+            'ORGï¿½O': 'ÓRGÃO',
+            'ï¿½RGÃO': 'ÓRGÃO',
+            'ï¿½rgão': 'órgão',
+            'empréstimo': 'empréstimo',  # já correto
+            'financiamento': 'financiamento'  # já correto
+        }
+        
+        # Aplicar mapeamentos diretos primeiro
+        for broken, fixed in hotfix_map.items():
+            if broken in best:
+                best = best.replace(broken, fixed)
+        
+        # Sequências genéricas comuns
+        generic_fixes = {
+            'ï¿½': 'É',  # replacement char comum para É
+            'Ã©': 'é',   # mojibake comum para é
+            'Ã¡': 'á',   # mojibake comum para á
+            'Ã§': 'ç',   # mojibake comum para ç
+            'Ã£': 'ã',   # mojibake comum para ã
+            'Ãµ': 'õ'    # mojibake comum para õ
+        }
+        
+        for broken, fixed in generic_fixes.items():
+            best = best.replace(broken, fixed)
+        
+        # Remover caracteres de replacement residual
+        best = best.replace('\ufffd', '')
+        return best
+
+    text_str = fix_mojibake(text_str)
     
     if not text_str:
         return ""
