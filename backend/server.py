@@ -4420,36 +4420,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.warning(f"🔍🔥 VCTEX MAPEAMENTO RESULTADO: {mapping_result}")
             
             if mapping_result and isinstance(mapping_result, dict):
-                # Alternar entre as duas tabelas finais
-                proposta_hash = hash(proposta_num) % 2
-                if proposta_hash == 0:
-                    normalized_row["CODIGO_TABELA"] = "TabelaEXP"
-                    print(f"✅ VCTEX APLICADO DIRETO: '{tabela_original}' → 'TabelaEXP'")
-                    logging.warning(f"✅ VCTEX APLICADO DIRETO: '{tabela_original}' → 'TabelaEXP'")
-                else:
-                    normalized_row["CODIGO_TABELA"] = "TabelaExponencial"
-                    print(f"✅ VCTEX APLICADO DIRETO: '{tabela_original}' → 'TabelaExponencial'")
-                    logging.warning(f"✅ VCTEX APLICADO DIRETO: '{tabela_original}' → 'TabelaExponencial'")
+                # Aplicar mapeamento encontrado no CSV
+                if "codigo_tabela" in mapping_result and mapping_result["codigo_tabela"]:
+                    normalized_row["CODIGO_TABELA"] = mapping_result["codigo_tabela"]
+                    print(f"✅🔥 VCTEX CSV APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
+                    logging.warning(f"✅🔥 VCTEX CSV APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
                 
-                # Garantir que os outros campos também sejam aplicados
-                normalized_row["TAXA"] = "1,83%"
-                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
+                if "taxa" in mapping_result and mapping_result["taxa"]:
+                    normalized_row["TAXA"] = mapping_result["taxa"]
+                    
+                if "operacao" in mapping_result and mapping_result["operacao"]:
+                    normalized_row["TIPO_OPERACAO"] = mapping_result["operacao"]
+                    
                 mapping_result = True  # Marcar como processado
-            elif tabela_original == "Tabela EXP":
-                normalized_row["CODIGO_TABELA"] = "TabelaEXP"
-                normalized_row["TAXA"] = "1,83%"
-                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
-                print(f"✅🔥 VCTEX DIRETO: 'Tabela EXP' → 'TabelaEXP'")
-                logging.warning(f"✅🔥 VCTEX DIRETO: 'Tabela EXP' → 'TabelaEXP'")
-                mapping_result = True
-            elif tabela_original == "Tabela Exponencial":
-                normalized_row["CODIGO_TABELA"] = "TabelaExponencial"
-                normalized_row["TAXA"] = "1,83%"
-                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
-                print(f"✅🔥 VCTEX DIRETO: 'Tabela Exponencial' → 'TabelaExponencial'")
-                logging.warning(f"✅🔥 VCTEX DIRETO: 'Tabela Exponencial' → 'TabelaExponencial'")
-                mapping_result = True
             else:
+                print(f"❌🔥 VCTEX NÃO MAPEADO: '{tabela_original}' não encontrado no CSV")
+                logging.warning(f"❌🔥 VCTEX NÃO MAPEADO: '{tabela_original}' não encontrado no CSV")
                 # Para outras tabelas, manter como está
                 print(f"⚠️🔥 VCTEX TABELA DESCONHECIDA: mantendo '{tabela_original}'")
                 logging.warning(f"⚠️🔥 VCTEX TABELA DESCONHECIDA: mantendo '{tabela_original}'")
