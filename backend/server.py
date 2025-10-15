@@ -408,6 +408,7 @@ def clean_special_characters(text):
             'Ã‰': 'É',   # mojibake comum para É (maiúsculo)
             'Ã': 'Á',    # mojibake comum para Á
             'Ã‡': 'Ç',   # mojibake comum para Ç
+            'CRÃ': 'CRÉ' # 🔥 ESPECÍFICO: CRÉDITO com Ã no lugar do É
             'Ã': 'Ã',    # mojibake comum para Ã
             'Ãµ': 'Õ'    # mojibake comum para Õ (maiúsculo)
         }
