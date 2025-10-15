@@ -4391,7 +4391,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - MAPEAMENTO DIRETO SIMPLES
+            # 🎯 VCTEX - Processamento com mapeamento direto
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             
             # Mapeamento direto VCTEX
@@ -4406,14 +4406,14 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "TabelaVamoComTudoComSeg": "TabelaVamoComTudoComSeg"
             }
             
+            # Aplicar mapeamento se encontrar
             if tabela_original in vctex_map:
                 normalized_row["CODIGO_TABELA"] = vctex_map[tabela_original]
                 normalized_row["TAXA"] = "1,83%"
                 normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
-                mapping_result = True
-            else:
-                # Manter como está se não encontrar
-                mapping_result = None
+            
+            # Sempre marcar como processado para VCTEX (mesmo se não mapear)
+            mapping_result = True
         elif bank_type == "FACTA92":
             # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
