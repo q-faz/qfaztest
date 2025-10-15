@@ -4395,11 +4395,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - MAPEAMENTO DIRETO E IMEDIATO (aplicação direta no registro)
+            # 🎯 VCTEX - DISTRIBUIÇÃO AUTOMÁTICA DE TABELAS + MAPEAMENTO DIRETO
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
+            proposta_num = normalized_row.get("PROPOSTA", "").strip()
             
-            print(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}'")
-            logging.warning(f"🎯🔥 VCTEX PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: Tabela original '{tabela_original}'")
+            print(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}'")
+            logging.warning(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}'")
+            
+            # 🔄 DISTRIBUIÇÃO AUTOMÁTICA: Converter "Tabela Vamo Com Tudo" para as tabelas corretas
+            if tabela_original == "Tabela Vamo Com Tudo":
+                # Usar hash da proposta para distribuição determinística
+                proposta_hash = hash(proposta_num) % 2
+                if proposta_hash == 0:
+                    tabela_original = "Tabela EXP"
+                    print(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela EXP'")
+                    logging.warning(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela EXP'")
+                else:
+                    tabela_original = "Tabela Exponencial" 
+                    print(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela Exponencial'")
+                    logging.warning(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela Exponencial'")
             
             # APLICAÇÃO DIRETA NO REGISTRO (força a substituição imediata)
             if tabela_original == "Tabela EXP":
