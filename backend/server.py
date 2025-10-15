@@ -4395,56 +4395,50 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - DISTRIBUIÇÃO AUTOMÁTICA DE TABELAS + MAPEAMENTO DIRETO
+            # 🎯 VCTEX - CONVERSÃO PARA TABELAS MAPEÁVEIS
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             proposta_num = normalized_row.get("PROPOSTA", "").strip()
             
             print(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}'")
             logging.warning(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}'")
             
-            # 🔄 DISTRIBUIÇÃO AUTOMÁTICA: Converter "Tabela Vamo Com Tudo" para as tabelas corretas
+            # 🔄 CONVERSÃO: Se for "Tabela Vamo Com Tudo", converter para tabela mapeável
+            tabela_para_mapeamento = tabela_original
             if tabela_original == "Tabela Vamo Com Tudo":
-                # Usar hash da proposta para distribuição determinística
+                # Alternar entre as duas tabelas que existem no CSV
                 proposta_hash = hash(proposta_num) % 2
                 if proposta_hash == 0:
-                    tabela_original = "Tabela EXP"
-                    print(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela EXP'")
-                    logging.warning(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela EXP'")
+                    tabela_para_mapeamento = "Tabela EXP"
+                    print(f"🔄🔥 VCTEX CONVERTENDO: '{tabela_original}' → 'Tabela EXP' para mapeamento")
+                    logging.warning(f"🔄🔥 VCTEX CONVERTENDO: '{tabela_original}' → 'Tabela EXP' para mapeamento")
                 else:
-                    tabela_original = "Tabela Exponencial" 
-                    print(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela Exponencial'")
-                    logging.warning(f"🔄🔥 VCTEX AUTO-DISTRIBUIÇÃO: '{proposta_num}' → 'Tabela Exponencial'")
+                    tabela_para_mapeamento = "Tabela Exponencial" 
+                    print(f"🔄🔥 VCTEX CONVERTENDO: '{tabela_original}' → 'Tabela Exponencial' para mapeamento")
+                    logging.warning(f"🔄🔥 VCTEX CONVERTENDO: '{tabela_original}' → 'Tabela Exponencial' para mapeamento")
             
-            # APLICAÇÃO DIRETA NO REGISTRO (força a substituição imediata)
-            if tabela_original == "Tabela EXP":
-                normalized_row["CODIGO_TABELA"] = "TabelaEXP"
-                normalized_row["TAXA"] = "1,83%"
-                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
-                print(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela EXP' → 'TabelaEXP' APLICADO NO REGISTRO!")
-                logging.warning(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela EXP' → 'TabelaEXP' APLICADO NO REGISTRO!")
-                mapping_result = True  # Marca que foi processado
-            elif tabela_original == "Tabela Exponencial":
-                normalized_row["CODIGO_TABELA"] = "TabelaExponencial"
-                normalized_row["TAXA"] = "1,83%"
-                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
-                print(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela Exponencial' → 'TabelaExponencial' APLICADO NO REGISTRO!")
-                logging.warning(f"✅🔥 VCTEX DIRETO APLICADO: 'Tabela Exponencial' → 'TabelaExponencial' APLICADO NO REGISTRO!")
-                mapping_result = True  # Marca que foi processado
-            else:
-                # Para outras tabelas VCTEX, usar mapeamento automático
-                banco_para_mapeamento = normalized_row.get("BANCO", "")
-                orgao_para_mapeamento = normalized_row.get("ORGAO", "")
-                operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
-                
-                mapping_result = apply_mapping(
-                    banco_para_mapeamento,
-                    orgao_para_mapeamento,
-                    operacao_para_mapeamento,
-                    "",  # usuario vazio
-                    tabela_original  # Usar tabela EXATA do arquivo
-                )
-                print(f"🔄🔥 VCTEX FALLBACK: '{tabela_original}' → busca automática")
-                logging.warning(f"🔄🔥 VCTEX FALLBACK: '{tabela_original}' → busca automática")
+            # Aplicar mapeamento baseado no CSV usando tabela convertida
+            banco_para_mapeamento = normalized_row.get("BANCO", "")
+            orgao_para_mapeamento = normalized_row.get("ORGAO", "")
+            operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
+            
+            mapping_result = apply_mapping(
+                banco_para_mapeamento,
+                orgao_para_mapeamento,
+                operacao_para_mapeamento,
+                "",  # usuario vazio
+                tabela_para_mapeamento  # Usar tabela CONVERTIDA
+            )
+            
+            # Se o mapeamento retornou um resultado válido, aplicar
+            if mapping_result and isinstance(mapping_result, dict):
+                if "codigo_tabela" in mapping_result:
+                    normalized_row["CODIGO_TABELA"] = mapping_result["codigo_tabela"]
+                    print(f"✅🔥 VCTEX MAPEAMENTO APLICADO: '{tabela_para_mapeamento}' → '{mapping_result['codigo_tabela']}'")
+                    logging.warning(f"✅🔥 VCTEX MAPEAMENTO APLICADO: '{tabela_para_mapeamento}' → '{mapping_result['codigo_tabela']}'")
+                if "taxa" in mapping_result:
+                    normalized_row["TAXA"] = mapping_result["taxa"]
+                if "operacao" in mapping_result:
+                    normalized_row["TIPO_OPERACAO"] = mapping_result["operacao"]
             
             # Log do estado final
             print(f"🔥 VCTEX ESTADO FINAL: CODIGO_TABELA='{normalized_row.get('CODIGO_TABELA', '')}', TAXA='{normalized_row.get('TAXA', '')}', OPERACAO='{normalized_row.get('TIPO_OPERACAO', '')}'")
