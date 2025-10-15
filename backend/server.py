@@ -376,6 +376,8 @@ def clean_special_characters(text):
             'CRï¿½DITO': 'CRÉDITO',
             'CRÃ‰DITO DO TRABALHADOR': 'CRÉDITO DO TRABALHADOR',
             'CRÃ‰DITO': 'CRÉDITO',
+            'CRDITO DO TRABALHADOR': 'CRÉDITO DO TRABALHADOR',  # Faltando É no início
+            'CRDITO': 'CRÉDITO',
             'TRABALHADORï¿½': 'TRABALHADOR',
             'Cartï¿½o': 'Cartão',
             'operaï¿½ï¿½o': 'operação',
