@@ -323,6 +323,91 @@ def format_percentage_brazilian(percentage_str):
         logging.warning(f"⚠️ Erro ao formatar percentual '{percentage_str}': {e}")
         return f"{str(percentage_str).strip()}%"
 
+def clean_special_characters(text):
+    """
+    Remove ou substitui caracteres especiais problemáticos que quebram o processamento
+    Trata problemas de encoding e normaliza texto para processamento seguro
+    """
+    if not text or pd.isna(text):
+        return ""
+    
+    text_str = str(text).strip()
+    
+    if not text_str:
+        return ""
+    
+    # Dicionário de substituições para caracteres problemáticos comuns
+    char_replacements = {
+        # Caracteres de controle e especiais problemáticos
+        '^': '',
+        '~': '',
+        '`': '',
+        '´': '',
+        '¨': '',
+        '°': '',
+        'º': '',
+        'ª': '',
+        # Aspas problemáticas
+        '"': '"',
+        '"': '"', 
+        ''': "'",
+        ''': "'",
+        # Símbolos matemáticos problemáticos  
+        '±': '+/-',
+        '×': 'x',
+        '÷': '/',
+        # Outros símbolos problemáticos
+        '§': 'paragrafo',
+        '¶': '',
+        '†': '',
+        '‡': '',
+        '•': '-',
+        '…': '...',
+        '–': '-',
+        '—': '-',
+        # Caracteres de moeda problemáticos
+        '¢': 'centavos',
+        '£': 'libras',
+        '¥': 'yen',
+        '€': 'euro',
+    }
+    
+    # Aplicar substituições
+    cleaned_text = text_str
+    for old_char, new_char in char_replacements.items():
+        cleaned_text = cleaned_text.replace(old_char, new_char)
+    
+    # Remover caracteres de controle (ASCII 0-31 exceto \t, \n, \r)
+    import re
+    cleaned_text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]', '', cleaned_text)
+    
+    # Normalizar múltiplos espaços em um só
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
+    
+    # Logging para debug quando há mudanças significativas
+    if len(text_str) != len(cleaned_text) or text_str != cleaned_text:
+        logging.info(f"🧹 Texto limpo: '{text_str[:50]}...' → '{cleaned_text[:50]}...'")
+    
+    return cleaned_text
+
+def apply_character_cleaning_to_dataframe(df: pd.DataFrame, filename: str = "") -> pd.DataFrame:
+    """
+    Aplica limpeza de caracteres especiais em todas as colunas de texto do DataFrame
+    """
+    if df.empty:
+        return df
+    
+    cleaned_columns = 0
+    for column in df.columns:
+        if df[column].dtype == 'object':  # Colunas de texto
+            df[column] = df[column].astype(str).apply(clean_special_characters)
+            cleaned_columns += 1
+    
+    if cleaned_columns > 0 and filename:
+        logging.info(f"✅ Limpeza aplicada ao arquivo {filename}: {cleaned_columns} colunas processadas")
+    
+    return df
+
 def load_organ_mapping():
     """Carrega o mapeamento de órgãos do arquivo CSV atualizado - MELHORADO sem dependência de usuário"""
     try:
@@ -336,15 +421,27 @@ def load_organ_mapping():
             logging.warning(f"Arquivos no diretório backend: {os.listdir(os.path.dirname(__file__))}")
             return {}, {}, {}, {}
             
-        # Tentar diferentes encodings
-        try:
-            df = pd.read_csv(csv_path, encoding='utf-8', sep=';')
-        except UnicodeDecodeError:
+        # Tentar diferentes encodings com tratamento robusto de caracteres especiais
+        encodings_to_try = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+        df = None
+        
+        for encoding in encodings_to_try:
             try:
-                df = pd.read_csv(csv_path, encoding='latin-1', sep=';')
+                df = pd.read_csv(csv_path, encoding=encoding, sep=';', errors='replace')
+                logging.info(f"✅ Arquivo CSV carregado com encoding: {encoding}")
+                break
             except Exception as e:
-                logging.warning(f"Erro ao ler CSV: {e}")
-                df = pd.read_csv(csv_path, encoding='iso-8859-1', sep=';')
+                logging.warning(f"⚠️ Erro ao ler CSV com encoding {encoding}: {e}")
+                continue
+        
+        if df is None:
+            # Fallback final com errors='ignore'
+            try:
+                df = pd.read_csv(csv_path, encoding='utf-8', sep=';', errors='ignore')
+                logging.warning("⚠️ Arquivo CSV carregado com encoding UTF-8 ignorando erros")
+            except Exception as e:
+                logging.error(f"❌ Erro crítico ao ler CSV: {e}")
+                return {}, {}, {}, {}
         
         # Formato REAL do arquivo: BANCO;ORGÃO STORM;TABELA BANCO;CODIGO TABELA STORM;OPERAÇÃO STORM;TAXA STORM
         # NOTA: Campo USUARIO DIGITADOR STORM foi removido para evitar problemas futuros com mudanças de usuário
@@ -463,8 +560,9 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
     
     try:
         if file_ext == 'csv':
-            # Tentar diferentes encodings e separadores
-            for encoding in ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252']:
+            # Tentar diferentes encodings e separadores com tratamento robusto
+            encodings_to_try = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+            for encoding in encodings_to_try:
                 for sep in [';', ',', '\t', '|']:
                     try:
                         df = pd.read_csv(
@@ -473,7 +571,8 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                             sep=sep,
                             low_memory=False,
                             na_values=['', 'NaN', 'NULL', 'null', 'N/A', 'n/a'],
-                            dtype=str  # Manter tudo como string inicialmente
+                            dtype=str,  # Manter tudo como string inicialmente
+                            errors='replace'  # Substituir caracteres problemáticos
                         )
                         
                         # Verificar se temos múltiplas colunas ou se precisa dividir
@@ -485,7 +584,8 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                         
                         if len(df.columns) > 1 or (len(df.columns) == 1 and len(df) > 0):
                             logging.info(f"Arquivo lido com encoding {encoding} e separador '{sep}', {len(df.columns)} colunas")
-                            return df
+                            
+                            return apply_character_cleaning_to_dataframe(df, filename)
                             
                     except (UnicodeDecodeError, pd.errors.ParserError, Exception) as e:
                         continue
@@ -537,7 +637,7 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                         dtype=str
                     )
                     logging.info(f"🏦 PAULISTA lido com skip=2: {len(df.columns)} colunas, primeiras: {list(df.columns)[:5]}")
-                    return df
+                    return apply_character_cleaning_to_dataframe(df, filename)
                 except Exception as e:
                     logging.error(f"❌ Erro na leitura especial PAULISTA: {str(e)}")
                     # Fallback para leitura normal
@@ -571,7 +671,7 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                                 dtype=str
                             )
                             logging.info(f"🏦 PAULISTA relido: {len(df_paulista.columns)} colunas: {list(df_paulista.columns)[:5]}")
-                            return df_paulista
+                            return apply_character_cleaning_to_dataframe(df_paulista, filename)
                         except Exception as e:
                             logging.error(f"❌ Erro na releitura PAULISTA: {str(e)}")
                 
@@ -602,13 +702,13 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                                     valid_rows = df_attempt.dropna(how='all')
                                     if len(valid_rows) > 0:
                                         logging.info(f"Excel lido pulando {skip_rows} linhas, {len(df_attempt.columns)} colunas")
-                                        return df_attempt
+                                        return apply_character_cleaning_to_dataframe(df_attempt, filename)
                             except:
                                 continue
                 
                 # Se chegou aqui, usar o DataFrame original
                 logging.info(f"Excel lido normalmente, {len(df.columns)} colunas")
-                return df
+                return apply_character_cleaning_to_dataframe(df, filename)
                 
             except Exception as e:
                 # Última tentativa: ler todas as sheets e pegar a primeira com dados
@@ -625,7 +725,7 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                             )
                             if not df.empty and len(df.columns) > 1:
                                 logging.info(f"Excel lido da sheet '{sheet_name}', {len(df.columns)} colunas")
-                                return df
+                                return apply_character_cleaning_to_dataframe(df, filename)
                         except:
                             continue
                 except Exception as sheet_error:
@@ -1902,6 +2002,26 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
     if len(df.columns) < 3:
         logging.error(f"❌ {bank_type}: Muito poucas colunas ({len(df.columns)}) - Colunas: {list(df.columns)}")
         return pd.DataFrame()
+    
+    # 🧹 LIMPEZA DE CARACTERES ESPECIAIS: Aplicar em todas as colunas de texto
+    logging.info(f"🧹 {bank_type}: Iniciando limpeza de caracteres especiais...")
+    text_columns_cleaned = 0
+    
+    for column in df.columns:
+        if df[column].dtype == 'object':  # Colunas de texto
+            original_values = df[column].astype(str)
+            df[column] = df[column].astype(str).apply(clean_special_characters)
+            
+            # Contar quantas células foram alteradas
+            changes_count = sum(1 for old, new in zip(original_values, df[column]) if old != new)
+            if changes_count > 0:
+                text_columns_cleaned += 1
+                logging.info(f"🧹 {bank_type}: Coluna '{column}' - {changes_count} células limpas")
+    
+    if text_columns_cleaned > 0:
+        logging.info(f"🧹 {bank_type}: Limpeza concluída - {text_columns_cleaned} colunas processadas")
+    else:
+        logging.info(f"🧹 {bank_type}: Nenhum caractere especial problemático encontrado")
     
 
     logging.info(f"✅ DataFrame passou validações - {len(df)} registros, {len(df.columns)} colunas")
@@ -4851,50 +4971,14 @@ def format_csv_for_storm(df: pd.DataFrame) -> str:
     # Reordenar colunas
     df_ordered = df.reindex(columns=required_columns, fill_value="")
     
-    # Limpar dados e garantir formatação consistente + CORRIGIR ENCODING
-    def clean_encoding_issues(text_value):
-        """Limpa problemas de encoding e caracteres corrompidos"""
-        if not text_value or text_value in ['nan', 'None', 'null', 'NaN']:
-            return ""
-        
-        import unicodedata
-        text_str = str(text_value).strip()
-        
-        # Remover caracteres de encoding corrompido específicos
-        # � (replacement character) e outros caracteres problemáticos
-        problematic_chars = ['\ufffd', '\u00bf', '\u00c2', '\u00c3']
-        for char in problematic_chars:
-            text_str = text_str.replace(char, '')
-        
-        # Remover caracteres não imprimíveis (exceto espaços)
-        text_clean = ''.join(c for c in text_str if c.isprintable() or c.isspace())
-        
-        # Normalizar caracteres especiais para garantir compatibilidade
-        try:
-            # NFC: Canonical Composition - junta caracteres decompostos
-            text_normalized = unicodedata.normalize('NFC', text_clean)
-        except:
-            text_normalized = text_clean
-        
-        # Substituir caracteres problemáticos específicos por versões compatíveis
-        replacements = {
-            'ç': 'ç',  # Garantir cedilha correta
-            'ã': 'ã',  # Garantir til correto
-            'á': 'á', 'à': 'à', 'â': 'â',  # Acentos
-            'é': 'é', 'ê': 'ê',
-            'í': 'í',
-            'ó': 'ó', 'ô': 'ô', 'õ': 'õ',
-            'ú': 'ú',
-        }
-        
-        for original, replacement in replacements.items():
-            text_normalized = text_normalized.replace(original, replacement)
-        
-        return text_normalized.strip()
+    # 🧹 LIMPEZA ROBUSTA: Aplicar limpeza de caracteres especiais no relatório final
+    logging.info(f"🧹 Aplicando limpeza de caracteres especiais no relatório final ({len(df_ordered)} linhas)")
     
     for col in df_ordered.columns:
-        df_ordered[col] = df_ordered[col].astype(str).apply(clean_encoding_issues)
+        df_ordered[col] = df_ordered[col].astype(str).apply(clean_special_characters)
         df_ordered[col] = df_ordered[col].replace(['nan', 'None', 'null', 'NaN'], '')
+    
+    logging.info(f"✅ Limpeza de caracteres especiais concluída no relatório final")
     
     # 🔧 FIX: Corrigir formatação do CPF digitador (USUARIO BANCO) no relatório final
     if "USUARIO BANCO" in df_ordered.columns:
@@ -5125,6 +5209,13 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
             raise HTTPException(status_code=400, detail="Nenhum dado válido foi processado. Verifique se os arquivos têm o formato correto e contêm dados válidos.")
         
         final_df = pd.concat(all_final_data, ignore_index=True)
+        
+        # 🧹 LIMPEZA FINAL: Garantir que não há caracteres especiais no relatório final
+        logging.info(f"🧹 Aplicando limpeza final de caracteres especiais no relatório combinado ({len(final_df)} registros)")
+        for col in final_df.columns:
+            if final_df[col].dtype == 'object':
+                final_df[col] = final_df[col].astype(str).apply(clean_special_characters)
+        logging.info(f"✅ Limpeza final concluída - relatório pronto para Storm")
         
         # **FORMATAÇÃO OTIMIZADA PARA STORM COM SEPARADOR ';'**
         csv_content = format_csv_for_storm(final_df)
