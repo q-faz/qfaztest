@@ -4426,13 +4426,13 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     print(f"✅🔥 VCTEX CSV APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
                     logging.warning(f"✅🔥 VCTEX CSV APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
                 
-                if "taxa" in mapping_result and mapping_result["taxa"]:
-                    normalized_row["TAXA"] = mapping_result["taxa"]
+                if "taxa_storm" in mapping_result and mapping_result["taxa_storm"]:
+                    normalized_row["TAXA"] = mapping_result["taxa_storm"]
                     
-                if "operacao" in mapping_result and mapping_result["operacao"]:
-                    normalized_row["TIPO_OPERACAO"] = mapping_result["operacao"]
+                if "operacao_storm" in mapping_result and mapping_result["operacao_storm"]:
+                    normalized_row["TIPO_OPERACAO"] = mapping_result["operacao_storm"]
                     
-                mapping_result = True  # Marcar como processado
+                # Manter mapping_result como dicionário para processamento posterior
             else:
                 print(f"❌🔥 VCTEX NÃO MAPEADO: '{tabela_original}' não encontrado no CSV")
                 logging.warning(f"❌🔥 VCTEX NÃO MAPEADO: '{tabela_original}' não encontrado no CSV")
