@@ -4391,7 +4391,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - Processamento com mapeamento direto
+            # 🎯 VCTEX - Processamento com mapeamento direto (BYPASS DO SISTEMA CSV)
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             
             # Mapeamento direto VCTEX
@@ -4406,14 +4406,20 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "TabelaVamoComTudoComSeg": "TabelaVamoComTudoComSeg"
             }
             
-            # Aplicar mapeamento se encontrar
+            # Aplicar mapeamento direto se encontrar
             if tabela_original in vctex_map:
-                normalized_row["CODIGO_TABELA"] = vctex_map[tabela_original]
+                codigo_novo = vctex_map[tabela_original]
+                normalized_row["CODIGO_TABELA"] = codigo_novo
                 normalized_row["TAXA"] = "1,83%"
                 normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
+                print(f"✅🎯 VCTEX MAPEAMENTO DIRETO: '{tabela_original}' → '{codigo_novo}'")
+                logging.warning(f"✅🎯 VCTEX MAPEAMENTO DIRETO: '{tabela_original}' → '{codigo_novo}'")
+            else:
+                print(f"⚠️🎯 VCTEX SEM MAPEAMENTO: mantendo '{tabela_original}'")
+                logging.warning(f"⚠️🎯 VCTEX SEM MAPEAMENTO: mantendo '{tabela_original}'")
             
-            # Sempre marcar como processado para VCTEX (mesmo se não mapear)
-            mapping_result = True
+            # SKIP o sistema de mapeamento CSV para VCTEX - usar None para evitar sobrescrita
+            mapping_result = None
         elif bank_type == "FACTA92":
             # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
