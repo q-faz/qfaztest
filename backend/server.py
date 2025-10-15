@@ -4399,8 +4399,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             proposta_num = normalized_row.get("PROPOSTA", "").strip()
             
-            print(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}'")
-            logging.warning(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}'")
+            print(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}' (len={len(tabela_original)})")
+            logging.warning(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}' (len={len(tabela_original)})")
             
             # 🔄 MAPEAMENTO DIRETO - FORÇAR SEMPRE A CONVERSÃO CORRETA
             # Usar apply_mapping para todas as tabelas VCTEX
@@ -4418,6 +4418,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             
             print(f"🔍🔥 VCTEX MAPEAMENTO RESULTADO: {mapping_result}")
             logging.warning(f"🔍🔥 VCTEX MAPEAMENTO RESULTADO: {mapping_result}")
+            
+            # 🧪 TESTE ADICIONAL: Se não encontrou, testar variações da tabela
+            if not mapping_result:
+                tabela_test_variants = [
+                    tabela_original.strip(),
+                    tabela_original.strip().upper(),
+                    tabela_original.strip().lower(),
+                    tabela_original.strip().title()
+                ]
+                print(f"🧪🔥 VCTEX TESTANDO VARIAÇÕES: {tabela_test_variants}")
+                logging.warning(f"🧪🔥 VCTEX TESTANDO VARIAÇÕES: {tabela_test_variants}")
+                
+                for variant in tabela_test_variants:
+                    test_result = apply_mapping(banco_para_mapeamento, orgao_para_mapeamento, operacao_para_mapeamento, "", variant)
+                    if test_result:
+                        print(f"🧪✅ VCTEX VARIAÇÃO ENCONTRADA: '{variant}' → {test_result}")
+                        logging.warning(f"🧪✅ VCTEX VARIAÇÃO ENCONTRADA: '{variant}' → {test_result}")
+                        mapping_result = test_result
+                        break
             
             if mapping_result and isinstance(mapping_result, dict):
                 # Aplicar mapeamento encontrado no CSV
