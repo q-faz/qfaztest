@@ -4391,74 +4391,29 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - USAR MAPEAMENTO DO CSV RELAT_ORGAOS
+            # 🎯 VCTEX - MAPEAMENTO DIRETO SIMPLES
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
-            proposta_num = normalized_row.get("PROPOSTA", "").strip()
             
-            print(f"🎯 VCTEX PROPOSTA {proposta_num}: Tabela='{tabela_original}'")
-            logging.warning(f"🎯 VCTEX PROPOSTA {proposta_num}: Tabela='{tabela_original}'")
+            # Mapeamento direto VCTEX
+            vctex_map = {
+                "Tabela Vamo Com Tudo": "TabelaVamoComTudo",
+                "Tabela Vamo com tudo com Seguro": "TabelaVamoComTudoComSeg", 
+                "Tabela Exponencial": "TabelaExponencial",
+                "Tabela Relax": "TabelaRelax",
+                "Tabela VCT": "TabelaVCT",
+                "Tabela EXP": "TabelaEXP",
+                "Tabela INSS Exponencial TX 1,85 - com Seguro Hot": "TabelaExponencialHot",
+                "TabelaVamoComTudoComSeg": "TabelaVamoComTudoComSeg"
+            }
             
-            # 🔄 MAPEAMENTO DIRETO - FORÇAR SEMPRE A CONVERSÃO CORRETA
-            # Usar apply_mapping para todas as tabelas VCTEX
-            banco_para_mapeamento = normalized_row.get("BANCO", "")
-            orgao_para_mapeamento = normalized_row.get("ORGAO", "") 
-            operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
-            
-            mapping_result = apply_mapping(
-                banco_para_mapeamento,
-                orgao_para_mapeamento, 
-                operacao_para_mapeamento,
-                "",  # usuario vazio
-                tabela_original  # tabela exata do arquivo
-            )
-            
-            print(f"🔍 VCTEX MAPEAMENTO: {mapping_result}")
-            logging.warning(f"🔍 VCTEX MAPEAMENTO: {mapping_result}")
-            
-            # 🧪 TESTE ADICIONAL: Se não encontrou, testar variações da tabela
-            if not mapping_result:
-                tabela_test_variants = [
-                    tabela_original.strip(),
-                    tabela_original.strip().upper(),
-                    tabela_original.strip().lower(),
-                    tabela_original.strip().title()
-                ]
-                print(f"🧪🔥 VCTEX TESTANDO VARIAÇÕES: {tabela_test_variants}")
-                logging.warning(f"🧪🔥 VCTEX TESTANDO VARIAÇÕES: {tabela_test_variants}")
-                
-                for variant in tabela_test_variants:
-                    test_result = apply_mapping(banco_para_mapeamento, orgao_para_mapeamento, operacao_para_mapeamento, "", variant)
-                    if test_result:
-                        print(f"🧪✅ VCTEX VARIAÇÃO ENCONTRADA: '{variant}' → {test_result}")
-                        logging.warning(f"🧪✅ VCTEX VARIAÇÃO ENCONTRADA: '{variant}' → {test_result}")
-                        mapping_result = test_result
-                        break
-            
-            if mapping_result and isinstance(mapping_result, dict):
-                # Aplicar mapeamento encontrado no CSV
-                if "codigo_tabela" in mapping_result and mapping_result["codigo_tabela"]:
-                    normalized_row["CODIGO_TABELA"] = mapping_result["codigo_tabela"]
-                    print(f"✅ VCTEX APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
-                    logging.warning(f"✅ VCTEX APLICADO: '{tabela_original}' → '{mapping_result['codigo_tabela']}'")
-                
-                if "taxa_storm" in mapping_result and mapping_result["taxa_storm"]:
-                    normalized_row["TAXA"] = mapping_result["taxa_storm"]
-                    
-                if "operacao_storm" in mapping_result and mapping_result["operacao_storm"]:
-                    normalized_row["TIPO_OPERACAO"] = mapping_result["operacao_storm"]
-                    
-                # Manter mapping_result como dicionário para processamento posterior
+            if tabela_original in vctex_map:
+                normalized_row["CODIGO_TABELA"] = vctex_map[tabela_original]
+                normalized_row["TAXA"] = "1,83%"
+                normalized_row["TIPO_OPERACAO"] = "Margem Livre (Novo)"
+                mapping_result = True
             else:
-                print(f"❌🔥 VCTEX NÃO MAPEADO: '{tabela_original}' não encontrado no CSV")
-                logging.warning(f"❌🔥 VCTEX NÃO MAPEADO: '{tabela_original}' não encontrado no CSV")
-                # Para outras tabelas, manter como está
-                print(f"⚠️🔥 VCTEX TABELA DESCONHECIDA: mantendo '{tabela_original}'")
-                logging.warning(f"⚠️🔥 VCTEX TABELA DESCONHECIDA: mantendo '{tabela_original}'")
+                # Manter como está se não encontrar
                 mapping_result = None
-            
-            # Log do estado final
-            print(f"🔥 VCTEX ESTADO FINAL: CODIGO_TABELA='{normalized_row.get('CODIGO_TABELA', '')}', TAXA='{normalized_row.get('TAXA', '')}', OPERACAO='{normalized_row.get('TIPO_OPERACAO', '')}'")
-            logging.warning(f"🔥 VCTEX ESTADO FINAL: CODIGO_TABELA='{normalized_row.get('CODIGO_TABELA', '')}', TAXA='{normalized_row.get('TAXA', '')}', OPERACAO='{normalized_row.get('TIPO_OPERACAO', '')}')")
         elif bank_type == "FACTA92":
             # 🎯 FACTA92 - código vem correto do arquivo (NR_TABCOM), buscar por BANCO + CODIGO apenas
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
