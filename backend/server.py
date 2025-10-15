@@ -404,7 +404,12 @@ def clean_special_characters(text):
             'Ã¡': 'á',   # mojibake comum para á
             'Ã§': 'ç',   # mojibake comum para ç
             'Ã£': 'ã',   # mojibake comum para ã
-            'Ãµ': 'õ'    # mojibake comum para õ
+            'Ãµ': 'õ',   # mojibake comum para õ
+            'Ã‰': 'É',   # mojibake comum para É (maiúsculo)
+            'Ã': 'Á',    # mojibake comum para Á
+            'Ã‡': 'Ç',   # mojibake comum para Ç
+            'Ã': 'Ã',    # mojibake comum para Ã
+            'Ãµ': 'Õ'    # mojibake comum para Õ (maiúsculo)
         }
         
         for broken, fixed in generic_fixes.items():
