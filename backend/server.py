@@ -1622,12 +1622,21 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
             else:
                 logging.warning(f"⚠️ SANTANDER sem código válido ({tabela_normalized}), usando busca tradicional")
         
-        # Log especial para VCTEX
-        if bank_normalized == "BANCO VCTEX":
-            print(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
-            logging.warning(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
-        
-        logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+            # Log especial para VCTEX - mostrar TODAS as entradas disponíveis
+            if bank_normalized == "BANCO VCTEX":
+                print(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+                logging.warning(f"🔍🔥 VCTEX ENTRY apply_mapping: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+                
+                # Mostrar TODAS as opções VCTEX disponíveis no CSV
+                vctex_count = 0
+                for key, details_list in detailed_mapping.items():
+                    if "BANCO VCTEX" in key:
+                        for details in details_list:
+                            vctex_count += 1
+                            print(f"   📋 VCTEX OPÇÃO {vctex_count}: '{details['tabela_banco']}' → '{details['codigo_tabela']}'")
+                            logging.warning(f"   📋 VCTEX OPÇÃO {vctex_count}: '{details['tabela_banco']}' → '{details['codigo_tabela']}'")
+                print(f"🔢 TOTAL VCTEX DISPONÍVEL: {vctex_count} opções")
+                logging.warning(f"🔢 TOTAL VCTEX DISPONÍVEL: {vctex_count} opções")        logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
         
         logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
         
