@@ -1625,7 +1625,7 @@ def apply_mapping(bank_name: str, organ: str, operation_type: str, usuario: str 
             # Log básico para VCTEX
             if bank_normalized == "BANCO VCTEX":
                 print(f"🔍 VCTEX: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
-                logging.warning(f"🔍 VCTEX: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")        logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
+                logging.warning(f"🔍 VCTEX: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
         
         logging.info(f"🔍 Buscando mapeamento: BANCO={bank_normalized} | ORGAO={organ_normalized} | OPERACAO={operation_normalized} | TABELA={tabela_normalized}")
         
