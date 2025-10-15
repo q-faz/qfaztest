@@ -4395,7 +4395,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
             mapping_result = None
         elif bank_type == "VCTEX":
-            # 🎯 VCTEX - MAPEAMENTO DIRETO E GARANTIDO
+            # 🎯 VCTEX - USAR MAPEAMENTO DO CSV RELAT_ORGAOS
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             proposta_num = normalized_row.get("PROPOSTA", "").strip()
             
@@ -4403,7 +4403,23 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.warning(f"🎯🔥 VCTEX PROPOSTA {proposta_num}: Tabela original '{tabela_original}'")
             
             # 🔄 MAPEAMENTO DIRETO - FORÇAR SEMPRE A CONVERSÃO CORRETA
-            if tabela_original == "Tabela Vamo Com Tudo":
+            # Usar apply_mapping para todas as tabelas VCTEX
+            banco_para_mapeamento = normalized_row.get("BANCO", "")
+            orgao_para_mapeamento = normalized_row.get("ORGAO", "") 
+            operacao_para_mapeamento = normalized_row.get("TIPO_OPERACAO", "")
+            
+            mapping_result = apply_mapping(
+                banco_para_mapeamento,
+                orgao_para_mapeamento, 
+                operacao_para_mapeamento,
+                "",  # usuario vazio
+                tabela_original  # tabela exata do arquivo
+            )
+            
+            print(f"🔍🔥 VCTEX MAPEAMENTO RESULTADO: {mapping_result}")
+            logging.warning(f"🔍🔥 VCTEX MAPEAMENTO RESULTADO: {mapping_result}")
+            
+            if mapping_result and isinstance(mapping_result, dict):
                 # Alternar entre as duas tabelas finais
                 proposta_hash = hash(proposta_num) % 2
                 if proposta_hash == 0:
