@@ -485,6 +485,19 @@ def clean_special_characters(text):
     import re
     cleaned_text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]', '', cleaned_text)
     
+    # ✅ CRÍTICO: Remover TODOS os emojis para garantir CSV limpo
+    # Remove emojis, símbolos, pictogramas e outros caracteres Unicode não-texto
+    emoji_pattern = re.compile("["
+        u"\U0001F600-\U0001F64F"  # emoticons
+        u"\U0001F300-\U0001F5FF"  # símbolos & pictogramas
+        u"\U0001F680-\U0001F6FF"  # transporte & símbolos de mapa
+        u"\U0001F1E0-\U0001F1FF"  # bandeiras (iOS)
+        u"\U00002702-\U000027B0"  # dingbats
+        u"\U000024C2-\U0001F251" 
+        u"\U0001F900-\U0001F9FF"  # símbolos suplementares
+        "]+", flags=re.UNICODE)
+    cleaned_text = emoji_pattern.sub('', cleaned_text)
+    
     # Normalizar múltiplos espaços em um só
     cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
     
@@ -526,7 +539,8 @@ def load_organ_mapping():
             return {}, {}, {}, {}
             
         # Tentar diferentes encodings com tratamento robusto de caracteres especiais
-        encodings_to_try = ['utf-8', 'latin-1', 'iso-8859-1', 'cp1252', 'utf-16']
+        # CORREÇÃO: Priorizar encodings que lidam melhor com caracteres portugueses
+        encodings_to_try = ['utf-8-sig', 'latin-1', 'cp1252', 'iso-8859-1', 'utf-8', 'utf-16']
         df = None
         
         for encoding in encodings_to_try:
@@ -2213,7 +2227,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         if bank_type == "PAULISTA":
             logging.info(f"🔍 PAULISTA linha {idx}: row_str = '{row_str[:100]}...'")
         
-        # Detectar linhas de metadados/cabeçalho
+        # ✅ MELHORADO: Detectar linhas de metadados/cabeçalho com mais precisão
         metadata_indicators = [
             'relatório', 'relatorio', 'total de registros', 'total:', 'página',
             'data de emissão', 'data de extração', 'banco:', 'período',
@@ -2228,8 +2242,13 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             'relação de propostas', 'analítico', 'relatório', 'relatorio'
         ]
         
-        # Verificar se deve pular linha de cabeçalho
-        is_header = any(indicator in row_str for indicator in metadata_indicators + paulista_header_indicators)
+        # ✅ CORREÇÃO: Não pular linhas que podem ter dados válidos
+        # Verificar se é REALMENTE cabeçalho (ter múltiplos indicadores OU ser linha muito curta)
+        header_matches = sum(1 for indicator in metadata_indicators + paulista_header_indicators if indicator in row_str)
+        is_likely_data = len([val for val in row.values if pd.notna(val) and str(val).strip()]) >= 3  # Pelo menos 3 campos preenchidos
+        
+        # É cabeçalho se: tem múltiplos indicadores OU poucos campos preenchidos com palavras de cabeçalho
+        is_header = (header_matches >= 2) or (header_matches >= 1 and not is_likely_data)
         
         if bank_type == "PAULISTA":
             # Log bem detalhado para PAULISTA
@@ -3365,10 +3384,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 # ✅ SEMPRE CRIAR normalized_row - Deixar validação final decidir
                 logging.info(f"✅ DAYCOVAL linha {idx}: Processando proposta {proposta_raw}")
                 
-                # Normalizar campos obrigatórios - Valores seguros
-                proposta_final = str(proposta_raw).strip() if proposta_raw and str(proposta_raw).strip() not in ['nan', 'None', ''] else f"DAYC_{idx}"
-                nome_final = str(cliente_raw).strip().upper() if cliente_raw and str(cliente_raw).strip() not in ['nan', 'None', ''] else "NOME NAO INFORMADO"
-                cpf_final = cpf_formatted if cpf_formatted and cpf_formatted != "000.000.000-00" else "000.000.000-00"
+                # ✅ VALIDAÇÃO RIGOROSA: NÃO gerar dados falsos se não temos dados reais
+                proposta_final = str(proposta_raw).strip() if proposta_raw and str(proposta_raw).strip() not in ['nan', 'None', ''] else ""
+                nome_final = str(cliente_raw).strip().upper() if cliente_raw and str(cliente_raw).strip() not in ['nan', 'None', ''] else ""
+                cpf_final = cpf_formatted if cpf_formatted and cpf_formatted != "000.000.000-00" else ""
+                
+                # ✅ CRÍTICO: Se não temos dados mínimos (proposta OU nome OU cpf), PULAR a linha
+                # Isso evita gerar "DAYC_1", "NOME NAO INFORMADO", "000.000.000-00"
+                if not proposta_final and not nome_final and not cpf_final:
+                    logging.info(f"⏭️ DAYCOVAL linha {idx}: Sem dados mínimos (proposta/nome/cpf vazios), pulando para evitar dados falsos")
+                    continue
                 
                 normalized_row = {
                     "PROPOSTA": proposta_final,  # Unnamed: 0
@@ -4960,80 +4985,40 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         logging.info(f"📅 DATAS FINAIS PRESERVADAS - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: CADASTRO='{normalized_row.get('DATA_CADASTRO')}' | PAGAMENTO='{normalized_row.get('DATA_PAGAMENTO')}'")
 
         
-        # VALIDAÇÃO MELHORADA: Só adicionar se tiver dados essenciais válidos
+        # ✅ VALIDAÇÃO SIMPLIFICADA: Aceitar qualquer linha que tenha pelo menos UM campo essencial válido
         proposta = str(normalized_row.get("PROPOSTA", "")).strip()
         nome = str(normalized_row.get("NOME", "")).strip()
         cpf = str(normalized_row.get("CPF", "")).strip()
+        banco = str(normalized_row.get("BANCO", "")).strip()
         
-        logging.info(f"🔍 VALIDAÇÃO FINAL - Proposta: '{proposta}', Nome: '{nome[:30] if nome else 'N/A'}', CPF: '{cpf}'")
+        logging.info(f"🔍 VALIDAÇÃO FINAL - Proposta: '{proposta}', Nome: '{nome[:20] if nome else 'N/A'}', CPF: '{cpf}', Banco: '{banco}'")
         
-        # Palavras-chave que indicam linha inválida (EXATAS, não substring)
-        invalid_exact_keywords = [
-            "nan", "none", "null", "unnamed", "relatório", "relatorio",
-            "total", "página", "pagina"
+        # Lista RESTRITA de palavras que realmente indicam cabeçalhos/metadados
+        obvious_headers = [
+            "nan", "none", "null", "proposta", "nome", "cliente", "cpf", "banco", 
+            "relatório", "relatorio", "total", "página", "pagina"
         ]
         
-        # Palavras que só são inválidas se forem a palavra COMPLETA
-        invalid_whole_words = [
-            "proposta", "nome", "cliente", "cpf", "banco", "código", "codigo", "data"
-        ]
-        
-        # Verificar se proposta é válida
+        # Verificar se proposta é obviamente um cabeçalho
         proposta_lower = proposta.lower()
+        is_obvious_header = proposta_lower in obvious_headers or proposta in ["", "NaN", "None", "NULL"]
         
-        # Verificação melhorada: não rejeitar se é uma proposta real que contém essas palavras
-        has_invalid_exact = any(keyword == proposta_lower for keyword in invalid_exact_keywords)
-        has_invalid_whole = any(proposta_lower == keyword for keyword in invalid_whole_words)
+        # ✅ CRITÉRIO PRINCIPAL: Aceitar se tem QUALQUER campo essencial válido
+        has_proposta = proposta and not is_obvious_header and len(proposta) >= 1
+        has_nome = nome and len(nome) >= 3 and nome.lower() not in obvious_headers
+        has_cpf = cpf and len(cpf) >= 8  # Mínimo de 8 chars para ser considerado CPF
+        has_banco = banco and len(banco) >= 3
         
-        # Validação mais leniente para diagnóstico
-        is_valid_proposta = (
-            proposta and 
-            proposta.strip() not in ["", "nan", "None", "NULL", "NaN"] and
-            not has_invalid_exact and
-            not has_invalid_whole and
-            len(proposta.strip()) >= 1  # Qualquer proposta com pelo menos 1 caractere
-        )
+        # ✅ ACEITAR se tem pelo menos UM campo válido
+        is_valid_record = has_proposta or has_nome or has_cpf or has_banco
         
-        logging.info(f"   is_valid_proposta={is_valid_proposta} (has_invalid_exact={has_invalid_exact}, has_invalid_whole={has_invalid_whole})")
+        logging.info(f"   ✅ VALIDAÇÃO: proposta_ok={has_proposta}, nome_ok={has_nome}, cpf_ok={has_cpf}, banco_ok={has_banco}, RESULTADO={is_valid_record}")
         
-        # Verificar se tem pelo menos nome OU cpf válido
-        nome_lower = nome.lower() if nome else ""
-        nome_is_invalid = any(nome_lower == keyword for keyword in invalid_whole_words + invalid_exact_keywords)
-        
-        # Relaxar validação de CPF para aceitar formatados (XXX.XXX.XXX-XX)
-        cpf_clean = ''.join(filter(str.isdigit, cpf)) if cpf else ""
-        cpf_valid = len(cpf_clean) >= 11 or (cpf and len(cpf) >= 11)
-        
-        # VALIDAÇÃO ESPECÍFICA PARA DAYCOVAL - Mais flexível só para este banco
-        if bank_type == "DAYCOVAL":
-            # DAYCOVAL: Se tem proposta numérica, é praticamente sempre válido
-            has_numeric_proposta = proposta and any(c.isdigit() for c in proposta)
-            has_valid_data = (
-                (nome and len(nome) > 2 and not nome_is_invalid) or  # Nome com 3+ chars
-                (cpf_clean and len(cpf_clean) >= 8) or  # CPF mais flexível para DAYCOVAL
-                has_numeric_proposta or  # Proposta com números
-                (proposta and len(proposta) >= 5)  # Qualquer proposta longa o suficiente
-            )
-        else:
-            # VALIDAÇÃO NORMAL PARA OUTROS BANCOS (Storm, Santander, etc.)
-            has_valid_data = (
-                (nome and len(nome) > 3 and not nome_is_invalid) or
-                cpf_valid or
-                proposta  # Se tem proposta, já é válido
-            )
-        
-        logging.info(f"   has_valid_data={has_valid_data} (nome_valid={nome and len(nome) > 3 and not nome_is_invalid}, cpf_valid={cpf_valid})")
-        
-        if is_valid_proposta and has_valid_data:
+        if is_valid_record:
             normalized_data.append(normalized_row)
-            logging.info(f"✅✅✅ Linha ADICIONADA com sucesso: Proposta={proposta}, Nome={nome[:20] if nome else 'N/A'}, CPF={cpf[:6] if cpf else 'N/A'}...")
+            logging.info(f"✅✅✅ Linha ACEITA: Proposta='{proposta}', Nome='{nome[:15] if nome else 'N/A'}', CPF='{cpf[:8] if cpf else 'N/A'}', Banco='{banco}'")
         else:
-            logging.warning(f"❌❌❌ Linha IGNORADA [{bank_type}] - Proposta='{proposta}' (len={len(proposta)}), Nome='{nome[:20] if nome else 'N/A'}' (len={len(nome)}), CPF='{cpf}' (len={len(cpf)}), is_valid_proposta={is_valid_proposta}, has_valid_data={has_valid_data}")
-            # Log detalhado para debug
-            if not is_valid_proposta:
-                logging.warning(f"  🔍 Proposta inválida: has_invalid_exact={has_invalid_exact}, has_invalid_whole={has_invalid_whole}")
-            if not has_valid_data:
-                logging.warning(f"  🔍 Dados inválidos: nome_valid={nome and len(nome) > 3 and not nome_is_invalid}, cpf_valid={cpf_valid}")
+            logging.warning(f"❌ Linha rejeitada por não ter nenhum campo essencial válido: Proposta='{proposta}', Nome='{nome}', CPF='{cpf}', Banco='{banco}'")
     
     logging.info(f"📊 [{bank_type}] RESUMO: {len(normalized_data)} registros válidos de {len(df)} linhas processadas")
     
@@ -5257,7 +5242,7 @@ def format_csv_for_storm(df: pd.DataFrame) -> str:
             Apenas formatar como CPF se for CPF puro sem código
             """
             if not cpf_str or cpf_str in ['', '0', '000.000.000-00']:
-                return '000.000.000-00'
+                return ''  # ✅ Retornar vazio em vez de CPF falso
             
             cpf_clean = str(cpf_str).strip()
             
