@@ -879,22 +879,28 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
     filename_lower = filename.lower()
     df_columns = [str(col).lower().strip() for col in df.columns]
     
-    logging.info(f"Detectando banco para arquivo: {filename}")
-    logging.info(f"Colunas encontradas: {df_columns[:10]}...")  # Mostrar apenas primeiras 10
+    logging.warning(f"🏦 INICIANDO DETECÇÃO para arquivo: {filename}")
+    logging.warning(f"📊 {len(df.columns)} colunas encontradas: {df_columns[:10]}...")  # Mostrar apenas primeiras 10
+    logging.warning(f"📋 Filename lower: {filename_lower}")
     
     # Detecção por nome do arquivo - mais confiável
     if any(indicator in filename_lower for indicator in ['storm', 'contratos', 'digitados']):
+        logging.warning(f"🎯 STORM detectado por nome: {filename}")
         return "STORM"
     elif 'averbai' in filename_lower:
+        logging.warning(f"🎯 AVERBAI detectado por nome: {filename}")
         return "AVERBAI"
     elif any(indicator in filename_lower for indicator in ['digio', 'wfsic', 'wfi']):
-        logging.info(f"✅ DIGIO detectado por nome do arquivo: {filename}")
+        logging.warning(f"🎯 DIGIO detectado por nome: {filename}")
         return "DIGIO"
     elif 'prata' in filename_lower:
+        logging.warning(f"🎯 PRATA detectado por nome: {filename}")
         return "PRATA"
     elif 'vctex' in filename_lower:
+        logging.warning(f"🎯 VCTEX detectado por nome: {filename}")
         return "VCTEX"
     elif 'daycoval' in filename_lower:
+        logging.warning(f"🎯 DAYCOVAL detectado por nome: {filename}")
         return "DAYCOVAL"
     
     # Detecção por estrutura de colunas específica
@@ -1122,13 +1128,15 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
     # Verificar se é QUERO MAIS CREDITO (PRIORIDADE ALTA - antes do Paulista)
     # 1. Por nome do arquivo
     if 'quero' in filename_lower and 'mais' in filename_lower:
-        logging.info("🎯 QUERO MAIS detectado por nome do arquivo")
+        logging.warning(f"🎯 QUERO MAIS detectado por nome do arquivo: {filename}")
         return "QUERO_MAIS"
     
     # 2. Por estrutura de colunas Unnamed específicas
+    logging.warning(f"🔍 QUERO MAIS check estrutura: {len(df.columns)} colunas, {sum(1 for col in df_columns if 'unnamed:' in col)} Unnamed")
     if len(df.columns) > 40 and sum(1 for col in df_columns if 'unnamed:' in col) > 30:
         # Verificar indicadores específicos do QUERO MAIS (ANTES do Paulista!)
         quero_mais_indicators = ['capital consig', 'quero mais credito', 'quero mais crédito', 'relatório de produção', 'relatório de produção', 'promotora', 'grupo qfz', 'cpf correspondente', 'convênio correspondente', 'quero mais', 'queromais', 'qmais', 'capital consignado']
+        logging.warning(f"🔍 QUERO MAIS estrutura OK - verificando conteúdo...")
         if not df.empty:
             # Verificar nas primeiras 5 linhas para maior precisão
             all_data = ""
@@ -1147,10 +1155,11 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             found_paulista_indicators = [ind for ind in paulista_exclusive if ind in all_data]
             
             if found_quero_indicators and not found_paulista_indicators:
-                logging.info(f"✅ QUERO MAIS detectado! Indicadores únicos: {found_quero_indicators}")
+                logging.warning(f"✅ QUERO MAIS detectado! Indicadores únicos: {found_quero_indicators}")
                 return "QUERO_MAIS"
             else:
-                logging.info(f"⚠️ QUERO MAIS não detectado - indicadores QUERO: {found_quero_indicators}, PAULISTA: {found_paulista_indicators}")
+                logging.error(f"❌ QUERO MAIS não detectado - indicadores QUERO: {found_quero_indicators}, PAULISTA: {found_paulista_indicators}")
+                logging.error(f"   📄 Conteúdo analisado: {all_data[:300]}...")
     
     # Verificar se é BANCO PAN (tem estrutura específica de cartão)
     pan_indicators = ['nº proposta', 'nº operação', 'tipo de operação', 'código do produto', 'nome do produto']
@@ -1380,6 +1389,10 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             
             if keyword_matches >= 2:
                 return "PAULISTA"
+    
+    logging.error(f"❌ CRÍTICO: Tipo de banco NÃO RECONHECIDO para: {filename}")
+    logging.error(f"   📊 Estrutura: {len(df.columns)} colunas, {sum(1 for col in df_columns if 'unnamed:' in col)} colunas 'Unnamed'")
+    logging.error(f"   📋 Primeiras colunas: {df_columns[:5]}")
     
     raise HTTPException(status_code=400, detail=f"Tipo de banco não reconhecido para: {filename}. Estrutura: {len(df.columns)} colunas, {sum(1 for col in df_columns if 'unnamed:' in col)} colunas 'Unnamed'. Primeiras colunas: {df_columns[:5]}")
 
@@ -3125,7 +3138,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de nascimento', '')).strip() if 'Data de nascimento' in df.columns else "",
-                "TELEFONE": str(row.get('Telefone', row.get('Tel', row.get('Fone', '')))).strip(),
+                "TELEFONE": str(row.get('Telefone Cliente', row.get('Telefone', row.get('Tel', row.get('Fone', ''))))).strip(),
                 "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(),
                 "BAIRRO": str(row.get('Bairro', '')).strip(), 
                 "CEP": str(row.get('CEP', '')).strip(),
@@ -3924,6 +3937,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         
         elif bank_type == "PAN":
             # Mapeamento BANCO PAN - Estrutura de cartão e saque
+            
+            # 📞📍 PAN: Extrair dados de contato baseado no mapeamento real
+            telefone_pan = str(row.get('Telefone', '')).strip()  # Telefone
+            celular_pan = str(row.get('Celular', '')).strip()   # Celular
+            endereco_pan = str(row.get('Endereço do Cliente', '')).strip()  # Endereço do Cliente
+            num_endereco_pan = str(row.get('Nº Endereço', '')).strip()  # Nº Endereço
+            cidade_pan = str(row.get('Cidade', '')).strip()   # Cidade
+            uf_pan = str(row.get('UF', '')).strip()           # UF
+            cep_pan = str(row.get('CEP', '')).strip()         # CEP
+            
+            # Montar endereço completo
+            endereco_completo_pan = f"{endereco_pan}, {num_endereco_pan}".strip(", ") if endereco_pan else ""
+            
+            # Priorizar celular, senão telefone fixo  
+            telefone_final_pan = celular_pan if celular_pan else telefone_pan
+            
+            # 📍 PAN: Log dos dados de contato para debug
+            logging.info(f"📞 PAN contato: telefone='{telefone_final_pan}', endereco='{endereco_completo_pan}', cidade='{cidade_pan}', cep='{cep_pan}', uf='{uf_pan}'")
+            
             normalized_row = {
                 "PROPOSTA": str(row.get('Nº Proposta', '')).strip(),
                 "DATA_CADASTRO": str(row.get('Data do Cadastro', '')).strip(),
@@ -3939,11 +3971,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF do Cliente', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', '')).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de Nascimento', '')).strip(),
-                "TELEFONE": "",    # PAN não tem dados de telefone
-                "ENDERECO": "",    # PAN não tem dados de endereço
-                "BAIRRO": "",      # PAN não tem dados de bairro
-                "CEP": "",         # PAN não tem dados de CEP
-                "UF": "",          # PAN não tem dados de UF
+                "TELEFONE": telefone_final_pan.strip() if telefone_final_pan else "",
+                "ENDERECO": endereco_completo_pan.strip() if endereco_completo_pan else "",
+                "BAIRRO": cidade_pan.strip() if cidade_pan else "",  # PAN usa Cidade como Bairro
+                "CEP": cep_pan.strip() if cep_pan else "",
+                "UF": uf_pan.strip() if uf_pan else "",
                 "CODIGO_TABELA": str(row.get('Nome do Convênio', row.get('Código do Convênio', ''))).strip(),
                 "VALOR_PARCELAS": str(row.get('Valor da Parcela', '')).strip(),
                 "TAXA": "",
