@@ -326,186 +326,54 @@ def format_percentage_brazilian(percentage_str):
 def clean_special_characters(text):
     """
     Remove ou substitui caracteres especiais problemáticos que quebram o processamento
-    Trata problemas de encoding e normaliza texto para processamento seguro
+    Versão simplificada para evitar corrupção de dados
     """
     if not text or pd.isna(text):
         return ""
     
     text_str = str(text).strip()
 
-    # Primeiro tentar corrigir casos de mojibake comum (ex: 'CRï¿½DITO' -> 'CRÉDITO')
-    def fix_mojibake(s: str) -> str:
-        # Tentar desfazer múltiplas camadas de codificação (até 3 iterações)
-        candidate = s
-        for _ in range(3):
-            try:
-                decoded = candidate.encode('latin-1', errors='replace').decode('utf-8', errors='replace')
-                # Se a decodificação produziu mais caracteres válidos, adotar
-                if len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", decoded)) > len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", candidate)):
-                    candidate = decoded
-                    continue
-            except Exception:
-                pass
-
-            try:
-                decoded2 = candidate.encode('utf-8', errors='replace').decode('latin-1', errors='replace')
-                if len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", decoded2)) > len(re.findall(r"[A-Za-zÀ-ÖØ-öø-ÿ]", candidate)):
-                    candidate = decoded2
-                    continue
-            except Exception:
-                pass
-
-            # Se nenhuma melhoria, parar
-            break
-
-        best = candidate
-
-        # Substituições simples e seguras residuais
-        safe_replacements = {'–': '-', '—': '-', '•': '-', '…': '...', '\u00A0': ' ', '\t': ' ', '\r': ''}
-        for k, v in safe_replacements.items():
-            best = best.replace(k, v)
-
-        residual = {'Ã¡': 'á', 'Ã©': 'é', 'Ãª': 'ê', 'Ã§': 'ç', 'Ã£': 'ã', 'Ãµ': 'õ', 'Ãº': 'ú', 'Ã³': 'ó', 'Ã­': 'í'}
-        for k, v in residual.items():
-            if k in best:
-                best = best.replace(k, v)
-
-        # Hotfix: Mapeamentos específicos para casos comuns conhecidos
-        hotfix_map = {
-            'CRï¿½DITO DO TRABALHADOR': 'CRÉDITO DO TRABALHADOR',
-            'CRï¿½DITO': 'CRÉDITO',
-            'CRÃ‰DITO DO TRABALHADOR': 'CRÉDITO DO TRABALHADOR',
+    # CORREÇÕES DIRETAS E SEGURAS APENAS
+    # Mapeamento direto para casos problemáticos conhecidos
+    direct_fixes = {
+        # Casos de mojibake comuns
             'CRÃ‰DITO': 'CRÉDITO',
-            'CRDITO DO TRABALHADOR': 'CRÉDITO DO TRABALHADOR',  # Faltando É no início
+            'CRÃ©DITO': 'CRÉDITO', 
+            'CRÃDITO': 'CRÉDITO',
             'CRDITO': 'CRÉDITO',
-            'TRABALHADORï¿½': 'TRABALHADOR',
-            'Cartï¿½o': 'Cartão',
-            'operaï¿½ï¿½o': 'operação',
-            'situaï¿½ï¿½o': 'situação',
-            'órgï¿½o': 'órgão',
-            'ÓRGï¿½O': 'ÓRGÃO',
-            'orgï¿½o': 'órgão',
-            'ORGï¿½O': 'ÓRGÃO',
-            'ï¿½RGÃO': 'ÓRGÃO',
-            'ï¿½rgão': 'órgão',
-            'empréstimo': 'empréstimo',  # já correto
-            'financiamento': 'financiamento'  # já correto
+            'ï¿½': '',  # Remove replacement characters
+            'Ã¡': 'á',
+            'Ã©': 'é',
+            'Ã­': 'í',
+            'Ã³': 'ó',
+            'Ãº': 'ú',
+            'Ã§': 'ç',
+            'Ã£': 'ã',
+            'Ãµ': 'õ',
+            'Ãª': 'ê',
+            'Ã´': 'ô',
+            'Ã ': 'à',
+            # Caracteres especiais seguros
+            '–': '-',
+            '—': '-', 
+            '•': '-',
+            '…': '...',
+            '\u00A0': ' ',  # non-breaking space
+            '\t': ' ',
+            '\r': '',
+            '\n': ' ',
         }
         
-        # Aplicar mapeamentos diretos primeiro
-        for broken, fixed in hotfix_map.items():
-            if broken in best:
-                best = best.replace(broken, fixed)
+        # Aplicar correções
+        result = text_str
+        for broken, fixed in direct_fixes.items():
+            result = result.replace(broken, fixed)
         
-        # Sequências genéricas comuns
-        generic_fixes = {
-            'ï¿½': 'É',  # replacement char comum para É
-            'Ã©': 'é',   # mojibake comum para é
-            'Ã¡': 'á',   # mojibake comum para á
-            'Ã§': 'ç',   # mojibake comum para ç
-            'Ã£': 'ã',   # mojibake comum para ã
-            'Ãµ': 'õ',   # mojibake comum para õ
-            'Ã‰': 'É',   # mojibake comum para É (maiúsculo)
-            'Ã': 'Á',    # mojibake comum para Á
-            'Ã‡': 'Ç',   # mojibake comum para Ç
-            'CRÃ': 'CRÉ', # 🔥 ESPECÍFICO: CRÉDITO com Ã no lugar do É
-            'Ã': 'Ã',    # mojibake comum para Ã
-            # 🔥 EXPANSÃO: Mais casos comuns de mojibake
-            'Ãº': 'ú',   # mojibake comum para ú
-            'Ã³': 'ó',   # mojibake comum para ó  
-            'Ã­': 'í',   # mojibake comum para í
-            'Ãª': 'ê',   # mojibake comum para ê
-            'Ã´': 'ô',   # mojibake comum para ô
-            'Ã¢': 'â',   # mojibake comum para â
-            'Ã¹': 'ù',   # mojibake comum para ù
-            'Ã¨': 'è',   # mojibake comum para è
-            'ÃŠ': 'Ê',   # mojibake comum para Ê (maiúsculo)
-            'Ã"': 'Ó',   # mojibake comum para Ó (maiúsculo)
-            'Ãš': 'Ú',   # mojibake comum para Ú (maiúsculo)
-            'Ã': 'Í',   # mojibake comum para Í (maiúsculo)
-            'RGÃ': 'RGÃO', # 🔥 ESPECÍFICO: ÓRGÃO com Ã
-            'ÃRGÃO': 'ÓRGÃO', # 🔥 ESPECÍFICO: ÓRGÃO começando com Ã
-            'Ãµ': 'Õ'    # mojibake comum para Õ (maiúsculo)
-        }
+        # Normalizar espaços múltiplos e limpar caracteres de replacement
+        result = re.sub(r'\s+', ' ', result).strip()
+        result = result.replace('\ufffd', '')  # Remove replacement chars
         
-        for broken, fixed in generic_fixes.items():
-            best = best.replace(broken, fixed)
-        
-        # Remover caracteres de replacement residual
-        best = best.replace('\ufffd', '')
-        return best
-
-    text_str = fix_mojibake(text_str)
-    
-    if not text_str:
-        return ""
-    
-    # Dicionário de substituições para caracteres problemáticos comuns
-    char_replacements = {
-        # Caracteres de controle e especiais problemáticos
-        '^': '',
-        '~': '',
-        '`': '',
-        '´': '',
-        '¨': '',
-        '°': '',
-        'º': '',
-        'ª': '',
-        # Aspas problemáticas
-        '"': '"',
-        '"': '"', 
-        ''': "'",
-        ''': "'",
-        # Símbolos matemáticos problemáticos  
-        '±': '+/-',
-        '×': 'x',
-        '÷': '/',
-        # Outros símbolos problemáticos
-        '§': 'paragrafo',
-        '¶': '',
-        '†': '',
-        '‡': '',
-        '•': '-',
-        '…': '...',
-        '–': '-',
-        '—': '-',
-        # Caracteres de moeda problemáticos
-        '¢': 'centavos',
-        '£': 'libras',
-        '¥': 'yen',
-        '€': 'euro',
-    }
-    
-    # Aplicar substituições
-    cleaned_text = text_str
-    for old_char, new_char in char_replacements.items():
-        cleaned_text = cleaned_text.replace(old_char, new_char)
-    
-    # Remover caracteres de controle (ASCII 0-31 exceto \t, \n, \r)
-    import re
-    cleaned_text = re.sub(r'[\x00-\x08\x0B-\x0C\x0E-\x1F\x7F]', '', cleaned_text)
-    
-    # ✅ CRÍTICO: Remover TODOS os emojis para garantir CSV limpo
-    # Remove emojis, símbolos, pictogramas e outros caracteres Unicode não-texto
-    emoji_pattern = re.compile("["
-        u"\U0001F600-\U0001F64F"  # emoticons
-        u"\U0001F300-\U0001F5FF"  # símbolos & pictogramas
-        u"\U0001F680-\U0001F6FF"  # transporte & símbolos de mapa
-        u"\U0001F1E0-\U0001F1FF"  # bandeiras (iOS)
-        u"\U00002702-\U000027B0"  # dingbats
-        u"\U000024C2-\U0001F251" 
-        u"\U0001F900-\U0001F9FF"  # símbolos suplementares
-        "]+", flags=re.UNICODE)
-    cleaned_text = emoji_pattern.sub('', cleaned_text)
-    
-    # Normalizar múltiplos espaços em um só
-    cleaned_text = re.sub(r'\s+', ' ', cleaned_text).strip()
-    
-    # Logging para debug quando há mudanças significativas
-    if len(text_str) != len(cleaned_text) or text_str != cleaned_text:
-        logging.info(f"🧹 Texto limpo: '{text_str[:50]}...' → '{cleaned_text[:50]}...'")
-    
-    return cleaned_text
+        return result
 
 def extract_contact_data(row, bank_type: str = "") -> dict:
     """Extrai dados de contato de forma universal tentando múltiplos campos possíveis"""
@@ -514,16 +382,20 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
     telefone_fields = [
         'TELEFONE', 'TEL_CLIENTE', 'CEL_CLIENTE', 'Telefone', 'Tel', 'Fone', 'Celular', 
         'CelularCliente', 'Telefone Cliente', 'DddCelular', 'NumeroCelular', 'Telefone Fixo',
-        'Telefone Proposta', 'Unnamed: 20', 'Unnamed: 42', 'Unnamed: 43'
+        'Telefone Proposta', 'Fone Cel.', 'Fone Res.', 'Telefone do Cliente', 'Tel Cliente',
+        'Unnamed: 20', 'Unnamed: 29', 'Unnamed: 31', 'Unnamed: 42', 'Unnamed: 43'
     ]
     
     endereco_fields = [
         'ENDERECO', 'ENDEREÇO', 'END_CLIENTE', 'Endereco', 'Endereço', 'End', 
-        'Endereço do Cliente', 'Nº Endereço', 'NUM_END_CLIENTE', 'Unnamed: 21', 'Unnamed: 37'
+        'Endereço do Cliente', 'Nº Endereço', 'NUM_END_CLIENTE', 'Endereco Cliente',
+        'Numero Endereco', 'Logradouro', 'Rua', 'Avenida', 'Praça',
+        'Unnamed: 21', 'Unnamed: 26', 'Unnamed: 34', 'Unnamed: 37'
     ]
     
     cep_fields = [
-        'CEP', 'CEP_CLIENTE', 'Cep', 'Unnamed: 42'
+        'CEP', 'CEP_CLIENTE', 'Cep', 'CEP Cliente', 'Codigo Postal', 'Postal',
+        'Unnamed: 12', 'Unnamed: 42'
     ]
     
     cidade_fields = [
@@ -531,11 +403,13 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
     ]
     
     uf_fields = [
-        'UF', 'UF_CLIENTE', 'Estado', 'ESTADO', 'Unnamed: 41'
+        'UF', 'UF_CLIENTE', 'Estado', 'ESTADO', 'Estado Cliente', 'Uf',
+        'Unnamed: 27', 'Unnamed: 41'
     ]
     
     bairro_fields = [
-        'BAIRRO', 'Bairro', 'BAIRRO_CLIENTE', 'Unnamed: 40'
+        'BAIRRO', 'Bairro', 'BAIRRO_CLIENTE', 'Bairro Cliente', 'District',
+        'Unnamed: 2', 'Unnamed: 40'
     ]
     
     # Função helper para buscar em múltiplos campos
@@ -2836,16 +2710,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,
                 "NOME": nome_cliente,
                 "DATA_NASCIMENTO": data_nascimento,
-                "TELEFONE": telefone.strip() if telefone else "",
-                "ENDERECO": endereco_completo.strip(", ") if endereco_completo.strip(", ") else "",
-                "BAIRRO": bairro.strip() if bairro else "",
-                "CEP": cep.strip() if cep else "",
-                "UF": uf.strip() if uf else "",
+
                 "VALOR_PARCELAS": vlr_parcela,
                 "CODIGO_TABELA": cod_convenio,  # ✅ DIGIO: Usar COD_CONVENIO direto (5076, 5077, 1720, etc)
                 "TAXA": "",  # Taxa deve vir do arquivo ou ser buscada depois
                 "OBSERVACOES": str(row.get('Unnamed: 11', row.get('Observações', ''))).strip()  # NOME_ATIVIDADE como observação
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal (substituir lógica manual)
+            contact_data = extract_contact_data(row, "DIGIO")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"] if contact_data["TELEFONE"] else telefone,
+                "ENDERECO": contact_data["ENDERECO"] if contact_data["ENDERECO"] else endereco_completo.strip(", "),
+                "BAIRRO": contact_data["BAIRRO"] if contact_data["BAIRRO"] else bairro,
+                "CEP": contact_data["CEP"] if contact_data["CEP"] else cep,
+                "UF": contact_data["UF"] if contact_data["UF"] else uf
+            })
             
             # ✅ DIGIO: NÃO aplicar mapeamento! 
             # O arquivo DIGIO já vem com códigos corretos (5076, 5077, 1720, 2055, etc)
@@ -2886,16 +2766,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF do Cliente', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', '')).strip(),
                 "DATA_NASCIMENTO": "",
-                "TELEFONE": str(row.get('Telefone', row.get('Tel', row.get('Fone', '')))).strip(),
-                "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(), 
-                "BAIRRO": str(row.get('Bairro', '')).strip(),
-                "CEP": str(row.get('CEP', '')).strip(),
-                "UF": str(row.get('UF', row.get('Estado', ''))).strip(),
+
                 "VALOR_PARCELAS": "",  # PRATA não fornece valor da parcela
                 "CODIGO_TABELA": str(row.get('Tabela', '')).strip(),  # Nome da tabela do banco
                 "TAXA": "",  # Vazio para buscar no relat_orgaos.csv
                 "OBSERVACOES": str(row.get('Observações', row.get('Observacoes', row.get('Obs', '')))).strip()
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "PRATA")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"],
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
             
         elif bank_type == "VCTEX":
             # Mapeamento BANCO VCTEX - Estrutura REAL dos arquivos
@@ -3305,16 +3191,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de nascimento', '')).strip() if 'Data de nascimento' in df.columns else "",
-                "TELEFONE": str(row.get('Telefone Cliente', row.get('Telefone', row.get('Tel', row.get('Fone', ''))))).strip(),
-                "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(),
-                "BAIRRO": str(row.get('Bairro', '')).strip(), 
-                "CEP": str(row.get('CEP', '')).strip(),
-                "UF": str(row.get('UF', row.get('Estado', ''))).strip(),
+
                 "VALOR_PARCELAS": valor_parcela_formatado,  # 💰 FORMATADO
                 "CODIGO_TABELA": tabela_normalized,  # Nome NORMALIZADO da tabela (usado para buscar no dicionário)
                 "TAXA": taxa_raw,  # Taxa do arquivo (mas será substituída pelo mapeamento se encontrar)
                 "OBSERVACOES": str(row.get('Observação', row.get('Observações', row.get('Observacoes', row.get('Obs', ''))))).strip()  # Campo observações do VCTEX
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "VCTEX")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"],
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
             
         elif bank_type == "DAYCOVAL":
             # 🔧 DAYCOVAL - Detectar formato (CSV correto vs Unnamed)
@@ -3350,8 +3242,18 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CODIGO_TABELA": str(row.get('CODIGO TABELA', '')).strip(),
                     "VALOR_PARCELAS": str(row.get('VALOR PARCELAS', '')).strip(),
                     "TAXA": str(row.get('TAXA', '')).strip(),
-                    "OBSERVACOES": f"Processado via CSV correto | {str(row.get('ENDERECO', row.get('ENDEREÇO', '')))}"
+                    "OBSERVACOES": f"Processado via CSV correto"
                 }
+                
+                # ✅ ADICIONAR DADOS DE CONTATO usando função universal (substituir hardcoded)
+                contact_data = extract_contact_data(row, "DAYCOVAL")
+                normalized_row.update({
+                    "TELEFONE": contact_data["TELEFONE"] if contact_data["TELEFONE"] else normalized_row["TELEFONE"],
+                    "ENDERECO": contact_data["ENDERECO"] if contact_data["ENDERECO"] else normalized_row["ENDERECO"],
+                    "BAIRRO": contact_data["BAIRRO"] if contact_data["BAIRRO"] else normalized_row["BAIRRO"],
+                    "CEP": contact_data["CEP"] if contact_data["CEP"] else normalized_row["CEP"],
+                    "UF": contact_data["UF"] if contact_data["UF"] else normalized_row["UF"]
+                })
                 
                 logging.info(f"✅ DAYCOVAL CSV: {normalized_row['PROPOSTA']} | {normalized_row['NOME']} | {normalized_row['SITUACAO']}")
                 
@@ -3774,16 +3676,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                         "CPF": cpf,
                         "NOME": cliente.upper(),
                         "DATA_NASCIMENTO": "",
-                        "TELEFONE": clean_santander_text(row.get('TELEFONE', row.get('TEL', row.get('FONE', '')))),
-                        "ENDERECO": clean_santander_text(row.get('ENDERECO', row.get('END', row.get('ENDEREÇO', '')))),
-                        "BAIRRO": clean_santander_text(row.get('BAIRRO', '')),
-                        "CEP": clean_santander_text(row.get('CEP', '')),
-                        "UF": clean_santander_text(row.get('UF', row.get('ESTADO', ''))),
+
                         "CODIGO_TABELA": codigo_tabela,
                         "VALOR_PARCELAS": format_santander_value(valor_parcela),
                         "TAXA": "0,00%",
                         "OBSERVACOES": ""
                     }
+                    
+                    # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+                    contact_data = extract_contact_data(row, "SANTANDER")
+                    normalized_row.update({
+                        "TELEFONE": contact_data["TELEFONE"],
+                        "ENDERECO": contact_data["ENDERECO"],
+                        "BAIRRO": contact_data["BAIRRO"],
+                        "CEP": contact_data["CEP"],
+                        "UF": contact_data["UF"]
+                    })
                     
                     logging.info(f"✅✅✅ SANTANDER linha {idx}: normalized_row CRIADO! Proposta={proposta} | Código={codigo_tabela} | Órgão={orgao} | Status={normalize_santander_status(status)}")
                     logging.info(f"📦 SANTANDER linha {idx}: normalized_row pronto para validação comum")
@@ -3980,16 +3888,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF', '')).strip(),
                 "NOME": str(row.get('Cliente', row.get('Nome', ''))).strip(),
                 "DATA_NASCIMENTO": "",
-                "TELEFONE": str(row.get('Telefone', row.get('Fone', row.get('Tel', '')))).strip(),
-                "ENDERECO": str(row.get('Endereco', row.get('Endereço', row.get('End', '')))).strip(),
-                "BAIRRO": str(row.get('Bairro', '')).strip(),
-                "CEP": str(row.get('CEP', row.get('Cep', ''))).strip(),
-                "UF": str(row.get('UF', row.get('Estado', row.get('Uf', '')))).strip(),
+
                 "CODIGO_TABELA": cod_operacao,  # ✅ Usar código diretamente do arquivo (ENER, CPAUTO, LUZ, BOL, CSD)
                 "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
                 "TAXA": "0,00%",  # CREFAZ não tem taxa no relat_orgaos (sempre 0,00%)
                 "OBSERVACOES": str(row.get('Motivos', row.get('Observacoes', ''))).strip()
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "CREFAZ")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"],
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
             
             logging.info(f"✅ CREFAZ processado: Proposta={proposta} | Código='{cod_operacao}' | Órgão='{orgao}'")
 
@@ -4097,9 +4011,6 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # Priorizar celular, senão telefone residencial
             telefone_final = fone_cel if fone_cel else fone_res
             
-            # 📍 QUERO MAIS: Log dos dados de contato para debug
-            logging.info(f"📞 QUERO MAIS contato: telefone='{telefone_final}', endereco='{endereco_completo}', bairro='{bairro_cliente}', cep='{cep_cliente}', uf='{uf_cliente}'")
-            
             normalized_row = {
                 "PROPOSTA": proposta,
                 "DATA_CADASTRO": data_cadastro,
@@ -4115,16 +4026,21 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,
                 "NOME": nome_cliente,
                 "DATA_NASCIMENTO": data_nascimento,
-                "TELEFONE": telefone_final.strip() if telefone_final else "",
-                "ENDERECO": endereco_completo.strip() if endereco_completo else "",
-                "BAIRRO": bairro_cliente.strip() if bairro_cliente else "",
-                "CEP": cep_cliente.strip() if cep_cliente else "",
-                "UF": uf_cliente.strip() if uf_cliente else "",
                 "CODIGO_TABELA": codigo_tabela_final,  # Código sem zeros à esquerda (4717)
                 "VALOR_PARCELAS": valor_parcela,
                 "TAXA": "0,00%",  # Taxa fixa para QUERO MAIS
                 "OBSERVACOES": descr_tabela  # Descrição da tabela como observação
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal (manter fallback manual se necessário)
+            contact_data = extract_contact_data(row, "QUERO_MAIS")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"] if contact_data["TELEFONE"] else telefone_final,
+                "ENDERECO": contact_data["ENDERECO"] if contact_data["ENDERECO"] else endereco_completo,
+                "BAIRRO": contact_data["BAIRRO"] if contact_data["BAIRRO"] else bairro_cliente,
+                "CEP": contact_data["CEP"] if contact_data["CEP"] else cep_cliente,
+                "UF": contact_data["UF"] if contact_data["UF"] else uf_cliente
+            })
             
             # Log para debug dos valores mapeados
             logging.info(f"✅ QUERO MAIS mapeado: PROPOSTA={proposta}, ORGAO={orgao}, CPF={cpf_cliente}, TIPO_OP={tipo_operacao}")
