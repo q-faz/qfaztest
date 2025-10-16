@@ -3419,7 +3419,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CODIGO_TABELA": str(row.get('Unnamed: 38', '')).strip() if row.get('Unnamed: 38') else "",  # Código da tabela
                     "VALOR_PARCELAS": valor_parcela_formatted,  # ✅ Formatado brasileiro
                     "TAXA": taxa_formatted,  # ✅ Formatado brasileiro (X,XX%)
-                    "OBSERVACOES": f"Matrícula: {matricula_raw} | Forma Liberação: {str(row.get('Unnamed: 32', '')).strip()} | {str(row.get('Unnamed: 29', '')).strip()}"
+                    "OBSERVACOES": f"Matrícula: {matricula_raw if matricula_raw and matricula_raw != 'nan' else ''} | Forma Liberação: {str(row.get('Unnamed: 32', '')).strip() if str(row.get('Unnamed: 32', '')).strip() != 'nan' else ''} | {str(row.get('Unnamed: 29', '')).strip() if str(row.get('Unnamed: 29', '')).strip() != 'nan' else ''}".replace(" |  | ", " | ").replace("Matrícula:  | ", "").replace(" |  |", " |").strip(" |")
                 }
                 
                 logging.info(f"✅✅✅ DAYCOVAL normalized_row criado com sucesso para proposta: {proposta_final}")
@@ -4985,7 +4985,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         logging.info(f"📅 DATAS FINAIS PRESERVADAS - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: CADASTRO='{normalized_row.get('DATA_CADASTRO')}' | PAGAMENTO='{normalized_row.get('DATA_PAGAMENTO')}'")
 
         
-        # ✅ VALIDAÇÃO SIMPLIFICADA: Aceitar qualquer linha que tenha pelo menos UM campo essencial válido
+        # ✅ VALIDAÇÃO RIGOROSA: Filtrar cabeçalhos e linhas vazias
         proposta = str(normalized_row.get("PROPOSTA", "")).strip()
         nome = str(normalized_row.get("NOME", "")).strip()
         cpf = str(normalized_row.get("CPF", "")).strip()
@@ -4993,32 +4993,44 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         
         logging.info(f"🔍 VALIDAÇÃO FINAL - Proposta: '{proposta}', Nome: '{nome[:20] if nome else 'N/A'}', CPF: '{cpf}', Banco: '{banco}'")
         
-        # Lista RESTRITA de palavras que realmente indicam cabeçalhos/metadados
-        obvious_headers = [
-            "nan", "none", "null", "proposta", "nome", "cliente", "cpf", "banco", 
-            "relatório", "relatorio", "total", "página", "pagina"
+        # ❌ REJEITAR linhas problemáticas específicas
+        problematic_indicators = [
+            # Cabeçalhos óbvios
+            "proposta", "data cadastro", "tabela utilizada", "qtd parcelas", "valor liberacao",
+            # Linhas vazias/numéricas sem contexto
+            proposta in ["51", ""],
+            # Linhas com apenas "nan" ou valores vazios em campos críticos
+            "matrícula: nan" in str(normalized_row.get("OBSERVACOES", "")).lower(),
+            # Cabeçalho do VCTEX
+            "tabela inss exponencial" in proposta.lower() or "com seguro hot" in proposta.lower(),
+            # Linhas só com banco sem proposta válida
+            not proposta and banco and not nome and not cpf,
         ]
         
-        # Verificar se proposta é obviamente um cabeçalho
-        proposta_lower = proposta.lower()
-        is_obvious_header = proposta_lower in obvious_headers or proposta in ["", "NaN", "None", "NULL"]
+        # ❌ Se tem indicadores problemáticos, REJEITAR
+        has_problematic = any(problematic_indicators) or proposta.lower() in ["nan", "none", "null", ""]
         
-        # ✅ CRITÉRIO PRINCIPAL: Aceitar se tem QUALQUER campo essencial válido
-        has_proposta = proposta and not is_obvious_header and len(proposta) >= 1
-        has_nome = nome and len(nome) >= 3 and nome.lower() not in obvious_headers
-        has_cpf = cpf and len(cpf) >= 8  # Mínimo de 8 chars para ser considerado CPF
-        has_banco = banco and len(banco) >= 3
+        # ✅ CRITÉRIO PRINCIPAL: Precisa ter PROPOSTA VÁLIDA + pelo menos mais um campo
+        has_valid_proposta = (
+            proposta and 
+            len(proposta) >= 3 and  # Mínimo 3 chars
+            not has_problematic and
+            not proposta.lower().startswith(("tabela", "data", "valor", "cliente"))
+        )
         
-        # ✅ ACEITAR se tem pelo menos UM campo válido
-        is_valid_record = has_proposta or has_nome or has_cpf or has_banco
+        has_valid_nome = nome and len(nome) >= 5 and nome.upper() not in ["CLIENTE", "NOME", "NOME DO CLIENTE"]
+        has_valid_cpf = cpf and len(cpf) >= 11  # CPF completo
         
-        logging.info(f"   ✅ VALIDAÇÃO: proposta_ok={has_proposta}, nome_ok={has_nome}, cpf_ok={has_cpf}, banco_ok={has_banco}, RESULTADO={is_valid_record}")
+        # ✅ ACEITAR apenas se tem proposta válida E pelo menos nome OU cpf
+        is_valid_record = has_valid_proposta and (has_valid_nome or has_valid_cpf)
+        
+        logging.info(f"   ✅ VALIDAÇÃO: proposta_valid={has_valid_proposta}, nome_valid={has_valid_nome}, cpf_valid={has_valid_cpf}, problematic={has_problematic}, RESULTADO={is_valid_record}")
         
         if is_valid_record:
             normalized_data.append(normalized_row)
-            logging.info(f"✅✅✅ Linha ACEITA: Proposta='{proposta}', Nome='{nome[:15] if nome else 'N/A'}', CPF='{cpf[:8] if cpf else 'N/A'}', Banco='{banco}'")
+            logging.info(f"✅✅✅ Linha ACEITA: Proposta='{proposta}', Nome='{nome[:15] if nome else 'N/A'}', CPF='{cpf[:8] if cpf else 'N/A'}'")
         else:
-            logging.warning(f"❌ Linha rejeitada por não ter nenhum campo essencial válido: Proposta='{proposta}', Nome='{nome}', CPF='{cpf}', Banco='{banco}'")
+            logging.warning(f"❌ Linha REJEITADA (rigorosa): Proposta='{proposta}', Nome='{nome}', CPF='{cpf}', Problematic={has_problematic}")
     
     logging.info(f"📊 [{bank_type}] RESUMO: {len(normalized_data)} registros válidos de {len(df)} linhas processadas")
     
