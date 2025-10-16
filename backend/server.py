@@ -410,6 +410,21 @@ def clean_special_characters(text):
             'Ã‡': 'Ç',   # mojibake comum para Ç
             'CRÃ': 'CRÉ', # 🔥 ESPECÍFICO: CRÉDITO com Ã no lugar do É
             'Ã': 'Ã',    # mojibake comum para Ã
+            # 🔥 EXPANSÃO: Mais casos comuns de mojibake
+            'Ãº': 'ú',   # mojibake comum para ú
+            'Ã³': 'ó',   # mojibake comum para ó  
+            'Ã­': 'í',   # mojibake comum para í
+            'Ãª': 'ê',   # mojibake comum para ê
+            'Ã´': 'ô',   # mojibake comum para ô
+            'Ã¢': 'â',   # mojibake comum para â
+            'Ã¹': 'ù',   # mojibake comum para ù
+            'Ã¨': 'è',   # mojibake comum para è
+            'ÃŠ': 'Ê',   # mojibake comum para Ê (maiúsculo)
+            'Ã"': 'Ó',   # mojibake comum para Ó (maiúsculo)
+            'Ãš': 'Ú',   # mojibake comum para Ú (maiúsculo)
+            'Ã': 'Í',   # mojibake comum para Í (maiúsculo)
+            'RGÃ': 'RGÃO', # 🔥 ESPECÍFICO: ÓRGÃO com Ã
+            'ÃRGÃO': 'ÓRGÃO', # 🔥 ESPECÍFICO: ÓRGÃO começando com Ã
             'Ãµ': 'Õ'    # mojibake comum para Õ (maiúsculo)
         }
         
@@ -1113,7 +1128,7 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
     # 2. Por estrutura de colunas Unnamed específicas
     if len(df.columns) > 40 and sum(1 for col in df_columns if 'unnamed:' in col) > 30:
         # Verificar indicadores específicos do QUERO MAIS (ANTES do Paulista!)
-        quero_mais_indicators = ['capital consig', 'quero mais credito', 'relatório de produção', 'promotora', 'grupo qfz', 'cpf correspondente', 'convênio correspondente']
+        quero_mais_indicators = ['capital consig', 'quero mais credito', 'quero mais crédito', 'relatório de produção', 'relatório de produção', 'promotora', 'grupo qfz', 'cpf correspondente', 'convênio correspondente', 'quero mais', 'queromais', 'qmais', 'capital consignado']
         if not df.empty:
             # Verificar nas primeiras 5 linhas para maior precisão
             all_data = ""
@@ -1124,7 +1139,7 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             logging.info(f"🔍 QUERO MAIS check - dados: {all_data[:200]}...")
             
             # Indicadores únicos do QUERO MAIS (não confundem com PAULISTA)
-            quero_mais_unique = ['capital consig', 'quero mais', 'promotora', 'grupo qfz', 'cpf correspondente']
+            quero_mais_unique = ['capital consig', 'quero mais', 'queromais', 'qmais', 'promotora', 'grupo qfz', 'cpf correspondente', 'capital consignado']
             found_quero_indicators = [ind for ind in quero_mais_unique if ind in all_data]
             
             # Verificar se NÃO tem indicadores do PAULISTA
@@ -1210,7 +1225,7 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             found_paulista_indicators = [ind for ind in paulista_unique_indicators if ind in all_data]
             
             # Verificar se NÃO tem indicadores do QUERO MAIS
-            quero_mais_exclusive = ['capital consig', 'quero mais', 'promotora', 'grupo qfz', 'cpf correspondente']
+            quero_mais_exclusive = ['capital consig', 'quero mais', 'queromais', 'qmais', 'promotora', 'grupo qfz', 'cpf correspondente', 'capital consignado']
             found_quero_indicators = [ind for ind in quero_mais_exclusive if ind in all_data]
             
             # PAULISTA só se tem indicadores únicos E não tem indicadores do QUERO MAIS
@@ -2623,6 +2638,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 cep = str(row.get('Unnamed: 42', '')).strip()  # CEP_CLIENTE  
                 uf = str(row.get('Unnamed: 41', '')).strip()  # UF_CLIENTE
             
+            # 📞📍 DIGIO: Log dos dados de contato para debug
+            logging.info(f"📞 DIGIO contato: telefone='{telefone}', endereco='{endereco_completo.strip(', ')}', bairro='{bairro}', cep='{cep}', uf='{uf}'")
+            
             normalized_row = {
                 "PROPOSTA": proposta,
                 "DATA_CADASTRO": data_cadastro,
@@ -2638,11 +2656,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,
                 "NOME": nome_cliente,
                 "DATA_NASCIMENTO": data_nascimento,
-                "TELEFONE": telefone,
-                "ENDERECO": endereco_completo.strip(", "),
-                "BAIRRO": bairro,
-                "CEP": cep,
-                "UF": uf,
+                "TELEFONE": telefone.strip() if telefone else "",
+                "ENDERECO": endereco_completo.strip(", ") if endereco_completo.strip(", ") else "",
+                "BAIRRO": bairro.strip() if bairro else "",
+                "CEP": cep.strip() if cep else "",
+                "UF": uf.strip() if uf else "",
                 "VALOR_PARCELAS": vlr_parcela,
                 "CODIGO_TABELA": cod_convenio,  # ✅ DIGIO: Usar COD_CONVENIO direto (5076, 5077, 1720, etc)
                 "TAXA": "",  # Taxa deve vir do arquivo ou ser buscada depois
@@ -4601,7 +4619,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # 🎯 VCTEX - Processamento com mapeamento direto (BYPASS DO SISTEMA CSV)
             tabela_original = normalized_row.get("CODIGO_TABELA", "").strip()
             
-            # Mapeamento direto VCTEX
+            # Mapeamento direto VCTEX - EXPANDIDO para cobrir mais casos INSS
             vctex_map = {
                 "Tabela Vamo Com Tudo": "TabelaVamoComTudo",
                 "Tabela Vamo com tudo com Seguro": "TabelaVamoComTudoComSeg", 
@@ -4610,7 +4628,22 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "Tabela VCT": "TabelaVCT",
                 "Tabela EXP": "TabelaEXP",
                 "Tabela INSS Exponencial TX 1,85 - com Seguro Hot": "TabelaExponencialHot",
-                "TabelaVamoComTudoComSeg": "TabelaVamoComTudoComSeg"
+                "TabelaVamoComTudoComSeg": "TabelaVamoComTudoComSeg",
+                # 🔥 EXPANSÃO INSS: Mais variações comuns
+                "EXP": "TabelaEXP",
+                "Exponencial": "TabelaExponencial", 
+                "TABELA EXP": "TabelaEXP",
+                "TABELA EXPONENCIAL": "TabelaExponencial",
+                "Tabela Exp": "TabelaEXP",
+                "tabela exp": "TabelaEXP",
+                "tabela exponencial": "TabelaExponencial",
+                "INSS Exponencial": "TabelaExponencial",
+                "INSS EXP": "TabelaEXP",
+                "Vamo Com Tudo": "TabelaVamoComTudo",
+                "VAMO COM TUDO": "TabelaVamoComTudo",
+                "VCT": "TabelaVCT",
+                "Relax": "TabelaRelax",
+                "RELAX": "TabelaRelax"
             }
             
             # Aplicar mapeamento direto se encontrar
