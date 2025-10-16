@@ -2391,7 +2391,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,  # CPF já extraído e validado
                 "NOME": str(row.get('NomeCliente', '')).strip(),
                 "DATA_NASCIMENTO": str(row.get('DataNascimento', '')).strip() if 'DataNascimento' in df.columns else "",
-                "TELEFONE": "",    # AVERBAI não tem dados de telefone
+                "TELEFONE": str(row.get('CelularCliente', '')).strip(),  # 📞 AVERBAI: Campo CelularCliente 
                 "ENDERECO": "",    # AVERBAI não tem dados de endereço
                 "BAIRRO": "",      # AVERBAI não tem dados de bairro
                 "CEP": "",         # AVERBAI não tem dados de CEP
@@ -2652,8 +2652,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 uf = str(row.get('UF_CLIENTE', '')).strip()
             else:
                 # Estrutura XLS com Unnamed (baseado no MAP)
-                tel_cliente = str(row.get('Unnamed: 43', '')).strip()  # TEL_CLIENTE
-                cel_cliente = str(row.get('Unnamed: 44', '')).strip()  # CEL_CLIENTE
+                tel_cliente = str(row.get('Unnamed: 42', '')).strip()  # TEL_CLIENTE
+                cel_cliente = str(row.get('Unnamed: 43', '')).strip()  # CEL_CLIENTE
                 telefone = cel_cliente if cel_cliente else tel_cliente
                 
                 endereco = str(row.get('Unnamed: 37', '')).strip()  # END_CLIENTE
@@ -5640,10 +5640,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
-
 if __name__ == "__main__":
+    import os
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port)
