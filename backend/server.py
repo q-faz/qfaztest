@@ -362,18 +362,18 @@ def clean_special_characters(text):
             '\t': ' ',
             '\r': '',
             '\n': ' ',
-        }
-        
-        # Aplicar correções
-        result = text_str
-        for broken, fixed in direct_fixes.items():
-            result = result.replace(broken, fixed)
-        
-        # Normalizar espaços múltiplos e limpar caracteres de replacement
-        result = re.sub(r'\s+', ' ', result).strip()
-        result = result.replace('\ufffd', '')  # Remove replacement chars
-        
-        return result
+    }
+    
+    # Aplicar correções
+    result = text_str
+    for broken, fixed in direct_fixes.items():
+        result = result.replace(broken, fixed)
+    
+    # Normalizar espaços múltiplos e limpar caracteres de replacement
+    result = re.sub(r'\s+', ' ', result).strip()
+    result = result.replace('\ufffd', '')  # Remove replacement chars
+    
+    return result
 
 def extract_contact_data(row, bank_type: str = "") -> dict:
     """Extrai dados de contato de forma universal tentando múltiplos campos possíveis"""
