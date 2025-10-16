@@ -3854,15 +3854,21 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             descr_orgao = str(row.get('Unnamed: 25', '')).strip().upper()  # Descr. Orgao
             descr_empregador = str(row.get('Unnamed: 24', '')).strip().upper()  # Descr. Empregador
             
-            orgao_text = f"{descr_orgao} {descr_empregador}"
-            if 'INSS' in orgao_text:
+            orgao_text = f"{descr_orgao} {descr_empregador}".strip()
+            logging.info(f"🏛️ QUERO MAIS órgão - descr_orgao: '{descr_orgao}', descr_empregador: '{descr_empregador}'")
+            
+            if 'INSS' in orgao_text or 'BENEFICIO' in orgao_text or 'BENEFÍCIO' in orgao_text:
                 orgao = 'INSS'
-            elif 'GOV' in orgao_text or 'SÃO PAULO' in orgao_text or 'SP' in orgao_text:
+            elif 'GOV' in orgao_text or 'SÃO PAULO' in orgao_text or 'SP' in orgao_text or 'ESTADO' in orgao_text or 'GOVERNO' in orgao_text:
                 orgao = 'SIAPE'
             elif 'FGTS' in orgao_text:
                 orgao = 'FGTS'
+            elif 'PREFEITURA' in orgao_text or 'MUNICIPAL' in orgao_text:
+                orgao = 'SIAPE'  # Prefeituras geralmente usam SIAPE
             else:
-                orgao = 'INSS'  # Default
+                orgao = 'INSS'  # Default para QUERO MAIS
+                
+            logging.info(f"✅ QUERO MAIS órgão determinado: '{orgao}' (de '{orgao_text}')")
             
             # Campos mapeados corretamente
             proposta = str(row.get('Unnamed: 33', '')).strip()  # Proposta
@@ -3883,15 +3889,21 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             tipo_operacao = "Margem Livre (Novo)"  # Default
             if descr_tabela:
                 descr_upper = descr_tabela.upper()
-                if "CARTAO" in descr_upper or "CARTÃO" in descr_upper:
+                logging.info(f"🔍 QUERO MAIS tipo operação - descr_tabela: '{descr_tabela}' -> '{descr_upper}'")
+                
+                if "CARTAO" in descr_upper or "CARTÃO" in descr_upper or "CCC" in descr_upper:
                     if "SAQUE" in descr_upper:
-                        tipo_operacao = "Cartao c/ saque"  # Sem acentos para evitar corrupção
+                        tipo_operacao = "Cartão c/ Saque"
                     else:
-                        tipo_operacao = "Cartao s/ saque"  # Sem acentos para evitar corrupção
+                        tipo_operacao = "Cartão s/ Saque"
                 elif "RMC" in descr_upper:
-                    tipo_operacao = "RMC"
+                    tipo_operacao = "Margem Livre (Novo)"  # RMC = Margem Livre
                 elif "LOAS" in descr_upper:
                     tipo_operacao = "Margem Livre (LOAS)"
+                elif "BENEFICIO" in descr_upper or "BENEFÍCIO" in descr_upper:
+                    tipo_operacao = "Margem Livre (Novo)"
+                    
+                logging.info(f"✅ QUERO MAIS tipo operação determinado: '{tipo_operacao}' (de '{descr_tabela}')")
             
             # Remover zeros à esquerda do código de tabela (004717 → 4717)
             codigo_tabela_original = str(row.get('Unnamed: 46', '')).strip()
@@ -4679,7 +4691,9 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         elif bank_type == "QUERO_MAIS":
             # 🎯 QUERO MAIS - preservar códigos originais, não aplicar mapeamento automático
             codigo_direto = normalized_row.get("CODIGO_TABELA", "")
-            logging.info(f"✅ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS código direto {codigo_direto}, pulando mapeamento automático")
+            orgao_quero = normalized_row.get("ORGAO", "")
+            tipo_op_quero = normalized_row.get("TIPO_OPERACAO", "")
+            logging.warning(f"🏆 PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: QUERO MAIS processado - ORGAO={orgao_quero}, TIPO_OP={tipo_op_quero}, CODIGO={codigo_direto}")
             mapping_result = None
         elif bank_type == "VCTEX":
             # 🎯 VCTEX - Processamento com mapeamento direto (BYPASS DO SISTEMA CSV)
