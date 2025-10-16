@@ -3875,6 +3875,24 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # Exemplo: "39891947807_901064" (manter como está)
             usuario_final = usuario_cadastro  # Manter formato original: 39891947807_901064
             
+            # 📞📍 QUERO MAIS: Extrair dados de contato baseado no mapeamento real
+            endereco_rua = str(row.get('Unnamed: 26', '')).strip()  # Endereco Cliente
+            numero_endereco = str(row.get('Unnamed: 34', '')).strip()  # Numero Endereco  
+            bairro_cliente = str(row.get('Unnamed: 2', '')).strip()  # Bairro
+            cep_cliente = str(row.get('Unnamed: 12', '')).strip()  # Cep
+            uf_cliente = str(row.get('Unnamed: 27', '')).strip()  # Estado
+            fone_cel = str(row.get('Unnamed: 29', '')).strip()  # Fone Cel.
+            fone_res = str(row.get('Unnamed: 31', '')).strip()  # Fone Res.
+            
+            # Montar endereço completo
+            endereco_completo = f"{endereco_rua}, {numero_endereco}".strip(", ") if endereco_rua else ""
+            
+            # Priorizar celular, senão telefone residencial
+            telefone_final = fone_cel if fone_cel else fone_res
+            
+            # 📍 QUERO MAIS: Log dos dados de contato para debug
+            logging.info(f"📞 QUERO MAIS contato: telefone='{telefone_final}', endereco='{endereco_completo}', bairro='{bairro_cliente}', cep='{cep_cliente}', uf='{uf_cliente}'")
+            
             normalized_row = {
                 "PROPOSTA": proposta,
                 "DATA_CADASTRO": data_cadastro,
@@ -3890,11 +3908,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,
                 "NOME": nome_cliente,
                 "DATA_NASCIMENTO": data_nascimento,
-                "TELEFONE": "",    # QUERO MAIS não tem dados de telefone
-                "ENDERECO": "",    # QUERO MAIS não tem dados de endereço
-                "BAIRRO": "",      # QUERO MAIS não tem dados de bairro
-                "CEP": "",         # QUERO MAIS não tem dados de CEP
-                "UF": "",          # QUERO MAIS não tem dados de UF
+                "TELEFONE": telefone_final.strip() if telefone_final else "",
+                "ENDERECO": endereco_completo.strip() if endereco_completo else "",
+                "BAIRRO": bairro_cliente.strip() if bairro_cliente else "",
+                "CEP": cep_cliente.strip() if cep_cliente else "",
+                "UF": uf_cliente.strip() if uf_cliente else "",
                 "CODIGO_TABELA": codigo_tabela_final,  # Código sem zeros à esquerda (4717)
                 "VALOR_PARCELAS": valor_parcela,
                 "TAXA": "0,00%",  # Taxa fixa para QUERO MAIS
@@ -5289,8 +5307,12 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
                 
                 mapped_df, mapped_count = map_to_final_format(df, bank_type)
                 
+                logging.info(f"🗺️ MAPEAMENTO RESULTADO: {bank_type} → {len(mapped_df)} linhas mapeadas de {len(df)} originais")
+                
                 if mapped_df.empty:
-                    logging.warning(f"Nenhum dado mapeado para {file.filename}")
+                    logging.error(f"❌ CRÍTICO: Nenhum dado mapeado para {file.filename} (banco: {bank_type})")
+                    logging.error(f"   📊 DataFrame original tinha {len(df)} linhas")
+                    logging.error(f"   🔍 Primeiras colunas do DF: {list(df.columns)[:10] if not df.empty else 'DF vazio'}")
                     continue
                 
                 # Remover duplicatas baseado na Storm
@@ -5298,10 +5320,14 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
                 filtered_df = remove_duplicates_enhanced(mapped_df, storm_data_global)
                 duplicates_removed = original_count - len(filtered_df)
                 
-                logging.info(f"Após remoção de duplicatas: {len(filtered_df)} registros")
+                logging.info(f"📊 DUPLICATAS: {duplicates_removed} removidas, {len(filtered_df)} restantes de {original_count}")
                 
                 if not filtered_df.empty:
                     all_final_data.append(filtered_df)
+                    logging.info(f"✅ SUCESSO: DataFrame de {bank_type} adicionado ao resultado final ({len(filtered_df)} linhas)")
+                else:
+                    logging.error(f"❌ CRÍTICO: Todas as linhas de {bank_type} foram removidas como duplicatas!")
+                    logging.error(f"   📊 Original: {original_count} → Duplicatas: {duplicates_removed} → Restou: 0")
                 
                 # Criar resumo
                 status_dist = {}
