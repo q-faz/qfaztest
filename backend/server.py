@@ -1413,45 +1413,89 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
     raise HTTPException(status_code=400, detail=f"Tipo de banco não reconhecido para: {filename}. Estrutura: {len(df.columns)} colunas, {sum(1 for col in df_columns if 'unnamed:' in col)} colunas 'Unnamed'. Primeiras colunas: {df_columns[:5]}")
 
 def process_storm_data_enhanced(df: pd.DataFrame) -> Dict[str, str]:
-    """Processamento aprimorado dos dados da Storm"""
+    """Processamento aprimorado dos dados da Storm - usa ADE e Status do Contrato"""
     storm_proposals = {}
     
-    logging.info(f"Processando Storm com colunas: {list(df.columns)}")
+    logging.info(f"Processando Storm com {len(df)} linhas e colunas: {list(df.columns)}")
     
-    for _, row in df.iterrows():
-        proposta = ""
-        status = ""
-        
-        # Tentar diferentes formatos de colunas (case-insensitive)
+    # Identificar colunas corretas
+    ade_col = None
+    status_col = None
+    
+    # Buscar colunas ADE e Status do Contrato
+    for col in df.columns:
+        col_lower = str(col).lower().strip()
+        if col_lower == 'ade':
+            ade_col = col
+            logging.info(f"Coluna ADE encontrada: '{col}'")
+        elif 'status do contrato' in col_lower or col_lower == 'status do contrato':
+            status_col = col
+            logging.info(f"Coluna Status encontrada: '{col}'")
+    
+    # Fallback para posições fixas baseadas na estrutura padrão Storm
+    if ade_col is None:
+        # ADE é geralmente a coluna 28 (índice 28)
+        if len(df.columns) > 28:
+            ade_col = df.columns[28]
+            logging.info(f"Usando coluna ADE por posição [28]: '{ade_col}'")
+    
+    if status_col is None:
+        # Status do Contrato é geralmente a coluna 40 (índice 40)  
+        if len(df.columns) > 40:
+            status_col = df.columns[40]
+            logging.info(f"Usando coluna Status por posição [40]: '{status_col}'")
+        elif len(df.columns) > 39:
+            status_col = df.columns[39]
+            logging.info(f"Usando coluna Status por posição [39]: '{status_col}'")
+    
+    if not ade_col or not status_col:
+        logging.warning(f"Colunas não encontradas - ADE: {ade_col}, Status: {status_col}")
+        # Tentar busca flexível
         for idx, col in enumerate(df.columns):
             col_lower = str(col).lower()
-            
-            # Procurar coluna de proposta/ADE
-            if any(term in col_lower for term in ['ade', 'proposta']) and not proposta:
-                proposta = str(row.iloc[idx]).strip()
-                
-            # Procurar coluna de status
-            if any(term in col_lower for term in ['status', 'situacao']) and not status:
-                status = str(row.iloc[idx]).strip().lower()
-        
-        # Fallback: usar posições fixas se não encontrou pelos nomes
-        if not proposta and len(df.columns) >= 1:
-            proposta = str(row.iloc[0]).strip()
-        if not status and len(df.columns) >= 3:
-            status = str(row.iloc[2]).strip().lower()
-        elif not status and len(df.columns) >= 2:
-            status = str(row.iloc[1]).strip().lower()
-        
-        # Validar se proposta é numérica (ADE válido)
-        if proposta and proposta != 'nan' and proposta not in ['ADE', 'ade', 'PROPOSTA']:
-            # Limpar proposta (remover caracteres não numéricos exceto dígitos)
-            proposta_clean = ''.join(c for c in proposta if c.isdigit())
-            if proposta_clean and len(proposta_clean) >= 4:  # ADE deve ter pelo menos 4 dígitos
-                normalized_status = STATUS_MAPPING.get(status, status.upper() if status else "AGUARDANDO")
-                storm_proposals[proposta_clean] = normalized_status
-                logging.info(f"Proposta processada: {proposta_clean} -> {normalized_status}")
+            if not ade_col and ('ade' in col_lower or 'proposta' in col_lower):
+                ade_col = col
+            if not status_col and ('status' in col_lower or 'situacao' in col_lower):
+                status_col = col
     
-    logging.info(f"Storm processada: {len(storm_proposals)} propostas")
+    processed_count = 0
+    pago_cancelado_count = 0
+    
+    for _, row in df.iterrows():
+        try:
+            # Extrair ADE
+            ade_value = str(row[ade_col]).strip() if ade_col else ""
+            
+            # Extrair Status
+            status_value = str(row[status_col]).strip().lower() if status_col else ""
+            
+            # Limpar e validar ADE
+            if ade_value and ade_value not in ['nan', 'NaN', '', 'ADE']:
+                # Manter apenas números
+                ade_clean = ''.join(c for c in ade_value if c.isdigit())
+                
+                if ade_clean and len(ade_clean) >= 6:  # ADEs têm pelo menos 6 dígitos
+                    # Normalizar status
+                    normalized_status = STATUS_MAPPING.get(status_value, status_value.upper())
+                    
+                    storm_proposals[ade_clean] = normalized_status
+                    processed_count += 1
+                    
+                    # Contar quantos estão PAGO/CANCELADO para estatística
+                    if normalized_status in ['PAGO', 'CANCELADO']:
+                        pago_cancelado_count += 1
+                    
+                    if processed_count <= 5:  # Log apenas os primeiros 5 para debug
+                        logging.info(f"Proposta Storm: ADE={ade_clean} Status={normalized_status}")
+                        
+        except Exception as e:
+            logging.error(f"Erro ao processar linha da Storm: {e}")
+            continue
+    
+    logging.info(f"Storm processada: {processed_count} propostas válidas")
+    logging.info(f"Propostas PAGO/CANCELADO (serão filtradas): {pago_cancelado_count}")
+    logging.info(f"Propostas disponíveis para processamento: {processed_count - pago_cancelado_count}")
+    
     return storm_proposals
 
 def normalize_operation_for_matching(operation: str) -> str:
@@ -5124,32 +5168,57 @@ def map_to_final_format(df: pd.DataFrame, bank_type: str) -> tuple[pd.DataFrame,
         return pd.DataFrame(), 0
 
 def remove_duplicates_enhanced(df: pd.DataFrame, storm_data: Dict[str, str]) -> pd.DataFrame:
-    """Remoção aprimorada de duplicatas baseada na Storm"""
+    """Remoção aprimorada de duplicatas baseada na Storm - usa ADE para comparação precisa"""
     if df.empty:
         return df
     
     filtered_data = []
     removed_count = 0
+    pago_removido = 0
+    cancelado_removido = 0
+    
+    logging.info(f"🔍 Verificando {len(df)} registros contra {len(storm_data)} ADEs da Storm")
     
     for _, row in df.iterrows():
         proposta = str(row.get('PROPOSTA', '')).strip()
         
         if not proposta or proposta.lower() in ['nan', 'null', '']:
+            # Se não tem proposta válida, incluir mesmo assim
+            filtered_data.append(row.to_dict())
             continue
         
-        # Verificar se proposta existe na Storm
-        skip_record = False
-        for storm_proposta, storm_status in storm_data.items():
-            if proposta == storm_proposta or proposta in storm_proposta or storm_proposta in proposta:
-                if storm_status in ["PAGO", "CANCELADO"]:
-                    skip_record = True
-                    removed_count += 1
-                    break
+        # Limpar proposta para comparar com ADEs da Storm (apenas números)
+        proposta_clean = ''.join(c for c in proposta if c.isdigit())
         
+        # Verificar se ADE existe na Storm e está PAGO/CANCELADO
+        skip_record = False
+        matched_status = None
+        
+        # Comparação exata de ADE 
+        if proposta_clean in storm_data:
+            matched_status = storm_data[proposta_clean]
+            if matched_status in ["PAGO", "CANCELADO"]:
+                skip_record = True
+                removed_count += 1
+                if matched_status == "PAGO":
+                    pago_removido += 1
+                else:
+                    cancelado_removido += 1
+                
+                # Log apenas algumas para debug
+                if removed_count <= 3:
+                    logging.info(f"🚫 Removendo duplicata: ADE={proposta_clean} Status={matched_status}")
+        
+        # Se não foi removido como duplicata, incluir no resultado
         if not skip_record:
             filtered_data.append(row.to_dict())
     
-    logging.info(f"Duplicatas removidas: {removed_count}")
+    logging.info(f"📊 DUPLICATAS PROCESSADAS:")
+    logging.info(f"   ✅ Registros mantidos: {len(filtered_data)}")
+    logging.info(f"   🚫 Total removidos: {removed_count}")
+    logging.info(f"      💰 PAGO removidos: {pago_removido}")
+    logging.info(f"      ❌ CANCELADO removidos: {cancelado_removido}")
+    
     return pd.DataFrame(filtered_data)
 
 def format_csv_for_storm(df: pd.DataFrame) -> str:
