@@ -1131,9 +1131,25 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
         logging.warning(f"🎯 QUERO MAIS detectado por nome do arquivo: {filename}")
         return "QUERO_MAIS"
     
+    # 1.5 Por palavras-chave específicas no nome (NOVO)
+    quero_mais_filename_indicators = ['promotora', 'capital consig', 'grupo qfz', 'relatório de produção', 'relatorio de producao']
+    for indicator in quero_mais_filename_indicators:
+        if indicator in filename_lower:
+            logging.warning(f"🎯 QUERO MAIS detectado por indicador no nome '{indicator}' em arquivo: {filename}")
+            return "QUERO_MAIS"
+    
     # 2. Por estrutura de colunas Unnamed específicas
-    logging.warning(f"🔍 QUERO MAIS check estrutura: {len(df.columns)} colunas, {sum(1 for col in df_columns if 'unnamed:' in col)} Unnamed")
-    if len(df.columns) > 40 and sum(1 for col in df_columns if 'unnamed:' in col) > 30:
+    total_cols = len(df.columns)
+    unnamed_cols = sum(1 for col in df_columns if 'unnamed:' in col)
+    logging.warning(f"🔍 QUERO MAIS check estrutura: {total_cols} colunas totais, {unnamed_cols} Unnamed, arquivo: {filename}")
+    
+    # 🔧 CRITÉRIO MELHORADO: Se tem 40+ colunas e 30+ Unnamed (ou ratio > 80%)
+    unnamed_ratio = (unnamed_cols / total_cols * 100) if total_cols > 0 else 0
+    structure_matches = (total_cols > 40 and unnamed_cols > 30) or unnamed_ratio > 80
+    
+    logging.warning(f"🔍 QUERO MAIS estrutura - ratio Unnamed: {unnamed_ratio:.1f}%, match: {structure_matches}")
+    
+    if structure_matches:
         # Verificar indicadores específicos do QUERO MAIS (ANTES do Paulista!)
         quero_mais_indicators = ['capital consig', 'quero mais credito', 'quero mais crédito', 'relatório de produção', 'relatório de produção', 'promotora', 'grupo qfz', 'cpf correspondente', 'convênio correspondente', 'quero mais', 'queromais', 'qmais', 'capital consignado']
         logging.warning(f"🔍 QUERO MAIS estrutura OK - verificando conteúdo...")
