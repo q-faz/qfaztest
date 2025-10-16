@@ -507,6 +507,85 @@ def clean_special_characters(text):
     
     return cleaned_text
 
+def extract_contact_data(row, bank_type: str = "") -> dict:
+    """Extrai dados de contato de forma universal tentando múltiplos campos possíveis"""
+    
+    # Lista de possíveis nomes para cada campo
+    telefone_fields = [
+        'TELEFONE', 'TEL_CLIENTE', 'CEL_CLIENTE', 'Telefone', 'Tel', 'Fone', 'Celular', 
+        'CelularCliente', 'Telefone Cliente', 'DddCelular', 'NumeroCelular', 'Telefone Fixo',
+        'Telefone Proposta', 'Unnamed: 20', 'Unnamed: 42', 'Unnamed: 43'
+    ]
+    
+    endereco_fields = [
+        'ENDERECO', 'ENDEREÇO', 'END_CLIENTE', 'Endereco', 'Endereço', 'End', 
+        'Endereço do Cliente', 'Nº Endereço', 'NUM_END_CLIENTE', 'Unnamed: 21', 'Unnamed: 37'
+    ]
+    
+    cep_fields = [
+        'CEP', 'CEP_CLIENTE', 'Cep', 'Unnamed: 42'
+    ]
+    
+    cidade_fields = [
+        'CIDADE', 'Cidade', 'CIDADE_CLIENTE', 'Município', 'Municipio'
+    ]
+    
+    uf_fields = [
+        'UF', 'UF_CLIENTE', 'Estado', 'ESTADO', 'Unnamed: 41'
+    ]
+    
+    bairro_fields = [
+        'BAIRRO', 'Bairro', 'BAIRRO_CLIENTE', 'Unnamed: 40'
+    ]
+    
+    # Função helper para buscar em múltiplos campos
+    def find_value(fields_list):
+        for field in fields_list:
+            value = str(row.get(field, '')).strip()
+            if value and value.lower() not in ['nan', 'none', 'null', '']:
+                return value
+        return ""
+    
+    # Extrair telefone (priorizar celular)
+    telefone = find_value(telefone_fields)
+    
+    # Extrair endereço (pode combinar múltiplos campos)
+    endereco_base = find_value(endereco_fields)
+    num_endereco = find_value(['NUM_END_CLIENTE', 'Nº Endereço', 'Numero', 'Número'])
+    complemento = find_value(['COMPLEMENTO', 'Complemento'])
+    
+    endereco_completo = endereco_base
+    if num_endereco and num_endereco != endereco_base:
+        endereco_completo = f"{endereco_base}, {num_endereco}".strip(", ")
+    if complemento and complemento not in [endereco_base, num_endereco]:
+        endereco_completo += f", {complemento}".strip(", ")
+    
+    # Extrair outros campos
+    cep = find_value(cep_fields)
+    cidade = find_value(cidade_fields) 
+    uf = find_value(uf_fields)
+    bairro = find_value(bairro_fields)
+    
+    # Log para debug se encontrou dados
+    found_data = []
+    if telefone: found_data.append(f"TEL:{telefone[:10]}")
+    if endereco_completo: found_data.append(f"END:{endereco_completo[:15]}")
+    if cep: found_data.append(f"CEP:{cep}")
+    if cidade: found_data.append(f"CID:{cidade}")
+    if uf: found_data.append(f"UF:{uf}")
+    
+    if found_data:
+        logging.info(f"📞 {bank_type} contato encontrado: {' | '.join(found_data)}")
+    
+    return {
+        'TELEFONE': telefone,
+        'ENDERECO': endereco_completo.strip(", "),
+        'BAIRRO': bairro,
+        'CEP': cep,
+        'UF': uf,
+        'CIDADE': cidade  # Campo adicional que pode ser útil
+    }
+
 def apply_character_cleaning_to_dataframe(df: pd.DataFrame, filename: str = "") -> pd.DataFrame:
     """
     Aplica limpeza de caracteres especiais em todas as colunas de texto do DataFrame
@@ -2454,16 +2533,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": cpf_cliente,  # CPF já extraído e validado
                 "NOME": str(row.get('NomeCliente', '')).strip(),
                 "DATA_NASCIMENTO": str(row.get('DataNascimento', '')).strip() if 'DataNascimento' in df.columns else "",
-                "TELEFONE": str(row.get('CelularCliente', '')).strip(),  # 📞 AVERBAI: Campo CelularCliente 
-                "ENDERECO": "",    # AVERBAI não tem dados de endereço
-                "BAIRRO": "",      # AVERBAI não tem dados de bairro
-                "CEP": "",         # AVERBAI não tem dados de CEP
-                "UF": "",          # AVERBAI não tem dados de UF
+            }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "AVERBAI")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"],
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
+            
+            # Continuar com os outros campos
+            normalized_row.update({
                 "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
                 "CODIGO_TABELA": codigo_tabela_direto,  # 🎯 CÓDIGO DIRETO DO ARQUIVO!
                 "TAXA": taxa_formatada,  # 📊 TAXA ORGANIZADA CONFORME TABELA
                 "OBSERVACOES": str(row.get('Observações', row.get('Observacoes', row.get('Obs', '')))).strip()
-            }
+            })
             
         elif bank_type == "DIGIO":
             # Mapeamento BANCO DIGIO S.A. - Suporte para duas estruturas:
@@ -3411,16 +3499,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CPF": cpf_final,  # ✅ Formatado brasileiro (XXX.XXX.XXX-XX)
                     "NOME": nome_final,  # ✅ Maiúsculas
                     "DATA_NASCIMENTO": "",  # Não disponível no DAYCOVAL
-                    "TELEFONE": str(row.get('Unnamed: 20', '')).strip(),  # Tentar extrair telefone (possível coluna)
-                    "ENDERECO": str(row.get('Unnamed: 21', '')).strip(),  # Tentar extrair endereço (possível coluna)
-                    "BAIRRO": str(row.get('Unnamed: 22', '')).strip(),    # Tentar extrair bairro (possível coluna)
-                    "CEP": "",          # DAYCOVAL não tem dados de CEP identificados
-                    "UF": "",           # DAYCOVAL não tem dados de UF identificados
+                }
+                
+                # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+                contact_data = extract_contact_data(row, "DAYCOVAL")
+                normalized_row.update({
+                    "TELEFONE": contact_data["TELEFONE"],
+                    "ENDERECO": contact_data["ENDERECO"],
+                    "BAIRRO": contact_data["BAIRRO"],
+                    "CEP": contact_data["CEP"],
+                    "UF": contact_data["UF"]
+                })
+                
+                # Continuar com os outros campos
+                normalized_row.update({
                     "CODIGO_TABELA": str(row.get('Unnamed: 38', '')).strip() if row.get('Unnamed: 38') else "",  # Código da tabela
                     "VALOR_PARCELAS": valor_parcela_formatted,  # ✅ Formatado brasileiro
                     "TAXA": taxa_formatted,  # ✅ Formatado brasileiro (X,XX%)
                     "OBSERVACOES": f"Matrícula: {matricula_raw if matricula_raw and matricula_raw != 'nan' else ''} | Forma Liberação: {str(row.get('Unnamed: 32', '')).strip() if str(row.get('Unnamed: 32', '')).strip() != 'nan' else ''} | {str(row.get('Unnamed: 29', '')).strip() if str(row.get('Unnamed: 29', '')).strip() != 'nan' else ''}".replace(" |  | ", " | ").replace("Matrícula:  | ", "").replace(" |  |", " |").strip(" |")
-                }
+                })
                 
                 logging.info(f"✅✅✅ DAYCOVAL normalized_row criado com sucesso para proposta: {proposta_final}")
                 logging.info(f"✅✅✅ DAYCOVAL normalized_row: PROPOSTA={proposta_final}, NOME={nome_final}, CPF={cpf_final}")
@@ -4218,6 +4315,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "TAXA": taxa_formatada,  # ✅ Vazia - será preenchida pelo mapeamento
                 "OBSERVACOES": ""
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "FACTA92")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"], 
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
         
         elif bank_type == "PAULISTA":
             logging.error(f"🎯 CHEGOU NO BLOCO PAULISTA! Linha {idx}: '{row.get('Unnamed: 0', '')}'")
@@ -5010,19 +5117,19 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         # ❌ Se tem indicadores problemáticos, REJEITAR
         has_problematic = any(problematic_indicators) or proposta.lower() in ["nan", "none", "null", ""]
         
-        # ✅ CRITÉRIO PRINCIPAL: Precisa ter PROPOSTA VÁLIDA + pelo menos mais um campo
+        # ✅ CRITÉRIO MAIS FLEXÍVEL: Aceitar dados reais dos bancos
         has_valid_proposta = (
             proposta and 
-            len(proposta) >= 3 and  # Mínimo 3 chars
+            len(proposta) >= 2 and  # ✅ Reduzido: mínimo 2 chars
             not has_problematic and
             not proposta.lower().startswith(("tabela", "data", "valor", "cliente"))
         )
         
-        has_valid_nome = nome and len(nome) >= 5 and nome.upper() not in ["CLIENTE", "NOME", "NOME DO CLIENTE"]
-        has_valid_cpf = cpf and len(cpf) >= 11  # CPF completo
+        has_valid_nome = nome and len(nome) >= 3 and nome.upper() not in ["CLIENTE", "NOME", "NOME DO CLIENTE"]  # ✅ Reduzido: 3+ chars
+        has_valid_cpf = cpf and len(cpf) >= 8   # ✅ Mais flexível: 8+ chars (pode ser formatado ou não)
         
-        # ✅ ACEITAR apenas se tem proposta válida E pelo menos nome OU cpf
-        is_valid_record = has_valid_proposta and (has_valid_nome or has_valid_cpf)
+        # ✅ CRITÉRIO RELAXADO: Aceitar se tem proposta válida OU pelo menos nome e CPF 
+        is_valid_record = has_valid_proposta or (has_valid_nome and has_valid_cpf)
         
         logging.info(f"   ✅ VALIDAÇÃO: proposta_valid={has_valid_proposta}, nome_valid={has_valid_nome}, cpf_valid={has_valid_cpf}, problematic={has_problematic}, RESULTADO={is_valid_record}")
         
