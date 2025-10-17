@@ -644,6 +644,14 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         uf_fields = ['UF']
         bairro_fields = ['Bairro']
     
+    elif bank_type == "PRATA":
+        telefone_fields = ['Telefone', 'Tel', 'Celular', 'Fone']  # PRATA campos típicos
+        endereco_fields = ['Endereco', 'Endereço', 'End']
+        cep_fields = ['CEP', 'Cep']
+        cidade_fields = ['Cidade', 'City']
+        uf_fields = ['UF', 'Estado']
+        bairro_fields = ['Bairro', 'Neighborhood']
+    
     elif bank_type == "FACTA92":
         telefone_fields = []  # FACTA92 não tem campos de telefone
         endereco_fields = []  # FACTA92 não tem campos de endereço
@@ -5388,6 +5396,26 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"🔧 DAYCOVAL - MANTENDO datas corrigidas pelo fix_daycoval_date(): CADASTRO='{normalized_row.get('DATA_CADASTRO')}' | PAGAMENTO='{normalized_row.get('DATA_PAGAMENTO')}'")
         else:
             logging.info(f"📅 DATAS FINAIS PRESERVADAS - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: CADASTRO='{normalized_row.get('DATA_CADASTRO')}' | PAGAMENTO='{normalized_row.get('DATA_PAGAMENTO')}'")
+
+        # 📞 LOG FINAL DOS CAMPOS DE CONTATO
+        contato_campos = []
+        if normalized_row.get('TELEFONE') and normalized_row.get('TELEFONE').strip() != "":
+            contato_campos.append(f"TEL:{normalized_row.get('TELEFONE')}")
+        if normalized_row.get('ENDERECO') and normalized_row.get('ENDERECO').strip() != "":
+            contato_campos.append(f"END:{normalized_row.get('ENDERECO')[:15]}...")
+        if normalized_row.get('BAIRRO') and normalized_row.get('BAIRRO').strip() != "":
+            contato_campos.append(f"BAI:{normalized_row.get('BAIRRO')}")
+        if normalized_row.get('CIDADE') and normalized_row.get('CIDADE').strip() != "":
+            contato_campos.append(f"CID:{normalized_row.get('CIDADE')}")
+        if normalized_row.get('UF') and normalized_row.get('UF').strip() != "":
+            contato_campos.append(f"UF:{normalized_row.get('UF')}")
+        if normalized_row.get('CEP') and normalized_row.get('CEP').strip() != "":
+            contato_campos.append(f"CEP:{normalized_row.get('CEP')}")
+        
+        if contato_campos:
+            logging.info(f"📞 CONTATO FINAL {banco_atual} - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: {' | '.join(contato_campos)}")
+        else:
+            logging.info(f"📞 CONTATO FINAL {banco_atual} - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: SEM DADOS DE CONTATO")
 
         
         # ✅ VALIDAÇÃO RIGOROSA: Filtrar cabeçalhos e linhas vazias
