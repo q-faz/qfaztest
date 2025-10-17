@@ -4009,27 +4009,68 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # Unnamed: 48 = Vlr.da parcela (53.13, 194.36)
             # Unnamed: 49 = Valor liberacao 1 (1829.79, 1717.23)
             
-            # Detecção de órgão pela descrição correta - CORRIGIDA
+            # Detecção de órgão INTELIGENTE - usando múltiplas fontes
             descr_orgao = str(row.get('Unnamed: 25', '')).strip().upper()  # Descr. Orgao
             descr_empregador = str(row.get('Unnamed: 24', '')).strip().upper()  # Descr. Empregador
+            descr_tabela = str(row.get('Unnamed: 22', '')).strip().upper()  # Descr. Tabela
+            codigo_tabela_raw = str(row.get('Unnamed: 46', '')).strip()  # Código da tabela
             
-            orgao_text = f"{descr_orgao} {descr_empregador}".strip()
-            logging.info(f"🏛️ QUERO MAIS órgão - descr_orgao: '{descr_orgao}', descr_empregador: '{descr_empregador}'")
+            # Combinar todas as informações para análise
+            todas_descricoes = f"{descr_orgao} {descr_empregador} {descr_tabela}".strip()
+            logging.info(f"🏛️ QUERO MAIS análise completa:")
+            logging.info(f"   descr_orgao: '{descr_orgao}'")
+            logging.info(f"   descr_empregador: '{descr_empregador}'")  
+            logging.info(f"   descr_tabela: '{descr_tabela}'")
+            logging.info(f"   codigo_tabela: '{codigo_tabela_raw}'")
             
-            # 🚨 CORREÇÃO: Priorizar SIAPE/FEDERAL antes de INSS
-            if 'GOV' in orgao_text or 'SÃO PAULO' in orgao_text or 'SP' in orgao_text or 'ESTADO' in orgao_text or 'GOVERNO' in orgao_text or 'FEDERAL' in orgao_text or 'SIAPE' in orgao_text:
-                orgao = 'SIAPE FEDERAL'  # 🚨 CORREÇÃO: Usar SIAPE FEDERAL
-            elif 'PREFEITURA' in orgao_text or 'MUNICIPAL' in orgao_text:
-                orgao = 'SIAPE CONSIG'  # 🚨 CORREÇÃO: Prefeituras = SIAPE CONSIG
-            elif 'INSS' in orgao_text or 'BENEFICIO' in orgao_text or 'BENEFÍCIO' in orgao_text:
+            # 🚨 LÓGICA INTELIGENTE: Análise por prioridade
+            if 'INSS' in todas_descricoes and ('BENEFICIO' in todas_descricoes or 'BENEFÍCIO' in todas_descricoes or 'RMC' in todas_descricoes or 'CART' in todas_descricoes):
+                # Se menciona INSS + (benefício OU RMC OU cartão) = realmente INSS
                 orgao = 'INSS'
-            elif 'FGTS' in orgao_text:
+                logging.info(f"✅ QUERO MAIS → INSS (detectado: INSS + benefício/RMC/cartão)")
+            elif 'SIAPE' in todas_descricoes or 'FEDERAL' in todas_descricoes:
+                # Se menciona SIAPE ou FEDERAL explicitamente
+                orgao = 'SIAPE FEDERAL'
+                logging.info(f"✅ QUERO MAIS → SIAPE FEDERAL (detectado: SIAPE/FEDERAL explícito)")
+            elif 'GOV' in todas_descricoes or 'GOVERNO' in todas_descricoes or 'ESTADO' in todas_descricoes:
+                # Se menciona governo/estado = SIAPE
+                orgao = 'SIAPE FEDERAL'
+                logging.info(f"✅ QUERO MAIS → SIAPE FEDERAL (detectado: governo/estado)")
+            elif 'SÃO PAULO' in todas_descricoes or 'SP' in todas_descricoes:
+                # Estado de São Paulo = SIAPE
+                orgao = 'SIAPE FEDERAL'
+                logging.info(f"✅ QUERO MAIS → SIAPE FEDERAL (detectado: São Paulo/SP)")
+            elif 'PREFEITURA' in todas_descricoes or 'MUNICIPAL' in todas_descricoes:
+                # Prefeituras = SIAPE CONSIG
+                orgao = 'SIAPE CONSIG'
+                logging.info(f"✅ QUERO MAIS → SIAPE CONSIG (detectado: prefeitura/municipal)")
+            elif 'FGTS' in todas_descricoes:
+                # FGTS = FGTS
                 orgao = 'FGTS'
+                logging.info(f"✅ QUERO MAIS → FGTS (detectado: FGTS)")
             else:
-                # 🚨 CORREÇÃO: Default para SIAPE em vez de INSS para QUERO MAIS
-                orgao = 'SIAPE FEDERAL'  
+                # 🚨 DECISÃO INTELIGENTE BASEADA NO CÓDIGO DA TABELA
+                # Códigos 4xxx geralmente são INSS, códigos 49xx podem ser SIAPE
+                if codigo_tabela_raw:
+                    codigo_num = codigo_tabela_raw.lstrip('0')
+                    if codigo_num.startswith('46') or codigo_num.startswith('47'):
+                        # Códigos 46xx, 47xx = tipicamente INSS cartão
+                        orgao = 'INSS'
+                        logging.info(f"✅ QUERO MAIS → INSS (código {codigo_num} = padrão INSS cartão)")
+                    elif codigo_num.startswith('49'):
+                        # Códigos 49xx = tipicamente SIAPE
+                        orgao = 'SIAPE FEDERAL'
+                        logging.info(f"✅ QUERO MAIS → SIAPE FEDERAL (código {codigo_num} = padrão SIAPE)")
+                    else:
+                        # Outros códigos: defaultar para INSS (mais comum no QUERO MAIS)
+                        orgao = 'INSS'
+                        logging.info(f"✅ QUERO MAIS → INSS (código {codigo_num} = default INSS)")
+                else:
+                    # Sem código: defaultar para INSS
+                    orgao = 'INSS'
+                    logging.info(f"✅ QUERO MAIS → INSS (sem código = default INSS)")
                 
-            logging.info(f"✅ QUERO MAIS órgão determinado: '{orgao}' (de '{orgao_text}')")
+            logging.info(f"🎯 QUERO MAIS órgão FINAL: '{orgao}'")
             
             # Campos mapeados corretamente
             proposta = str(row.get('Unnamed: 33', '')).strip()  # Proposta
