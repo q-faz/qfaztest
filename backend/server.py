@@ -64,6 +64,73 @@ class ReportSummary(BaseModel):
 
 # ===== MAPEAMENTOS COMPLETOS MELHORADOS =====
 
+# ✅ MAPEAMENTO PADRONIZADO STORM - SEM ACENTOS (baseado em relat_orgaos.csv)
+STORM_OPERATIONS_MAPPING = {
+    # Operações SEM ACENTOS para evitar caracteres quebrados
+    "MARGEM LIVRE (NOVO)": "Margem Livre (Novo)",
+    "MARGEM LIVRE NOVO": "Margem Livre (Novo)", 
+    "CARTAO C/ SAQUE": "CARTAO C/ SAQUE",
+    "CARTAO C/ SAQUE COMPLEMENTAR A VISTA": "CARTAO C/ SAQUE COMPLEMENTAR A VISTA",
+    "PORTABILIDADE": "PORTABILIDADE",
+    "PORTABILIDADE + REFIN": "PORTABILIDADE",  # 🚨 CORREÇÃO: + Refin vira simples
+    "PORTABILIDADE + REFINANCIAMENTO": "PORTABILIDADE",  # 🚨 CORREÇÃO
+    "PORTABILIDADE E REFINANCIAMENTO": "PORTABILIDADE",  # 🚨 CORREÇÃO
+    "REFINANCIAMENTO": "Refinanciamento",
+    "REFINANCIAMENTO DA PORTABILIDADE": "Refinanciamento da Portabilidade",
+    "ATIVACAO - PRE SAQUE": "Ativacao - Pre Saque",
+    # Variações com acentos → sem acentos
+    "Portabilidade": "PORTABILIDADE",
+    "Portabilidade + Refin": "PORTABILIDADE",
+    "Portabilidade + Refinanciamento": "PORTABILIDADE", 
+    "Portabilidade e Refinanciamento": "PORTABILIDADE",
+    "Portabilidade +Refin": "PORTABILIDADE",
+    "Refinanciamento da Portabilidade": "Refinanciamento da Portabilidade",
+    "Refinanciamento Da Portabilidade": "Refinanciamento da Portabilidade",
+    "Cartão c/ Saque": "CARTAO C/ SAQUE",
+    "Cartao C/ Saque": "CARTAO C/ SAQUE",
+    "Cartão C/ Saque": "CARTAO C/ SAQUE",
+    "Margem Livre (Novo)": "Margem Livre (Novo)",
+    # Casos especiais
+    "Rentabilidade": "PORTABILIDADE",  # Erro de digitação comum
+    "Saque FGTS": "Margem Livre (Novo)",
+    "Consignado FGTS": "Margem Livre (Novo)",
+    "Consignado INSS": "Margem Livre (Novo)",
+    "Emprestimo Complementar": "Margem Livre (Novo)",
+    "Credito Do Trabalhador": "Margem Livre (Novo)"
+}
+
+# ✅ MAPEAMENTO PADRONIZADO ÓRGÃOS STORM - SEM ACENTOS
+STORM_ORGANS_MAPPING = {
+    # Órgãos SEM ACENTOS para evitar caracteres quebrados
+    "INSS": "INSS",
+    "FGTS": "FGTS", 
+    "SIAPE FEDERAL": "SIAPE FEDERAL",
+    "SIAPE CONSIG": "SIAPE CONSIG",
+    "SIAPE BENEFICIO": "SIAPE BENEFICIO",
+    "CREDITO DO TRABALHADOR": "CREDITO DO TRABALHADOR",
+    "SPPREV": "SPPREV",
+    "GOV. SAO PAULO": "GOV. SAO PAULO",
+    "EDUCACAO": "EDUCACAO",
+    "SEFAZ": "SEFAZ",
+    "SAUDE": "SAUDE",
+    "PREF. DE BAURU": "PREF. DE BAURU",
+    "PREF. DE LINS - SP": "PREF. DE LINS - SP",
+    "PREF. DE AGUDOS - SP": "PREF. DE AGUDOS - SP",
+    "MINISTERIO DO TRABALHO E EMPREGO MTE": "MINISTERIO DO TRABALHO E EMPREGO MTE",
+    # Variações com acentos → sem acentos
+    "CRÉDITO DO TRABALHADOR": "CREDITO DO TRABALHADOR",
+    "EDUCAÇÃO": "EDUCACAO",
+    "SAÚDE": "SAUDE",
+    "SEFAZ - AOL": "SEFAZ - AOL",
+    "TJ SERVIDORES": "TJ SERVIDORES",
+    "PMESP": "PMESP",
+    "OBRAS": "OBRAS",
+    "CULTURA": "CULTURA",
+    "ENERGIA": "ENERGIA",
+    "ADMINISTRACAO": "ADMINISTRACAO",
+    "LOAS": "LOAS"
+}
+
 # Status normalization - Mapeamento COMPLETO
 STATUS_MAPPING = {
     # ===== PAGO variants ===== (proposta finalizada e paga)
@@ -453,6 +520,36 @@ def fix_daycoval_date(date_str, field_name=""):
     # Se não corresponder ao padrão, retornar como está
     logging.warning(f"⚠️ DAYCOVAL {field_name}: Formato não reconhecido: '{date_clean}'")
     return date_clean
+
+def normalize_storm_operation(operation_str):
+    """
+    🚨 NORMALIZAÇÃO STORM: Operações padronizadas SEM ACENTOS
+    """
+    if not operation_str:
+        return ""
+    
+    operation_clean = str(operation_str).strip()
+    
+    # Primeiro remover acentos
+    operation_clean = clean_special_characters(operation_clean)
+    
+    # Depois aplicar mapeamento Storm
+    return STORM_OPERATIONS_MAPPING.get(operation_clean.upper(), operation_clean)
+
+def normalize_storm_organ(organ_str):
+    """
+    🚨 NORMALIZAÇÃO STORM: Órgãos padronizados SEM ACENTOS
+    """
+    if not organ_str:
+        return ""
+    
+    organ_clean = str(organ_str).strip()
+    
+    # Primeiro remover acentos
+    organ_clean = clean_special_characters(organ_clean)
+    
+    # Depois aplicar mapeamento Storm
+    return STORM_ORGANS_MAPPING.get(organ_clean.upper(), organ_clean)
 
 def extract_contact_data(row, bank_type: str = "") -> dict:
     """Extrai dados de contato de forma universal tentando múltiplos campos possíveis"""
@@ -3400,15 +3497,18 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 desc_upper = descricao_empregador.upper()
                 
                 if 'INSS' in desc_upper:
-                    return "INSS"
+                    orgao = "INSS"
                 elif 'SPPREV' in desc_upper:
-                    return "SPPREV"
+                    orgao = "SPPREV"
                 elif 'EDUC' in desc_upper or 'SEC EDU' in desc_upper:
-                    return "EDUCACAO"
+                    orgao = "EDUCACAO"
                 elif 'SEFAZ' in desc_upper:
-                    return "SEFAZ"
+                    orgao = "SEFAZ"
                 else:
-                    return "INSS"  # Default
+                    orgao = "INSS"  # Default
+                
+                # 🚨 APLICAR NORMALIZAÇÃO STORM
+                return normalize_storm_organ(orgao)
             
             # Função para detectar operação do DAYCOVAL  
             def detect_daycoval_operacao(tipo_operacao):
@@ -3416,15 +3516,18 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 tipo_upper = tipo_operacao.upper()
                 
                 if 'PORTABILIDADE' in tipo_upper and 'REFINANCIAMENTO' in tipo_upper:
-                    return "Refinanciamento da Portabilidade"
+                    operacao = "Refinanciamento da Portabilidade"
                 elif 'PORTABILIDADE' in tipo_upper:
-                    return "Portabilidade"  # 🚨 CORREÇÃO: Sem "+ Refin"
+                    operacao = "PORTABILIDADE"  # 🚨 CORREÇÃO: Sem "+ Refin"
                 elif 'REFINANCIAMENTO' in tipo_upper:
-                    return "Refinanciamento"
+                    operacao = "Refinanciamento"
                 elif 'NOVA' in tipo_upper:
-                    return "Margem Livre (Novo)"
+                    operacao = "Margem Livre (Novo)"
                 else:
-                    return "Margem Livre (Novo)"  # Default
+                    operacao = "Margem Livre (Novo)"  # Default
+                
+                # 🚨 APLICAR NORMALIZAÇÃO STORM
+                return normalize_storm_operation(operacao)
             
             # Detectar órgão e operação usando as funções
             orgao_detectado = detect_daycoval_orgao(descricao_empregador_raw)
@@ -4070,6 +4173,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     orgao = 'INSS'
                     logging.info(f"✅ QUERO MAIS → INSS (sem código = default INSS)")
                 
+            # 🚨 APLICAR NORMALIZAÇÃO STORM NO ÓRGÃO
+            orgao = normalize_storm_organ(orgao)
             logging.info(f"🎯 QUERO MAIS órgão FINAL: '{orgao}'")
             
             # Campos mapeados corretamente
@@ -4095,14 +4200,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 
                 if "CARTAO" in descr_upper or "CARTÃO" in descr_upper or "CCC" in descr_upper:
                     # 🚨 CORREÇÃO: Sempre "c/ Saque" para cartão
-                    tipo_operacao = "Cartao C/ Saque"
+                    tipo_operacao = "CARTAO C/ SAQUE"  # 🚨 SEM ACENTOS
                 elif "RMC" in descr_upper:
                     tipo_operacao = "Margem Livre (Novo)"  # RMC = Margem Livre
                 elif "LOAS" in descr_upper:
-                    tipo_operacao = "Margem Livre (LOAS)"
+                    tipo_operacao = "Margem Livre (Novo)"  # LOAS = Margem Livre
                 elif "BENEFICIO" in descr_upper or "BENEFÍCIO" in descr_upper:
                     tipo_operacao = "Margem Livre (Novo)"
                     
+                # 🚨 APLICAR NORMALIZAÇÃO STORM
+                tipo_operacao = normalize_storm_operation(tipo_operacao)
                 logging.info(f"✅ QUERO MAIS tipo operação determinado: '{tipo_operacao}' (de '{descr_tabela}')")
             
             # Remover zeros à esquerda do código de tabela (004717 → 4717)
