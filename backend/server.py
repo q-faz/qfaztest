@@ -517,16 +517,16 @@ def fix_daycoval_date(date_str, field_name=""):
         logging.warning(f"DAYCOVAL {field_name}: Formato não reconhecido: '{date_clean}'")
         return ""
     
-    logging.info(f"DAYCOVAL {field_name}: PROCESSANDO DATA '{date_clean}' - LÓGICA MÚLTIPLOS FORMATOS!")
+    logging.info(f"🔧 DAYCOVAL {field_name}: PROCESSANDO DATA '{date_clean}' - CORRIGIR FORMATO!")
     
     try:
-        # 🔥 NOVO: Formato YYYY-MM-DD HH:MM:SS (como '2025-10-01 00:00:00')
+        # 🔥 PRIORIDADE 1: Formato YYYY-MM-DD HH:MM:SS (como '2025-10-01 00:00:00')
         iso_pattern = re.match(r'^(\d{4})-(\d{1,2})-(\d{1,2})(\s+\d{2}:\d{2}:\d{2})?$', date_clean)
         if iso_pattern:
             year, month, day = iso_pattern.groups()[:3]
-            # Converter para DD/MM/YYYY
+            # Converter para DD/MM/YYYY brasileiro
             fixed_date = f"{day.zfill(2)}/{month.zfill(2)}/{year}"
-            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (ISO convertido)")
+            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (ISO→BR convertido)")
             return fixed_date
         
         # Formato XX/YY/YYYY (lógica original)
@@ -646,6 +646,15 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
     🚨 FUNÇÃO UNIVERSAIS PARA EXTRAIR DADOS DE CONTATO
     Baseada no mapeamento real dos bancos em map_relat_atualizados.txt
     """
+    
+    # 🔍 LOG INICIAL: Mostrar primeiras colunas e valores para debug
+    if bank_type in ["DIGIO", "QUERO_MAIS", "PAN"]:
+        colunas_sample = list(row.keys())[:10]  # Primeiras 10 colunas
+        logging.error(f"🔍 {bank_type} EXTRACT_CONTACT_DATA INICIO:")
+        for i, col in enumerate(colunas_sample):
+            valor = str(row.get(col, 'N/A'))[:25]
+            logging.error(f"   [{i}] '{col}' = '{valor}'")
+        logging.error(f"   Total de colunas: {len(row.keys())}")
     
     # Campos específicos por banco baseados no mapeamento real
     if bank_type == "AVERBAI":
@@ -859,10 +868,18 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         
         # DEBUG EXTRA: Para bancos que deveriam ter dados, mostrar mais detalhes
         if bank_type in ["DIGIO", "QUERO_MAIS", "PAN"]:
-            logging.error(f"{bank_type} DEBUG - TODOS OS CAMPOS PROCURADOS:")
+            logging.error(f"{bank_type} DEBUG - CAMPOS PROCURADOS vs VALORES REAIS:")
             logging.error(f"   TELEFONE buscado em: {telefone_fields}")
+            for field in telefone_fields[:3]:  # Primeiros 3 campos
+                valor = str(row.get(field, 'N/A'))[:20]
+                logging.error(f"     {field} = '{valor}'")
+            
             logging.error(f"   ENDERECO buscado em: {endereco_fields}")
-            logging.error(f"   TODAS AS COLUNAS: {list(row.keys())}")
+            for field in endereco_fields[:3]:  # Primeiros 3 campos  
+                valor = str(row.get(field, 'N/A'))[:30]
+                logging.error(f"     {field} = '{valor}'")
+            
+            logging.error(f"   COLUNAS TOTAIS: {len(list(row.keys()))} | PRIMEIRAS 15: {list(row.keys())[:15]}")
     
     return {
         'TELEFONE': telefone,
