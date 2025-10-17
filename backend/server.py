@@ -481,7 +481,7 @@ def fix_daycoval_date(date_str, field_name=""):
     🚨 CORREÇÃO ESPECÍFICA DAYCOVAL: 
     Converte MM/DD/YYYY → DD/MM/YYYY (formato brasileiro)
     Exemplo: 10/02/2025 → 02/10/2025
-    ⚠️ DEPLOY CHECK: ESTA FUNÇÃO FOI ATUALIZADA EM 17/10/2025 11:30
+    ⚠️ LÓGICA CORRIGIDA: 17/10/2025 13:30 - FIX para datas já corretas
     """
     if not date_str or pd.isna(date_str) or str(date_str).strip() == "":
         return ""
@@ -490,32 +490,33 @@ def fix_daycoval_date(date_str, field_name=""):
     from datetime import datetime
     
     date_clean = str(date_str).strip()
-    logging.info(f"🔧 DAYCOVAL {field_name}: CORRIGINDO DATA '{date_clean}' - FUNCAO ATUALIZADA!")
+    logging.info(f"🔧 DAYCOVAL {field_name}: CORRIGINDO DATA '{date_clean}' - LOGICA CORRIGIDA!")
     
-    # Padrão MM/DD/YYYY → DD/MM/YYYY
+    # Padrão XX/YY/YYYY
     us_date_pattern = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', date_clean)
     if us_date_pattern:
-        month, day, year = us_date_pattern.groups()
+        first_num, second_num, year = us_date_pattern.groups()
         
-        # Verificar se faz sentido inverter (mês > 12 ou dia > 12)
-        month_int = int(month)
-        day_int = int(day)
+        first_int = int(first_num)
+        second_int = int(second_num)
         
-        # Se mês > 12, definitivamente está trocado
-        if month_int > 12:
-            fixed_date = f"{day}/{month}/{year}"  # troca para DD/MM/YYYY
-            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (mês > 12)")
-            return fixed_date
+        # 🚨 LÓGICA CORRIGIDA:
         
-        # Se dia > 12 e mês <= 12, provavelmente está correto (DD/MM/YYYY)
-        elif day_int > 12 and month_int <= 12:
-            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' mantido (já DD/MM/YYYY)")
+        # Se primeiro número > 12, então está no formato DD/MM (brasileiro) - MANTER
+        if first_int > 12:
+            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' mantido (já DD/MM/YYYY - primeiro > 12)")
             return date_clean
         
-        # Caso ambíguo (ambos <= 12): assumir que está no formato americano e inverter
-        elif month_int <= 12 and day_int <= 12:
-            fixed_date = f"{day}/{month}/{year}"
-            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (formato americano convertido)")
+        # Se segundo número > 12, então está no formato MM/DD (americano) - TROCAR
+        elif second_int > 12:
+            fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
+            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (MM/DD convertido - segundo > 12)")
+            return fixed_date
+        
+        # Caso ambíguo (ambos <= 12): assumir formato americano MM/DD e converter para DD/MM
+        elif first_int <= 12 and second_int <= 12:
+            fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
+            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (formato americano assumido)")
             return fixed_date
     
     # Se não corresponder ao padrão, retornar como está
