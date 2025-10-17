@@ -104,7 +104,7 @@ STORM_ORGANS_MAPPING = {
     # Órgãos SEM ACENTOS para evitar caracteres quebrados
     "INSS": "INSS",
     "FGTS": "FGTS", 
-    "SIAPE FEDERAL": "SIAPE FEDERAL",
+    "SIAPE FEDERAL": "FEDERAL",  # SIAPE FEDERAL → FEDERAL no relatório final
     "SIAPE CONSIG": "SIAPE CONSIG",
     "SIAPE BENEFICIO": "SIAPE BENEFICIO",
     "CREDITO DO TRABALHADOR": "CREDITO DO TRABALHADOR",
@@ -502,7 +502,7 @@ def fix_daycoval_date(date_str, field_name=""):
         
         # Se mês > 12, definitivamente está trocado
         if month_int > 12:
-            fixed_date = f"{month}/{day}/{year}"  # troca diretamente
+            fixed_date = f"{day}/{month}/{year}"  # troca para DD/MM/YYYY
             logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (mês > 12)")
             return fixed_date
         
