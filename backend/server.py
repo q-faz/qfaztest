@@ -739,19 +739,25 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
     def buscar_campo(field_list):
         # Primeiro: Busca exata
         for field in field_list:
-            valor = row.get(field, '')
-            if valor and str(valor).strip() not in ['nan', 'NaN', '', '0', '0.0']:
-                logging.info(f"✅ {bank_type} ENCONTROU EXATO {field} = {valor}")
-                return str(valor).strip()
+            if field in row:
+                valor = row[field]
+                # Verificação segura para pandas Series
+                if valor is not None and not pd.isna(valor):
+                    valor_str = str(valor).strip()
+                    if valor_str not in ['nan', 'NaN', '', '0', '0.0']:
+                        logging.info(f"✅ {bank_type} ENCONTROU EXATO {field} = {valor_str}")
+                        return valor_str
         
         # Segundo: Busca case-insensitive e partial match
         for field_pattern in field_list:
-            for col_name in row.keys():
+            for col_name in row.index:
                 if field_pattern.lower() in col_name.lower():
-                    valor = row.get(col_name, '')
-                    if valor and str(valor).strip() not in ['nan', 'NaN', '', '0', '0.0']:
-                        logging.info(f"✅ {bank_type} ENCONTROU PARCIAL '{field_pattern}' em '{col_name}' = {valor}")
-                        return str(valor).strip()
+                    valor = row[col_name]
+                    if valor is not None and not pd.isna(valor):
+                        valor_str = str(valor).strip()
+                        if valor_str not in ['nan', 'NaN', '', '0', '0.0']:
+                            logging.info(f"✅ {bank_type} ENCONTROU PARCIAL '{field_pattern}' em '{col_name}' = {valor_str}")
+                            return valor_str
         return ""
     
     # 📱 EXTRAIR DADOS USANDO NOMES EXATOS
