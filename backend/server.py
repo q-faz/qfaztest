@@ -478,10 +478,10 @@ def clean_special_characters(text):
 
 def fix_daycoval_date(date_str, field_name=""):
     """
-    🚨 CORREÇÃO ESPECÍFICA DAYCOVAL: 
-    Converte MM/DD/YYYY → DD/MM/YYYY (formato brasileiro)
-    Exemplo: 10/02/2025 → 02/10/2025
-    ⚠️ LÓGICA CORRIGIDA: 17/10/2025 13:30 - FIX para datas já corretas
+    CORRECAO ESPECIFICA DAYCOVAL: 
+    Converte MM/DD/YYYY -> DD/MM/YYYY (formato brasileiro)
+    Exemplo: 10/02/2025 -> 02/10/2025
+    LOGICA CORRIGIDA: 17/10/2025 13:30 - FIX para datas ja corretas
     """
     if not date_str or pd.isna(date_str) or str(date_str).strip() == "":
         return ""
@@ -490,9 +490,9 @@ def fix_daycoval_date(date_str, field_name=""):
     from datetime import datetime
     
     date_clean = str(date_str).strip()
-    logging.info(f"🔧 DAYCOVAL {field_name}: CORRIGINDO DATA '{date_clean}' - LOGICA CORRIGIDA!")
+    logging.info(f"DAYCOVAL {field_name}: CORRIGINDO DATA '{date_clean}' - LOGICA CORRIGIDA!")
     
-    # Padrão XX/YY/YYYY
+    # Padrao XX/YY/YYYY
     us_date_pattern = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', date_clean)
     if us_date_pattern:
         first_num, second_num, year = us_date_pattern.groups()
@@ -500,27 +500,27 @@ def fix_daycoval_date(date_str, field_name=""):
         first_int = int(first_num)
         second_int = int(second_num)
         
-        # 🚨 LÓGICA CORRIGIDA:
+        # LOGICA CORRIGIDA:
         
-        # Se primeiro número > 12, então está no formato DD/MM (brasileiro) - MANTER
+        # Se primeiro numero > 12, entao esta no formato DD/MM (brasileiro) - MANTER
         if first_int > 12:
-            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' mantido (já DD/MM/YYYY - primeiro > 12)")
+            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' mantido (ja DD/MM/YYYY - primeiro > 12)")
             return date_clean
         
-        # Se segundo número > 12, então está no formato MM/DD (americano) - TROCAR
+        # Se segundo numero > 12, entao esta no formato MM/DD (americano) - TROCAR
         elif second_int > 12:
             fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
-            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (MM/DD convertido - segundo > 12)")
+            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (MM/DD convertido - segundo > 12)")
             return fixed_date
         
-        # Caso ambíguo (ambos <= 12): assumir formato americano MM/DD e converter para DD/MM
+        # Caso ambiguo (ambos <= 12): assumir formato americano MM/DD e converter para DD/MM
         elif first_int <= 12 and second_int <= 12:
             fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
-            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (formato americano assumido)")
+            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (formato americano assumido)")
             return fixed_date
     
-    # Se não corresponder ao padrão, retornar como está
-    logging.warning(f"⚠️ DAYCOVAL {field_name}: Formato não reconhecido: '{date_clean}'")
+    # Se nao corresponder ao padrao, retornar como esta
+    logging.warning(f"DAYCOVAL {field_name}: Formato nao reconhecido: '{date_clean}'")
     return date_clean
 
 def normalize_storm_operation(operation_str):
@@ -742,12 +742,12 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         missing_data.append("BAI")
 
     if found_data:
-        logging.info(f"📞 {bank_type} contato encontrado: {' | '.join(found_data)}")
+        logging.info(f"{bank_type} contato encontrado: {' | '.join(found_data)}")
     
     if missing_data:
         # Log dos campos disponíveis para debug quando dados estão faltando
         available_columns = list(row.keys())[:10]  # Primeiras 10 colunas
-        logging.warning(f"❌ {bank_type} campos faltando: {', '.join(missing_data)} | Colunas disponíveis: {available_columns}")
+        logging.warning(f"{bank_type} campos faltando: {', '.join(missing_data)} | Colunas disponíveis: {available_columns}")
     
     return {
         'TELEFONE': telefone,
@@ -2722,7 +2722,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "VALOR_PARCELAS": valor_parcela_br,  # 💰 FORMATO BRASILEIRO
                 "CODIGO_TABELA": codigo_tabela_direto,  # 🎯 CÓDIGO DIRETO DO ARQUIVO!
                 "TAXA": taxa_formatada,  # 📊 TAXA ORGANIZADA CONFORME TABELA
-                "OBSERVACOES": str(row.get('Observações', row.get('Observacoes', row.get('Obs', '')))).strip()
+                "OBSERVACOES": ""  # AVERBAI não deve ter observações - somente VCTEX
             })
             
         elif bank_type == "DIGIO":
@@ -3012,7 +3012,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "VALOR_PARCELAS": vlr_parcela,
                 "CODIGO_TABELA": cod_convenio,  # ✅ DIGIO: Usar COD_CONVENIO direto (5076, 5077, 1720, etc)
                 "TAXA": "",  # Taxa deve vir do arquivo ou ser buscada depois
-                "OBSERVACOES": str(row.get('Unnamed: 11', row.get('Observações', ''))).strip()  # NOME_ATIVIDADE como observação
+                "OBSERVACOES": ""  # DIGIO não deve ter observações - somente VCTEX
             }
             
             # ✅ ADICIONAR DADOS DE CONTATO usando função universal (substituir lógica manual)
@@ -3068,7 +3068,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "VALOR_PARCELAS": "",  # PRATA não fornece valor da parcela
                 "CODIGO_TABELA": str(row.get('Tabela', '')).strip(),  # Nome da tabela do banco
                 "TAXA": "",  # Vazio para buscar no relat_orgaos.csv
-                "OBSERVACOES": str(row.get('Observações', row.get('Observacoes', row.get('Obs', '')))).strip()
+                "OBSERVACOES": ""  # PRATA não deve ter observações - somente VCTEX
             }
             
             # ✅ ADICIONAR DADOS DE CONTATO usando função universal
@@ -3540,7 +3540,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CODIGO_TABELA": str(row.get('CODIGO TABELA', '')).strip(),
                     "VALOR_PARCELAS": str(row.get('VALOR PARCELAS', '')).strip(),
                     "TAXA": str(row.get('TAXA', '')).strip(),
-                    "OBSERVACOES": f"Processado via CSV correto"
+                    "OBSERVACOES": ""  # DAYCOVAL não deve ter observações - somente VCTEX
                 }
                 
                 # ✅ ADICIONAR DADOS DE CONTATO usando função universal (substituir hardcoded)
@@ -3722,7 +3722,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CODIGO_TABELA": str(row.get('Unnamed: 38', '')).strip() if row.get('Unnamed: 38') else "",  # Código da tabela
                     "VALOR_PARCELAS": valor_parcela_formatted,  # ✅ Formatado brasileiro
                     "TAXA": taxa_formatted,  # ✅ Formatado brasileiro (X,XX%)
-                    "OBSERVACOES": f"Matrícula: {matricula_raw if matricula_raw and matricula_raw != 'nan' else ''} | Forma Liberação: {str(row.get('Unnamed: 32', '')).strip() if str(row.get('Unnamed: 32', '')).strip() != 'nan' else ''} | {str(row.get('Unnamed: 29', '')).strip() if str(row.get('Unnamed: 29', '')).strip() != 'nan' else ''}".replace(" |  | ", " | ").replace("Matrícula:  | ", "").replace(" |  |", " |").strip(" |")
+                    "OBSERVACOES": ""  # DAYCOVAL não deve ter observações - somente VCTEX
                 })
                 
                 logging.info(f"✅✅✅ DAYCOVAL normalized_row criado com sucesso para proposta: {proposta_final}")
@@ -4378,7 +4378,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CODIGO_TABELA": codigo_tabela_final,  # Código sem zeros à esquerda (4717)
                 "VALOR_PARCELAS": valor_parcela,
                 "TAXA": "0,00%",  # Taxa fixa para QUERO MAIS
-                "OBSERVACOES": descr_tabela  # Descrição da tabela como observação
+                "OBSERVACOES": ""  # QUERO MAIS não deve ter observações - somente VCTEX
             }
             
             # ✅ ADICIONAR DADOS DE CONTATO usando função universal (manter fallback manual se necessário)
