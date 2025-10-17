@@ -481,6 +481,7 @@ def fix_daycoval_date(date_str, field_name=""):
     🚨 CORREÇÃO ESPECÍFICA DAYCOVAL: 
     Converte MM/DD/YYYY → DD/MM/YYYY (formato brasileiro)
     Exemplo: 10/02/2025 → 02/10/2025
+    ⚠️ DEPLOY CHECK: ESTA FUNÇÃO FOI ATUALIZADA EM 17/10/2025 11:30
     """
     if not date_str or pd.isna(date_str) or str(date_str).strip() == "":
         return ""
@@ -489,7 +490,7 @@ def fix_daycoval_date(date_str, field_name=""):
     from datetime import datetime
     
     date_clean = str(date_str).strip()
-    logging.info(f"🔧 DAYCOVAL {field_name}: Corrigindo data '{date_clean}'")
+    logging.info(f"🔧 DAYCOVAL {field_name}: CORRIGINDO DATA '{date_clean}' - FUNCAO ATUALIZADA!")
     
     # Padrão MM/DD/YYYY → DD/MM/YYYY
     us_date_pattern = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', date_clean)
