@@ -777,6 +777,13 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         # Log dos campos disponíveis para debug quando dados estão faltando
         available_columns = list(row.keys())[:10]  # Primeiras 10 colunas
         logging.warning(f"{bank_type} campos faltando: {', '.join(missing_data)} | Colunas disponíveis: {available_columns}")
+        
+        # DEBUG EXTRA: Para bancos que deveriam ter dados, mostrar mais detalhes
+        if bank_type in ["DIGIO", "QUERO_MAIS", "PAN"]:
+            logging.error(f"{bank_type} DEBUG - TODOS OS CAMPOS PROCURADOS:")
+            logging.error(f"   TELEFONE buscado em: {telefone_fields}")
+            logging.error(f"   ENDERECO buscado em: {endereco_fields}")
+            logging.error(f"   TODAS AS COLUNAS: {list(row.keys())}")
     
     return {
         'TELEFONE': telefone,
@@ -3629,6 +3636,13 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             tipo_op = tipo_operacao_raw.upper()
             orgao_descricao = descricao_empregador_raw.upper()
             
+            # DEBUG COMPLETO: Mostrar TODAS as colunas disponíveis e seus valores
+            logging.error(f"DAYCOVAL DEBUG COMPLETO - Todas as colunas:")
+            all_columns = list(row.keys())
+            for i, col in enumerate(all_columns[:20]):  # Primeiras 20 colunas
+                valor = str(row.get(col, 'N/A'))[:50]  # Limitar valor a 50 caracteres
+                logging.error(f"   [{i:2d}] {col}: '{valor}'")
+            
             # Logs detalhados para debug
             logging.info(f"DAYCOVAL extraído:")
             logging.info(f"   Proposta: {proposta_raw}")
@@ -3638,6 +3652,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.info(f"   Situacao: {situacao_raw}")
             logging.info(f"   Orgao: {descricao_empregador_raw}")
             logging.info(f"   Valor Operacao: {valor_operacao_raw}")
+            logging.info(f"   Data Cadastro Raw: '{data_cadastro_raw}' (Unnamed: 5)")
+            logging.info(f"   Data Pagamento Raw: '{data_liberacao_raw}' (Unnamed: 36)")
             logging.info(f"   Data Cadastro RAW: {data_cadastro_raw}")
             logging.info(f"   Data Liberacao RAW: {data_liberacao_raw}")
             
