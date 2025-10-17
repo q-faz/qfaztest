@@ -559,33 +559,45 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         'TELEFONE', 'TEL_CLIENTE', 'CEL_CLIENTE', 'Telefone', 'Tel', 'Fone', 'Celular', 
         'CelularCliente', 'Telefone Cliente', 'DddCelular', 'NumeroCelular', 'Telefone Fixo',
         'Telefone Proposta', 'Fone Cel.', 'Fone Res.', 'Telefone do Cliente', 'Tel Cliente',
-        'Unnamed: 20', 'Unnamed: 29', 'Unnamed: 31', 'Unnamed: 42', 'Unnamed: 43'
+        'Unnamed: 20', 'Unnamed: 29', 'Unnamed: 31', 'Unnamed: 42', 'Unnamed: 43',
+        # Campos específicos dos bancos
+        'Tel.', 'Fone', 'Cell', 'Phone', 'Contact', 'Contato'
     ]
     
     endereco_fields = [
         'ENDERECO', 'ENDEREÇO', 'END_CLIENTE', 'Endereco', 'Endereço', 'End', 
         'Endereço do Cliente', 'Nº Endereço', 'NUM_END_CLIENTE', 'Endereco Cliente',
         'Numero Endereco', 'Logradouro', 'Rua', 'Avenida', 'Praça',
-        'Unnamed: 21', 'Unnamed: 26', 'Unnamed: 34', 'Unnamed: 37'
+        'Unnamed: 21', 'Unnamed: 26', 'Unnamed: 34', 'Unnamed: 37',
+        # Campos específicos dos bancos  
+        'Address', 'Addr', 'Street', 'Logr', 'End Cliente'
     ]
     
     cep_fields = [
         'CEP', 'CEP_CLIENTE', 'Cep', 'CEP Cliente', 'Codigo Postal', 'Postal',
-        'Unnamed: 12', 'Unnamed: 42'
+        'Unnamed: 12', 'Unnamed: 42',
+        # Campos específicos dos bancos
+        'PostalCode', 'ZIP', 'Postal Code'
     ]
     
     cidade_fields = [
-        'CIDADE', 'Cidade', 'CIDADE_CLIENTE', 'Município', 'Municipio'
+        'CIDADE', 'Cidade', 'CIDADE_CLIENTE', 'Município', 'Municipio',
+        # Campos específicos dos bancos
+        'City', 'Localidade', 'Municipio Cliente'
     ]
     
     uf_fields = [
         'UF', 'UF_CLIENTE', 'Estado', 'ESTADO', 'Estado Cliente', 'Uf',
-        'Unnamed: 27', 'Unnamed: 41'
+        'Unnamed: 27', 'Unnamed: 41',
+        # Campos específicos dos bancos
+        'State', 'Est', 'UF Cliente'
     ]
     
     bairro_fields = [
         'BAIRRO', 'Bairro', 'BAIRRO_CLIENTE', 'Bairro Cliente', 'District',
-        'Unnamed: 2', 'Unnamed: 40'
+        'Unnamed: 2', 'Unnamed: 40',
+        # Campos específicos dos bancos
+        'Neighborhood', 'Distrito', 'Bairro Cliente'
     ]
     
     # Função helper para buscar em múltiplos campos
@@ -618,14 +630,43 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
     
     # Log para debug se encontrou dados
     found_data = []
-    if telefone: found_data.append(f"TEL:{telefone[:10]}")
-    if endereco_completo: found_data.append(f"END:{endereco_completo[:15]}")
-    if cep: found_data.append(f"CEP:{cep}")
-    if cidade: found_data.append(f"CID:{cidade}")
-    if uf: found_data.append(f"UF:{uf}")
+    missing_data = []
     
+    if telefone: 
+        found_data.append(f"TEL:{telefone[:10]}")
+    else:
+        missing_data.append("TEL")
+    
+    if endereco_completo: 
+        found_data.append(f"END:{endereco_completo[:15]}")
+    else:
+        missing_data.append("END")
+        
+    if cep: 
+        found_data.append(f"CEP:{cep}")
+    else:
+        missing_data.append("CEP")
+        
+    if cidade: 
+        found_data.append(f"CID:{cidade}")
+        
+    if uf: 
+        found_data.append(f"UF:{uf}")
+    else:
+        missing_data.append("UF")
+        
+    if bairro:
+        found_data.append(f"BAI:{bairro}")
+    else:
+        missing_data.append("BAI")
+
     if found_data:
         logging.info(f"📞 {bank_type} contato encontrado: {' | '.join(found_data)}")
+    
+    if missing_data:
+        # Log dos campos disponíveis para debug quando dados estão faltando
+        available_columns = list(row.keys())[:10]  # Primeiras 10 colunas
+        logging.warning(f"❌ {bank_type} campos faltando: {', '.join(missing_data)} | Colunas disponíveis: {available_columns}")
     
     return {
         'TELEFONE': telefone,
