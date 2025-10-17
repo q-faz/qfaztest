@@ -5369,19 +5369,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             logging.warning(f"⚠️ PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: CODIGO_TABELA vazio, definido como SEM_CODIGO")
         
         # 🔍 PRESERVAR DATAS ORIGINAIS - não deixar o mapeamento alterar
+        # EXCETO para DAYCOVAL que já foram corrigidas pelo fix_daycoval_date()
         data_cadastro_original = normalized_row.get('DATA_CADASTRO', '')
         data_pagamento_original = normalized_row.get('DATA_PAGAMENTO', '')
+        banco_atual = normalized_row.get('BANCO', '').upper()
         
         # Log DEPOIS do mapeamento
         logging.info(f"📗 DEPOIS do mapeamento - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: ORGAO={normalized_row.get('ORGAO', '')}, CODIGO_TABELA={normalized_row.get('CODIGO_TABELA', '')}, TAXA={normalized_row.get('TAXA', '')}, OPERACAO={normalized_row.get('TIPO_OPERACAO', '')}")
         
         # ✅ GARANTIR que as datas originais sejam mantidas
-        if data_cadastro_original:
+        # ⚠️  EXCETO para DAYCOVAL que precisa manter as datas corrigidas pelo fix_daycoval_date()
+        if data_cadastro_original and 'DAYCOVAL' not in banco_atual:
             normalized_row['DATA_CADASTRO'] = data_cadastro_original
-        if data_pagamento_original: 
+        if data_pagamento_original and 'DAYCOVAL' not in banco_atual: 
             normalized_row['DATA_PAGAMENTO'] = data_pagamento_original
             
-        logging.info(f"📅 DATAS FINAIS PRESERVADAS - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: CADASTRO='{normalized_row.get('DATA_CADASTRO')}' | PAGAMENTO='{normalized_row.get('DATA_PAGAMENTO')}'")
+        if 'DAYCOVAL' in banco_atual:
+            logging.info(f"🔧 DAYCOVAL - MANTENDO datas corrigidas pelo fix_daycoval_date(): CADASTRO='{normalized_row.get('DATA_CADASTRO')}' | PAGAMENTO='{normalized_row.get('DATA_PAGAMENTO')}'")
+        else:
+            logging.info(f"📅 DATAS FINAIS PRESERVADAS - PROPOSTA {normalized_row.get('PROPOSTA', 'N/A')}: CADASTRO='{normalized_row.get('DATA_CADASTRO')}' | PAGAMENTO='{normalized_row.get('DATA_PAGAMENTO')}'")
 
         
         # ✅ VALIDAÇÃO RIGOROSA: Filtrar cabeçalhos e linhas vazias
