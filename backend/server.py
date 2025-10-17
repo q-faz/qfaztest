@@ -476,6 +476,26 @@ def clean_special_characters(text):
     
     return result
 
+def clean_contact_field(value, field_name=""):
+    """
+    Limpa e valida campos de contato, retornando string vazia para valores inválidos
+    """
+    if not value:
+        return ""
+    
+    # Converter para string e limpar
+    clean_value = str(value).strip()
+    
+    # Lista de valores inválidos
+    invalid_values = ['nan', 'none', 'null', '', 'n/a', 'na', 'não informado', 'nao informado']
+    
+    # Verificar se é valor inválido
+    if clean_value.lower() in invalid_values:
+        return ""
+    
+    # Se passou na validação, retornar valor limpo
+    return clean_value
+
 def fix_daycoval_date(date_str, field_name=""):
     """
     CORRECAO ESPECIFICA DAYCOVAL: 
@@ -684,9 +704,10 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
     # Função helper para buscar em múltiplos campos
     def find_value(fields_list):
         for field in fields_list:
-            value = str(row.get(field, '')).strip()
-            if value and value.lower() not in ['nan', 'none', 'null', '']:
-                return value
+            raw_value = row.get(field, '')
+            cleaned_value = clean_contact_field(raw_value, field)
+            if cleaned_value:  # Se não está vazio após limpeza
+                return cleaned_value
         return ""
     
     # Extrair telefone (priorizar celular)
@@ -3018,11 +3039,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # ✅ ADICIONAR DADOS DE CONTATO usando função universal (substituir lógica manual)
             contact_data = extract_contact_data(row, "DIGIO")
             normalized_row.update({
-                "TELEFONE": contact_data["TELEFONE"] if contact_data["TELEFONE"] else telefone,
-                "ENDERECO": contact_data["ENDERECO"] if contact_data["ENDERECO"] else endereco_completo.strip(", "),
-                "BAIRRO": contact_data["BAIRRO"] if contact_data["BAIRRO"] else bairro,
-                "CEP": contact_data["CEP"] if contact_data["CEP"] else cep,
-                "UF": contact_data["UF"] if contact_data["UF"] else uf
+                "TELEFONE": contact_data["TELEFONE"] if contact_data["TELEFONE"] else clean_contact_field(telefone, "TELEFONE"),
+                "ENDERECO": contact_data["ENDERECO"] if contact_data["ENDERECO"] else clean_contact_field(endereco_completo.strip(", "), "ENDERECO"),
+                "BAIRRO": contact_data["BAIRRO"] if contact_data["BAIRRO"] else clean_contact_field(bairro, "BAIRRO"),
+                "CEP": contact_data["CEP"] if contact_data["CEP"] else clean_contact_field(cep, "CEP"),
+                "UF": contact_data["UF"] if contact_data["UF"] else clean_contact_field(uf, "UF")
             })
             
             # ✅ DIGIO: NÃO aplicar mapeamento! 
@@ -3532,10 +3553,10 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "CPF": str(row.get('CPF', '')).strip(),
                     "NOME": str(row.get('NOME', '')).strip().upper(),
                     "DATA_NASCIMENTO": str(row.get('DATA DE NASCIMENTO', '')).strip(),
-                    "TELEFONE": str(row.get('TELEFONE', '')).strip(),
-                    "ENDERECO": str(row.get('ENDERECO', row.get('ENDEREÇO', ''))).strip(),
-                    "BAIRRO": str(row.get('BAIRRO', '')).strip(),
-                    "CEP": str(row.get('CEP', '')).strip(),
+                    "TELEFONE": "",  # DAYCOVAL não possui campos de contato
+                    "ENDERECO": "",  # DAYCOVAL não possui campos de contato
+                    "BAIRRO": "",   # DAYCOVAL não possui campos de contato
+                    "CEP": "",      # DAYCOVAL não possui campos de contato
                     "UF": str(row.get('UF', '')).strip(),
                     "CODIGO_TABELA": str(row.get('CODIGO TABELA', '')).strip(),
                     "VALOR_PARCELAS": str(row.get('VALOR PARCELAS', '')).strip(),
@@ -3556,10 +3577,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"✅ DAYCOVAL CSV: {normalized_row['PROPOSTA']} | {normalized_row['NOME']} | {normalized_row['SITUACAO']}")
                 
             else:
-                # ✅ FORMATO ANTIGO - Não processar por enquanto
-                logging.info(f"⚠️ DAYCOVAL linha {idx}: FORMATO ANTIGO - não processado")  
-                normalized_row = None
-                # 🔧 FORMATO ANTIGO COM "Unnamed:" - Manter processamento existente
+                # FORMATO ANTIGO COM "Unnamed:" - Processamento existente
                 # Estrutura DAYCOVAL:
                 # Unnamed: 0 = NR.PROP., Unnamed: 1 = Tp. Operação, Unnamed: 2 = CLIENTE, Unnamed: 3 = CPF/CNPJ
                 # Unnamed: 4 = MATRÍCULA, Unnamed: 5 = DT.CAD., Unnamed: 6 = DT.BASE
@@ -3568,12 +3586,12 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 # Unnamed: 27 = Situação_Atual_da_Proposta, Unnamed: 36 = Data da liberação
                 
                 logging.info(f"=" * 80)
-                logging.info(f"🏦 DAYCOVAL linha {idx}: FORMATO ANTIGO DETECTADO")
+                logging.info(f"DAYCOVAL linha {idx}: FORMATO ANTIGO DETECTADO")
                 logging.info(f"   Colunas disponíveis: {list(row.keys())[:10]}")
                 logging.info(f"=" * 80)
                 
                 # 🔍 Debug: Verificar estrutura completa dos valores importantes
-                logging.error(f"🔍 DAYCOVAL DEBUG - Valores importantes:")
+                logging.error(f"DAYCOVAL DEBUG - Valores importantes:")
                 campos_importantes = [10, 11, 12, 13, 16, 17, 18, 26, 27, 36, 38]
                 for i in campos_importantes:
                     col_name = f'Unnamed: {i}'
@@ -4384,11 +4402,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # ✅ ADICIONAR DADOS DE CONTATO usando função universal (manter fallback manual se necessário)
             contact_data = extract_contact_data(row, "QUERO_MAIS")
             normalized_row.update({
-                "TELEFONE": contact_data["TELEFONE"] if contact_data["TELEFONE"] else telefone_final,
-                "ENDERECO": contact_data["ENDERECO"] if contact_data["ENDERECO"] else endereco_completo,
-                "BAIRRO": contact_data["BAIRRO"] if contact_data["BAIRRO"] else bairro_cliente,
-                "CEP": contact_data["CEP"] if contact_data["CEP"] else cep_cliente,
-                "UF": contact_data["UF"] if contact_data["UF"] else uf_cliente
+                "TELEFONE": contact_data["TELEFONE"] if contact_data["TELEFONE"] else clean_contact_field(telefone_final, "TELEFONE"),
+                "ENDERECO": contact_data["ENDERECO"] if contact_data["ENDERECO"] else clean_contact_field(endereco_completo, "ENDERECO"),
+                "BAIRRO": contact_data["BAIRRO"] if contact_data["BAIRRO"] else clean_contact_field(bairro_cliente, "BAIRRO"),
+                "CEP": contact_data["CEP"] if contact_data["CEP"] else clean_contact_field(cep_cliente, "CEP"),
+                "UF": contact_data["UF"] if contact_data["UF"] else clean_contact_field(uf_cliente, "UF")
             })
             
             # Log para debug dos valores mapeados
@@ -4430,11 +4448,11 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "CPF": str(row.get('CPF do Cliente', '')).strip(),
                 "NOME": str(row.get('Nome do Cliente', '')).strip(),
                 "DATA_NASCIMENTO": str(row.get('Data de Nascimento', '')).strip(),
-                "TELEFONE": telefone_final_pan.strip() if telefone_final_pan else "",
-                "ENDERECO": endereco_completo_pan.strip() if endereco_completo_pan else "",
-                "BAIRRO": cidade_pan.strip() if cidade_pan else "",  # PAN usa Cidade como Bairro
-                "CEP": cep_pan.strip() if cep_pan else "",
-                "UF": uf_pan.strip() if uf_pan else "",
+                "TELEFONE": clean_contact_field(telefone_final_pan, "TELEFONE"),
+                "ENDERECO": clean_contact_field(endereco_completo_pan, "ENDERECO"),
+                "BAIRRO": clean_contact_field(cidade_pan, "BAIRRO"),  # PAN usa Cidade como Bairro
+                "CEP": clean_contact_field(cep_pan, "CEP"),
+                "UF": clean_contact_field(uf_pan, "UF"),
                 "CODIGO_TABELA": str(row.get('Nome do Convênio', row.get('Código do Convênio', ''))).strip(),
                 "VALOR_PARCELAS": str(row.get('Valor da Parcela', '')).strip(),
                 "TAXA": "",
