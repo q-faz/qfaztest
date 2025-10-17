@@ -552,53 +552,132 @@ def normalize_storm_organ(organ_str):
     return STORM_ORGANS_MAPPING.get(organ_clean.upper(), organ_clean)
 
 def extract_contact_data(row, bank_type: str = "") -> dict:
-    """Extrai dados de contato de forma universal tentando múltiplos campos possíveis"""
+    """
+    🚨 FUNÇÃO UNIVERSAIS PARA EXTRAIR DADOS DE CONTATO
+    Baseada no mapeamento real dos bancos em map_relat_atualizados.txt
+    """
     
-    # Lista de possíveis nomes para cada campo
-    telefone_fields = [
-        'TELEFONE', 'TEL_CLIENTE', 'CEL_CLIENTE', 'Telefone', 'Tel', 'Fone', 'Celular', 
-        'CelularCliente', 'Telefone Cliente', 'DddCelular', 'NumeroCelular', 'Telefone Fixo',
-        'Telefone Proposta', 'Fone Cel.', 'Fone Res.', 'Telefone do Cliente', 'Tel Cliente',
-        'Unnamed: 20', 'Unnamed: 29', 'Unnamed: 31', 'Unnamed: 42', 'Unnamed: 43',
-        # Campos específicos dos bancos
-        'Tel.', 'Fone', 'Cell', 'Phone', 'Contact', 'Contato'
-    ]
+    # Campos específicos por banco baseados no mapeamento real
+    if bank_type == "AVERBAI":
+        telefone_fields = ['CelularCliente']
+        endereco_fields = []  # AVERBAI não tem campos de endereço
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
     
-    endereco_fields = [
-        'ENDERECO', 'ENDEREÇO', 'END_CLIENTE', 'Endereco', 'Endereço', 'End', 
-        'Endereço do Cliente', 'Nº Endereço', 'NUM_END_CLIENTE', 'Endereco Cliente',
-        'Numero Endereco', 'Logradouro', 'Rua', 'Avenida', 'Praça',
-        'Unnamed: 21', 'Unnamed: 26', 'Unnamed: 34', 'Unnamed: 37',
-        # Campos específicos dos bancos  
-        'Address', 'Addr', 'Street', 'Logr', 'End Cliente'
-    ]
+    elif bank_type == "DIGIO":
+        telefone_fields = ['TEL_CLIENTE', 'CEL_CLIENTE', 'Unnamed: 42', 'Unnamed: 43']
+        endereco_fields = ['END_CLIENTE', 'Unnamed: 35']
+        cep_fields = ['CEP_CLIENTE', 'Unnamed: 41']
+        cidade_fields = ['CIDADE', 'Unnamed: 39']
+        uf_fields = ['UF_CLIENTE', 'Unnamed: 40']
+        bairro_fields = ['BAIRRO', 'Unnamed: 38']
     
-    cep_fields = [
-        'CEP', 'CEP_CLIENTE', 'Cep', 'CEP Cliente', 'Codigo Postal', 'Postal',
-        'Unnamed: 12', 'Unnamed: 42',
-        # Campos específicos dos bancos
-        'PostalCode', 'ZIP', 'Postal Code'
-    ]
+    elif bank_type == "CREFAZ":
+        telefone_fields = ['Telefone', 'Telefone Fixo']
+        endereco_fields = []  # CREFAZ não tem endereço completo
+        cep_fields = []
+        cidade_fields = ['Cidade']
+        uf_fields = ['UF']
+        bairro_fields = []
     
-    cidade_fields = [
-        'CIDADE', 'Cidade', 'CIDADE_CLIENTE', 'Município', 'Municipio',
-        # Campos específicos dos bancos
-        'City', 'Localidade', 'Municipio Cliente'
-    ]
+    elif bank_type == "SANTANDER":
+        telefone_fields = ['TELEFONE']  # Campo existe mas vazio no mapeamento
+        endereco_fields = []
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
     
-    uf_fields = [
-        'UF', 'UF_CLIENTE', 'Estado', 'ESTADO', 'Estado Cliente', 'Uf',
-        'Unnamed: 27', 'Unnamed: 41',
-        # Campos específicos dos bancos
-        'State', 'Est', 'UF Cliente'
-    ]
+    elif bank_type == "QUERO_MAIS":
+        telefone_fields = ['Fone Cel.', 'Fone Res.', 'Unnamed: 29', 'Unnamed: 31']
+        endereco_fields = ['Endereco Cliente', 'Unnamed: 26']
+        cep_fields = ['Cep', 'Unnamed: 12']
+        cidade_fields = ['Cidade', 'Unnamed: 13']
+        uf_fields = ['Estado', 'Unnamed: 27']
+        bairro_fields = ['Bairro', 'Unnamed: 2']
     
-    bairro_fields = [
-        'BAIRRO', 'Bairro', 'BAIRRO_CLIENTE', 'Bairro Cliente', 'District',
-        'Unnamed: 2', 'Unnamed: 40',
-        # Campos específicos dos bancos
-        'Neighborhood', 'Distrito', 'Bairro Cliente'
-    ]
+    elif bank_type == "DAYCOVAL":
+        telefone_fields = []  # DAYCOVAL não tem campos de telefone
+        endereco_fields = []  # DAYCOVAL não tem campos de endereço
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
+    
+    elif bank_type == "VCTEX":
+        telefone_fields = ['Telefone Cliente']
+        endereco_fields = []  # VCTEX não tem campos de endereço detalhados
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
+    
+    elif bank_type == "PAN":
+        telefone_fields = ['Telefone', 'Celular']
+        endereco_fields = ['Endereço do Cliente']
+        cep_fields = ['CEP']
+        cidade_fields = ['Cidade']
+        uf_fields = ['UF']
+        bairro_fields = ['Bairro']
+    
+    elif bank_type == "FACTA92":
+        telefone_fields = []  # FACTA92 não tem campos de telefone
+        endereco_fields = []  # FACTA92 não tem campos de endereço
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = ['ESTADO']  # FACTA92 tem só ESTADO
+        bairro_fields = []
+    
+    elif bank_type == "BRB":
+        telefone_fields = []  # BRB não tem campos de telefone no mapeamento
+        endereco_fields = []  # BRB não tem campos de endereço
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
+    
+    else:
+        # Campos genéricos para bancos não mapeados (fallback)
+        telefone_fields = [
+            'TELEFONE', 'TEL_CLIENTE', 'CEL_CLIENTE', 'Telefone', 'Tel', 'Fone', 'Celular', 
+            'CelularCliente', 'Telefone Cliente', 'DddCelular', 'NumeroCelular', 'Telefone Fixo',
+            'Telefone Proposta', 'Fone Cel.', 'Fone Res.', 'Telefone do Cliente', 'Tel Cliente',
+            'Unnamed: 20', 'Unnamed: 29', 'Unnamed: 31', 'Unnamed: 42', 'Unnamed: 43',
+            'Tel.', 'Fone', 'Cell', 'Phone', 'Contact', 'Contato'
+        ]
+        
+        endereco_fields = [
+            'ENDERECO', 'ENDEREÇO', 'END_CLIENTE', 'Endereco', 'Endereço', 'End', 
+            'Endereço do Cliente', 'Nº Endereço', 'NUM_END_CLIENTE', 'Endereco Cliente',
+            'Numero Endereco', 'Logradouro', 'Rua', 'Avenida', 'Praça',
+            'Unnamed: 21', 'Unnamed: 26', 'Unnamed: 34', 'Unnamed: 37',
+            'Address', 'Addr', 'Street', 'Logr', 'End Cliente'
+        ]
+        
+        cep_fields = [
+            'CEP', 'CEP_CLIENTE', 'Cep', 'CEP Cliente', 'Codigo Postal', 'Postal',
+            'Unnamed: 12', 'Unnamed: 42',
+            'PostalCode', 'ZIP', 'Postal Code'
+        ]
+        
+        cidade_fields = [
+            'CIDADE', 'Cidade', 'CIDADE_CLIENTE', 'Município', 'Municipio',
+            'City', 'Localidade', 'Municipio Cliente'
+        ]
+        
+        uf_fields = [
+            'UF', 'UF_CLIENTE', 'Estado', 'ESTADO', 'Estado Cliente', 'Uf',
+            'Unnamed: 27', 'Unnamed: 41',
+            'State', 'Est', 'UF Cliente'
+        ]
+        
+        bairro_fields = [
+            'BAIRRO', 'Bairro', 'BAIRRO_CLIENTE', 'Bairro Cliente', 'District',
+            'Unnamed: 2', 'Unnamed: 40',
+            'Neighborhood', 'Distrito', 'Bairro Cliente'
+        ]
     
     # Função helper para buscar em múltiplos campos
     def find_value(fields_list):
