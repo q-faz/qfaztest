@@ -646,11 +646,18 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         bairro_fields = []
     
     elif bank_type == "DIGIO":
+        # ✅ DIGIO: Mapeamento correto baseado no arquivo real
+        # TEL_CLIENTE = Unnamed: 42, CEL_CLIENTE = Unnamed: 43
         telefone_fields = ['TEL_CLIENTE', 'CEL_CLIENTE', 'Unnamed: 42', 'Unnamed: 43']
+        # END_CLIENTE = Unnamed: 35
         endereco_fields = ['END_CLIENTE', 'Unnamed: 35']
+        # CEP_CLIENTE = Unnamed: 41
         cep_fields = ['CEP_CLIENTE', 'Unnamed: 41']
+        # CIDADE = Unnamed: 39
         cidade_fields = ['CIDADE', 'Unnamed: 39']
+        # UF_CLIENTE = Unnamed: 40
         uf_fields = ['UF_CLIENTE', 'Unnamed: 40']
+        # BAIRRO = Unnamed: 38
         bairro_fields = ['BAIRRO', 'Unnamed: 38']
     
     elif bank_type == "CREFAZ":
@@ -662,20 +669,22 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         bairro_fields = []
     
     elif bank_type == "SANTANDER":
-        telefone_fields = ['TELEFONE']  # Campo existe mas vazio no mapeamento
-        endereco_fields = []
+        # ❌ SANTANDER: Campo TELEFONE existe mas está sempre vazio
+        telefone_fields = []  # Campo TELEFONE vazio (0 valores únicos)
+        endereco_fields = []  # Não tem campos de endereço
         cep_fields = []
         cidade_fields = []
         uf_fields = []
         bairro_fields = []
     
     elif bank_type == "QUERO_MAIS":
-        telefone_fields = ['Fone Cel.', 'Fone Res.', 'Unnamed: 29', 'Unnamed: 31']
-        endereco_fields = ['Endereco Cliente', 'Unnamed: 26']
-        cep_fields = ['Cep', 'Unnamed: 12']
-        cidade_fields = ['Cidade', 'Unnamed: 13']
-        uf_fields = ['Estado', 'Unnamed: 27']
-        bairro_fields = ['Bairro', 'Unnamed: 2']
+        # ✅ QUERO MAIS: Mapeamento correto dos campos disponíveis
+        telefone_fields = ['Fone Cel.', 'Unnamed: 29']  # Fone Cel. = coluna 29
+        endereco_fields = ['Endereco Cliente', 'Unnamed: 26']  # Endereco Cliente = coluna 26
+        cep_fields = ['Cep', 'Unnamed: 12']  # Cep = coluna 12
+        cidade_fields = ['Cidade', 'Unnamed: 13']  # Cidade = coluna 13
+        uf_fields = ['Estado', 'Unnamed: 27']  # Estado = coluna 27
+        bairro_fields = ['Bairro', 'Unnamed: 2']  # Bairro = coluna 2
     
     elif bank_type == "DAYCOVAL":
         # DAYCOVAL: Tentar diferentes colunas baseado na estrutura de arquivo
@@ -695,6 +704,7 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         bairro_fields = []
     
     elif bank_type == "PAN":
+        # ✅ PAN: Dados completos disponíveis
         telefone_fields = ['Telefone', 'Celular']
         endereco_fields = ['Endereço do Cliente']
         cep_fields = ['CEP']
