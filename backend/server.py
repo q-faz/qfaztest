@@ -647,31 +647,34 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
     Tenta múltiplas estratégias para encontrar telefone, endereço, etc.
     """
     
-    # 🎯 MAPEAMENTO EXATO POR BANCO (nomes reais das colunas)
+    # 📋 MAPEAMENTO BASEADO NA ANÁLISE REAL DOS ARQUIVOS ORIGINAIS
     if bank_type == "DIGIO":
-        # ✅ DIGIO: END_CLIENTE, NUM_END_CLIENTE, COMPLEMENTO, BAIRRO, CIDADE, UF_CLIENTE, CEL_CLIENTE
+        # ✅ DIGIO (arquivoWFSIC.csv): Headers reais na linha 22
+        # Campos confirmados pela análise: CEL_CLIENTE, END_CLIENTE, BAIRRO, CIDADE, UF_CLIENTE, CEP_CLIENTE
         telefone_fields = ['CEL_CLIENTE']
-        endereco_fields = ['END_CLIENTE']
+        endereco_fields = ['END_CLIENTE'] 
         num_endereco_fields = ['NUM_END_CLIENTE']
-        complemento_fields = ['COMPLEMENTO']
+        complemento_fields = ['COMPLEMENTO']  
         bairro_fields = ['BAIRRO']
         cidade_fields = ['CIDADE']
         uf_fields = ['UF_CLIENTE']
-        cep_fields = []  # DIGIO não tem CEP específico
+        cep_fields = ['CEP_CLIENTE']
     
     elif bank_type == "QUERO_MAIS":
-        # ✅ QUERO_MAIS: Bairro, Cep, Cidade, Endereco Cliente, Estado, Fone Cel.
-        telefone_fields = ['Fone Cel.']
-        endereco_fields = ['Endereco Cliente']
+        # ❌ QUERO_MAIS (Propostas Cadastradas Detalhado.csv): Headers na linha 9
+        # ANÁLISE REVELOU: Não tem campos de contato nos primeiros 20 headers
+        telefone_fields = []  
+        endereco_fields = []
         num_endereco_fields = []
         complemento_fields = []
-        bairro_fields = ['Bairro']
-        cidade_fields = ['Cidade']
-        uf_fields = ['Estado']
-        cep_fields = ['Cep']
+        bairro_fields = []
+        cidade_fields = []
+        uf_fields = []
+        cep_fields = []
     
     elif bank_type == "AVERBAI":
-        # ✅ AVERBAI: APENAS CelularCliente
+        # ✅ AVERBAI (Relatório.csv): Headers corretos na primeira linha
+        # Campo confirmado: CelularCliente (coluna 9)
         telefone_fields = ['CelularCliente']
         endereco_fields = []
         num_endereco_fields = []
@@ -681,8 +684,20 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         uf_fields = []
         cep_fields = []
     
+    elif bank_type == "C6":
+        # ✅ C6 (Repositório de Dados - Operacional.csv): Headers corretos na primeira linha  
+        # Campos confirmados: Telefone Proposta, Endereço Cliente, Bairro Cliente, Cidade Cliente, UF Cliente
+        telefone_fields = ['Telefone Proposta']
+        endereco_fields = ['Endereço Cliente']
+        num_endereco_fields = []
+        complemento_fields = ['Complemento Endereço Cliente']
+        bairro_fields = ['Bairro Cliente']
+        cidade_fields = ['Cidade Cliente'] 
+        uf_fields = ['UF Cliente']
+        cep_fields = []  # Não encontrado na análise
+    
     elif bank_type == "PRATA":
-        # ✅ PRATA: APENAS Telefone do Cliente
+        # ⚠️ PRATA: Mapeamento original (não analisado nos arquivos)
         telefone_fields = ['Telefone do Cliente']
         endereco_fields = []
         num_endereco_fields = []
@@ -693,7 +708,7 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         cep_fields = []
     
     elif bank_type == "CREFAZ":
-        # ✅ CREFAZ: Cidade, UF, Telefone
+        # ⚠️ CREFAZ: Mapeamento original (não analisado nos arquivos)
         telefone_fields = ['Telefone']
         endereco_fields = []
         num_endereco_fields = []
@@ -714,11 +729,18 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         uf_fields = ['uf', 'estado', 'uf_cliente']
         cep_fields = ['cep']
     
+    # 🔍 DEBUG: Mostrar colunas disponíveis para bancos principais
+    if bank_type in ["DIGIO", "QUERO_MAIS", "C6", "AVERBAI"] and row:
+        available_columns = list(row.keys())
+        logging.info(f"🔍 {bank_type} DEBUG - Colunas disponíveis: {available_columns[:20]}")
+        logging.info(f"🎯 {bank_type} DEBUG - Procurando telefone em: {telefone_fields}")
+    
     # 🔍 FUNÇÃO HELPER: Buscar valor em lista de campos
     def buscar_campo(field_list):
         for field in field_list:
             valor = row.get(field, '')
             if valor and str(valor).strip() not in ['nan', 'NaN', '', '0', '0.0']:
+                logging.info(f"✅ {bank_type} ENCONTROU {field} = {valor}")
                 return str(valor).strip()
         return ""
     
