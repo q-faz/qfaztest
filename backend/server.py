@@ -499,9 +499,9 @@ def clean_contact_field(value, field_name=""):
 def fix_daycoval_date(date_str, field_name=""):
     """
     CORRECAO ESPECIFICA DAYCOVAL: 
-    Converte MM/DD/YYYY -> DD/MM/YYYY (formato brasileiro)
-    Exemplo: 10/02/2025 -> 02/10/2025
-    LOGICA CORRIGIDA: 17/10/2025 13:30 - FIX para datas ja corretas
+    Converte múltiplos formatos para DD/MM/YYYY (formato brasileiro)
+    Aceita: YYYY-MM-DD HH:MM:SS, MM/DD/YYYY, DD/MM/YYYY
+    MESMA LÓGICA DO VCTEX QUE FUNCIONOU
     """
     if not date_str or pd.isna(date_str) or str(date_str).strip() == "" or str(date_str).strip().lower() == 'nan':
         logging.warning(f"DAYCOVAL {field_name}: Formato não reconhecido: '{date_str}'")
@@ -517,38 +517,49 @@ def fix_daycoval_date(date_str, field_name=""):
         logging.warning(f"DAYCOVAL {field_name}: Formato não reconhecido: '{date_clean}'")
         return ""
     
-    logging.info(f"DAYCOVAL {field_name}: CORRIGINDO DATA '{date_clean}' - LOGICA CORRIGIDA!")
+    logging.info(f"DAYCOVAL {field_name}: PROCESSANDO DATA '{date_clean}' - LÓGICA MÚLTIPLOS FORMATOS!")
     
-    # Padrao XX/YY/YYYY
-    us_date_pattern = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', date_clean)
-    if us_date_pattern:
-        first_num, second_num, year = us_date_pattern.groups()
-        
-        first_int = int(first_num)
-        second_int = int(second_num)
-        
-        # LOGICA CORRIGIDA:
-        
-        # Se primeiro numero > 12, entao esta no formato DD/MM (brasileiro) - MANTER
-        if first_int > 12:
-            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' mantido (ja DD/MM/YYYY - primeiro > 12)")
-            return date_clean
-        
-        # Se segundo numero > 12, entao esta no formato MM/DD (americano) - TROCAR
-        elif second_int > 12:
-            fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
-            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (MM/DD convertido - segundo > 12)")
+    try:
+        # 🔥 NOVO: Formato YYYY-MM-DD HH:MM:SS (como '2025-10-01 00:00:00')
+        iso_pattern = re.match(r'^(\d{4})-(\d{1,2})-(\d{1,2})(\s+\d{2}:\d{2}:\d{2})?$', date_clean)
+        if iso_pattern:
+            year, month, day = iso_pattern.groups()[:3]
+            # Converter para DD/MM/YYYY
+            fixed_date = f"{day.zfill(2)}/{month.zfill(2)}/{year}"
+            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (ISO convertido)")
             return fixed_date
         
-        # Caso ambiguo (ambos <= 12): assumir formato americano MM/DD e converter para DD/MM
-        elif first_int <= 12 and second_int <= 12:
-            fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
-            logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (formato americano assumido)")
-            return fixed_date
+        # Formato XX/YY/YYYY (lógica original)
+        us_date_pattern = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', date_clean)
+        if us_date_pattern:
+            first_num, second_num, year = us_date_pattern.groups()
+            
+            first_int = int(first_num)
+            second_int = int(second_num)
+            
+            # Se primeiro numero > 12, entao esta no formato DD/MM (brasileiro) - MANTER
+            if first_int > 12:
+                logging.info(f"DAYCOVAL {field_name}: '{date_clean}' mantido (já DD/MM/YYYY)")
+                return date_clean
+            
+            # Se segundo numero > 12, entao esta no formato MM/DD (americano) - TROCAR
+            elif second_int > 12:
+                fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
+                logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (MM/DD convertido)")
+                return fixed_date
+            
+            # Caso ambiguo (ambos <= 12): assumir formato americano MM/DD e converter para DD/MM
+            elif first_int <= 12 and second_int <= 12:
+                fixed_date = f"{second_num}/{first_num}/{year}"  # DD/MM/YYYY
+                logging.info(f"DAYCOVAL {field_name}: '{date_clean}' -> '{fixed_date}' (assumido MM/DD)")
+                return fixed_date
     
-    # Se nao corresponder ao padrao, retornar como esta
-    logging.warning(f"DAYCOVAL {field_name}: Formato nao reconhecido: '{date_clean}'")
-    return date_clean
+    except Exception as e:
+        logging.error(f"DAYCOVAL {field_name}: Erro ao processar '{date_clean}': {e}")
+    
+    # Se nao reconhecer nenhum formato, retornar vazio 
+    logging.warning(f"DAYCOVAL {field_name}: Formato não reconhecido: '{date_clean}'")
+    return ""
 
 def map_daycoval_columns(row):
     """
@@ -4319,6 +4330,15 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         
         elif bank_type == "QUERO_MAIS":
             # Mapeamento BANCO QUERO MAIS CREDITO - ESTRUTURA REAL IDENTIFICADA
+            
+            # ⚠️ VALIDAÇÃO: Pular linhas de cabeçalho  
+            primeira_coluna = str(list(row.values())[0] if row.values() else "").strip()
+            if any(header in primeira_coluna.upper() for header in [
+                'RELATÓRIO DE PRODUÇÃO', 'CAPITAL CONSIG', 'COMISSIONADO', 'AGENCIA', 'CNPJ', 
+                'CODIGO PROMOTORA', 'PG.', 'PROC.', 'SIST.', 'VERSÃO'
+            ]):
+                logging.info(f"🚫 QUERO MAIS - Pulando linha de cabeçalho: '{primeira_coluna[:50]}...'")
+                continue
             
             # Log para debug das colunas disponíveis
             logging.info(f"🏦 QUERO MAIS - Colunas disponíveis: {list(row.keys())[:15]}...")
