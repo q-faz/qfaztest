@@ -3622,14 +3622,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             orgao_descricao = descricao_empregador_raw.upper()
             
             # Logs detalhados para debug
-            logging.info(f"� DAYCOVAL extraído:")
+            logging.info(f"DAYCOVAL extraído:")
             logging.info(f"   Proposta: {proposta_raw}")
-            logging.info(f"   Tipo Operação: {tipo_operacao_raw}")
+            logging.info(f"   Tipo Operacao: {tipo_operacao_raw}")
             logging.info(f"   Cliente: {cliente_raw[:30] if cliente_raw else 'N/A'}...")
             logging.info(f"   CPF: {cpf_raw}")
-            logging.info(f"   Situação: {situacao_raw}")
-            logging.info(f"   Órgão: {descricao_empregador_raw}")
-            logging.info(f"   Valor Operação: {valor_operacao_raw}")
+            logging.info(f"   Situacao: {situacao_raw}")
+            logging.info(f"   Orgao: {descricao_empregador_raw}")
+            logging.info(f"   Valor Operacao: {valor_operacao_raw}")
+            logging.info(f"   Data Cadastro RAW: {data_cadastro_raw}")
+            logging.info(f"   Data Liberacao RAW: {data_liberacao_raw}")
             
             # Função para detectar órgão do DAYCOVAL
             def detect_daycoval_orgao(descricao_empregador):
@@ -3704,22 +3706,29 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 # ✅ CRÍTICO: Se não temos dados mínimos (proposta OU nome OU cpf), PULAR a linha
                 # Isso evita gerar "DAYC_1", "NOME NAO INFORMADO", "000.000.000-00"
                 if not proposta_final and not nome_final and not cpf_final:
-                    logging.info(f"⏭️ DAYCOVAL linha {idx}: Sem dados mínimos (proposta/nome/cpf vazios), pulando para evitar dados falsos")
+                    logging.info(f"DAYCOVAL linha {idx}: Sem dados minimos (proposta/nome/cpf vazios), pulando para evitar dados falsos")
                     continue
+                
+                # APLICAR FIX DE DATAS COM LOGS DETALHADOS
+                data_cadastro_fixed = fix_daycoval_date(str(data_cadastro_raw) if data_cadastro_raw else "", "DATA_CADASTRO")
+                data_pagamento_fixed = fix_daycoval_date(str(data_liberacao_raw) if data_liberacao_raw else "", "DATA_PAGAMENTO")
+                
+                logging.info(f"DAYCOVAL DATAS - ANTES: cadastro='{data_cadastro_raw}', pagamento='{data_liberacao_raw}'")
+                logging.info(f"DAYCOVAL DATAS - DEPOIS: cadastro='{data_cadastro_fixed}', pagamento='{data_pagamento_fixed}'")
                 
                 normalized_row = {
                     "PROPOSTA": proposta_final,  # Unnamed: 0
                     "ADE": proposta_final,  # Campo ADE = mesma proposta
-                    "DATA_CADASTRO": fix_daycoval_date(str(data_cadastro_raw) if data_cadastro_raw else "", "DATA_CADASTRO"),  # Unnamed: 5 - DT.CAD.
+                    "DATA_CADASTRO": data_cadastro_fixed,  # Unnamed: 5 - DT.CAD. - CORRIGIDA
                     "BANCO": "BANCO DAYCOVAL",
-                    "ORGAO": clean_special_characters(orgao_detectado),  # ✅ Detectado do arquivo + limpo
-                    "TIPO_OPERACAO": clean_special_characters(operacao_detectada),  # ✅ Detectado do arquivo + limpo
+                    "ORGAO": clean_special_characters(orgao_detectado),  # Detectado do arquivo + limpo
+                    "TIPO_OPERACAO": clean_special_characters(operacao_detectada),  # Detectado do arquivo + limpo
                     "NUMERO_PARCELAS": str(prazo_meses_raw) if prazo_meses_raw else "0",  # Unnamed: 11 - Prz. em Meses
-                    "VALOR_OPERACAO": valor_operacao_formatted,  # ✅ Formatado brasileiro
-                    "VALOR_LIBERADO": valor_liberado_formatted,  # ✅ Formatado brasileiro
+                    "VALOR_OPERACAO": valor_operacao_formatted,  # Formatado brasileiro
+                    "VALOR_LIBERADO": valor_liberado_formatted,  # Formatado brasileiro
                     "USUARIO_BANCO": str(row.get('Unnamed: 40', '')).strip(),  # Usuário_Digitador
                     "SITUACAO": str(situacao_raw) if situacao_raw else "",  # Unnamed: 27 - Situação_Atual_da_Proposta
-                    "DATA_PAGAMENTO": fix_daycoval_date(str(data_liberacao_raw) if data_liberacao_raw else "", "DATA_PAGAMENTO"),  # Unnamed: 36 - Data da liberação
+                    "DATA_PAGAMENTO": data_pagamento_fixed,  # Unnamed: 36 - Data da liberação - CORRIGIDA
                     "CPF": cpf_final,  # ✅ Formatado brasileiro (XXX.XXX.XXX-XX)
                     "NOME": nome_final,  # ✅ Maiúsculas
                     "DATA_NASCIMENTO": "",  # Não disponível no DAYCOVAL
