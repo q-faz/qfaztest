@@ -503,13 +503,20 @@ def fix_daycoval_date(date_str, field_name=""):
     Exemplo: 10/02/2025 -> 02/10/2025
     LOGICA CORRIGIDA: 17/10/2025 13:30 - FIX para datas ja corretas
     """
-    if not date_str or pd.isna(date_str) or str(date_str).strip() == "":
+    if not date_str or pd.isna(date_str) or str(date_str).strip() == "" or str(date_str).strip().lower() == 'nan':
+        logging.warning(f"DAYCOVAL {field_name}: Formato não reconhecido: '{date_str}'")
         return ""
     
     import re
     from datetime import datetime
     
     date_clean = str(date_str).strip()
+    
+    # Se for 'nan', retornar vazio
+    if date_clean.lower() == 'nan':
+        logging.warning(f"DAYCOVAL {field_name}: Formato não reconhecido: '{date_clean}'")
+        return ""
+    
     logging.info(f"DAYCOVAL {field_name}: CORRIGINDO DATA '{date_clean}' - LOGICA CORRIGIDA!")
     
     # Padrao XX/YY/YYYY
@@ -542,6 +549,56 @@ def fix_daycoval_date(date_str, field_name=""):
     # Se nao corresponder ao padrao, retornar como esta
     logging.warning(f"DAYCOVAL {field_name}: Formato nao reconhecido: '{date_clean}'")
     return date_clean
+
+def map_daycoval_columns(row):
+    """
+    PARSER ESPECÍFICO DAYCOVAL: Mapeia colunas 'Unnamed: X' para campos reais
+    Baseado na estrutura real dos arquivos DAYCOVAL que não têm headers normais
+    """
+    logging.info(f"🔍 DAYCOVAL PARSER: Mapeando colunas para estrutura real")
+    
+    # Primeira coluna pode ser 'BANCO DAYCOVAL S/A - Consignado' ou 'Unnamed: 0'
+    primeira_coluna = None
+    if 'BANCO DAYCOVAL S/A - Consignado' in row.keys():
+        primeira_coluna = 'BANCO DAYCOVAL S/A - Consignado'
+    else:
+        primeira_coluna = 'Unnamed: 0'
+    
+    # Mapeamento baseado na análise dos logs de debug
+    mapped_data = {
+        'PROPOSTA': str(row.get(primeira_coluna, '')).strip(),  # Coluna 0
+        'TIPO_OPERACAO': str(row.get('Unnamed: 1', '')).strip(),  # Coluna 1
+        'CLIENTE': str(row.get('Unnamed: 2', '')).strip(),  # Coluna 2  
+        'CPF': str(row.get('Unnamed: 3', '')).strip(),  # Coluna 3
+        'MATRICULA': str(row.get('Unnamed: 4', '')).strip(),  # Coluna 4
+        'DATA_CADASTRO_RAW': str(row.get('Unnamed: 5', '')).strip(),  # Coluna 5
+        'DATA_BASE': str(row.get('Unnamed: 6', '')).strip(),  # Coluna 6
+        'PRAZO_MESES': str(row.get('Unnamed: 11', '')).strip(),  # Coluna 11
+        'TAXA': str(row.get('Unnamed: 12', '')).strip(),  # Coluna 12
+        'VALOR_LIQUIDO': str(row.get('Unnamed: 13', '')).strip(),  # Coluna 13
+        'VALOR_OPERACAO': str(row.get('Unnamed: 16', '')).strip(),  # Coluna 16
+        'VALOR_PARCELA': str(row.get('Unnamed: 18', '')).strip(),  # Coluna 18
+        'EMPREGADOR': str(row.get('Unnamed: 23', '')).strip(),  # Coluna 23
+        'SITUACAO': str(row.get('Unnamed: 27', '')).strip(),  # Coluna 27
+        'DATA_PAGAMENTO_RAW': str(row.get('Unnamed: 36', '')).strip(),  # Coluna 36
+        'USUARIO': str(row.get('Unnamed: 40', '')).strip(),  # Coluna 40
+        # Campos de contato - vamos tentar diferentes colunas
+        'TELEFONE_RAW': str(row.get('Unnamed: 7', '')).strip(),  # Tentativa coluna 7
+        'ENDERECO_RAW': str(row.get('Unnamed: 8', '')).strip(),  # Tentativa coluna 8
+        'BAIRRO_RAW': str(row.get('Unnamed: 9', '')).strip(),  # Tentativa coluna 9
+        'CEP_RAW': str(row.get('Unnamed: 10', '')).strip(),  # Tentativa coluna 10
+        'UF_RAW': str(row.get('Unnamed: 14', '')).strip(),  # Tentativa coluna 14
+    }
+    
+    # Log do mapeamento para debug
+    logging.info(f"📋 DAYCOVAL MAPEADO: PROPOSTA={mapped_data['PROPOSTA'][:20]}...")
+    logging.info(f"📋 DAYCOVAL MAPEADO: CLIENTE={mapped_data['CLIENTE'][:30]}...")  
+    logging.info(f"📋 DAYCOVAL MAPEADO: DATA_CAD_RAW={mapped_data['DATA_CADASTRO_RAW']}")
+    logging.info(f"📋 DAYCOVAL MAPEADO: DATA_PAG_RAW={mapped_data['DATA_PAGAMENTO_RAW']}")
+    logging.info(f"📋 DAYCOVAL MAPEADO: TEL={mapped_data['TELEFONE_RAW'][:15]}...")
+    logging.info(f"📋 DAYCOVAL MAPEADO: END={mapped_data['ENDERECO_RAW'][:30]}...")
+    
+    return mapped_data
 
 def normalize_storm_operation(operation_str):
     """
@@ -621,12 +678,13 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         bairro_fields = ['Bairro', 'Unnamed: 2']
     
     elif bank_type == "DAYCOVAL":
-        telefone_fields = []  # DAYCOVAL não tem campos de telefone
-        endereco_fields = []  # DAYCOVAL não tem campos de endereço
-        cep_fields = []
-        cidade_fields = []
-        uf_fields = []
-        bairro_fields = []
+        # DAYCOVAL: Tentar diferentes colunas baseado na estrutura de arquivo
+        telefone_fields = ['Unnamed: 7', 'Unnamed: 15', 'Unnamed: 20', 'Unnamed: 25']
+        endereco_fields = ['Unnamed: 8', 'Unnamed: 17', 'Unnamed: 21', 'Unnamed: 28']
+        cep_fields = ['Unnamed: 10', 'Unnamed: 19', 'Unnamed: 24', 'Unnamed: 30']
+        cidade_fields = ['Unnamed: 9', 'Unnamed: 22', 'Unnamed: 29'] 
+        uf_fields = ['Unnamed: 14', 'Unnamed: 26', 'Unnamed: 31']
+        bairro_fields = ['Unnamed: 9', 'Unnamed: 18', 'Unnamed: 23']
     
     elif bank_type == "VCTEX":
         telefone_fields = ['Telefone Cliente']
@@ -3592,45 +3650,31 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"✅ DAYCOVAL CSV: {normalized_row['PROPOSTA']} | {normalized_row['NOME']} | {normalized_row['SITUACAO']}")
                 
             else:
-                # FORMATO ANTIGO COM "Unnamed:" - Processamento existente
-                # Estrutura DAYCOVAL:
-                # Unnamed: 0 = NR.PROP., Unnamed: 1 = Tp. Operação, Unnamed: 2 = CLIENTE, Unnamed: 3 = CPF/CNPJ
-                # Unnamed: 4 = MATRÍCULA, Unnamed: 5 = DT.CAD., Unnamed: 6 = DT.BASE
-                # Unnamed: 11 = Prz. em Meses, Unnamed: 12 = TX.AM, Unnamed: 13 = VLR.LIQ
-                # Unnamed: 16 = VLR.OPER, Unnamed: 18 = VLR.PARC, Unnamed: 23 = DESCRIÇÃO EMPREGADOR
-                # Unnamed: 27 = Situação_Atual_da_Proposta, Unnamed: 36 = Data da liberação
-                
+                # FORMATO ANTIGO COM "Unnamed:" - PARSER ESPECÍFICO DAYCOVAL MELHORADO
                 logging.info(f"=" * 80)
-                logging.info(f"DAYCOVAL linha {idx}: FORMATO ANTIGO DETECTADO")
+                logging.info(f"DAYCOVAL linha {idx}: FORMATO ANTIGO DETECTADO - USANDO PARSER ESPECÍFICO")
                 logging.info(f"   Colunas disponíveis: {list(row.keys())[:10]}")
                 logging.info(f"=" * 80)
                 
-                # 🔍 Debug: Verificar estrutura completa dos valores importantes
-                logging.error(f"DAYCOVAL DEBUG - Valores importantes:")
-                campos_importantes = [10, 11, 12, 13, 16, 17, 18, 26, 27, 36, 38]
-                for i in campos_importantes:
-                    col_name = f'Unnamed: {i}'
-                    col_value = str(row.get(col_name, 'N/A')).strip()[:30]
-                    logging.error(f"   {col_name}: '{col_value}'")
+                # ✅ USAR NOVO PARSER ESPECÍFICO DAYCOVAL
+                mapped_data = map_daycoval_columns(row)
                 
-                # Extrair campos principais do DAYCOVAL - ajustado para estrutura real
-                # Se a primeira coluna não é Unnamed: 0, usar o nome real da coluna
-                primeira_coluna = 'BANCO DAYCOVAL S/A - Consignado'  # Nome real da primeira coluna
-                proposta_raw = str(row.get(primeira_coluna, row.get('Unnamed: 0', ''))).strip()  # NR.PROP.
-                tipo_operacao_raw = str(row.get('Unnamed: 1', '')).strip()  # Tp. Operação
-                cliente_raw = str(row.get('Unnamed: 2', '')).strip()  # CLIENTE
-                cpf_raw = str(row.get('Unnamed: 3', '')).strip()  # CPF/CNPJ
-                matricula_raw = str(row.get('Unnamed: 4', '')).strip()  # MATRÍCULA
-                data_cadastro_raw = str(row.get('Unnamed: 5', '')).strip()  # DT.CAD.
-                data_base_raw = str(row.get('Unnamed: 6', '')).strip()  # DT.BASE
-                prazo_meses_raw = str(row.get('Unnamed: 11', '')).strip()  # Prz. em Meses
-                taxa_raw = str(row.get('Unnamed: 12', '')).strip()  # TX.AM
-                valor_liquido_raw = str(row.get('Unnamed: 13', '')).strip()  # VLR.LIQ
-                valor_operacao_raw = str(row.get('Unnamed: 16', '')).strip()  # VLR.OPER
-                valor_parcela_raw = str(row.get('Unnamed: 18', '')).strip()  # VLR.PARC
-                descricao_empregador_raw = str(row.get('Unnamed: 23', '')).strip()  # DESCRIÇÃO EMPREGADOR
-                situacao_raw = str(row.get('Unnamed: 27', '')).strip()  # Situação_Atual_da_Proposta
-                data_liberacao_raw = str(row.get('Unnamed: 36', '')).strip()  # Data da liberação
+                # Extrair dados mapeados
+                proposta_raw = mapped_data['PROPOSTA']
+                tipo_operacao_raw = mapped_data['TIPO_OPERACAO']
+                cliente_raw = mapped_data['CLIENTE']
+                cpf_raw = mapped_data['CPF']
+                matricula_raw = mapped_data['MATRICULA']
+                data_cadastro_raw = mapped_data['DATA_CADASTRO_RAW']
+                data_base_raw = mapped_data['DATA_BASE']
+                prazo_meses_raw = mapped_data['PRAZO_MESES']
+                taxa_raw = mapped_data['TAXA']
+                valor_liquido_raw = mapped_data['VALOR_LIQUIDO']
+                valor_operacao_raw = mapped_data['VALOR_OPERACAO']
+                valor_parcela_raw = mapped_data['VALOR_PARCELA']
+                descricao_empregador_raw = mapped_data['EMPREGADOR']
+                situacao_raw = mapped_data['SITUACAO']
+                data_liberacao_raw = mapped_data['DATA_PAGAMENTO_RAW']
             
             # Normalizar campos para detecção
             tipo_op = tipo_operacao_raw.upper()
