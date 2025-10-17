@@ -643,251 +643,140 @@ def normalize_storm_organ(organ_str):
 
 def extract_contact_data(row, bank_type: str = "") -> dict:
     """
-    🚨 FUNÇÃO UNIVERSAIS PARA EXTRAIR DADOS DE CONTATO
-    Baseada no mapeamento real dos bancos em map_relat_atualizados.txt
+    � FUNÇÃO INTELIGENTE PARA EXTRAIR DADOS DE CONTATO
+    Tenta múltiplas estratégias para encontrar telefone, endereço, etc.
     """
     
-    # 🔍 LOG INICIAL: Mostrar primeiras colunas e valores para debug
+    # 🔍 LOG SIMPLIFICADO: Mostrar apenas colunas que podem ter dados úteis
     if bank_type in ["DIGIO", "QUERO_MAIS", "PAN"]:
-        colunas_sample = list(row.keys())[:10]  # Primeiras 10 colunas
-        logging.error(f"🔍 {bank_type} EXTRACT_CONTACT_DATA INICIO:")
-        for i, col in enumerate(colunas_sample):
-            valor = str(row.get(col, 'N/A'))[:25]
-            logging.error(f"   [{i}] '{col}' = '{valor}'")
-        logging.error(f"   Total de colunas: {len(row.keys())}")
+        colunas_todas = list(row.keys())
+        # Filtrar colunas que podem ter dados (não vazias e com texto)
+        colunas_com_dados = []
+        for col in colunas_todas:
+            valor = str(row.get(col, '')).strip()
+            if valor and valor not in ['nan', 'NaN', '', '0', '0.0']:
+                if len(valor) > 3:  # Valores com pelo menos 4 caracteres
+                    colunas_com_dados.append(f"{col}='{valor[:20]}'")
+        
+        logging.error(f"🔍 {bank_type} COLUNAS COM DADOS: {len(colunas_com_dados)} de {len(colunas_todas)}")
+        for i, col_data in enumerate(colunas_com_dados[:8]):  # Primeiras 8 colunas úteis
+            logging.error(f"   {i}: {col_data}")
     
-    # Campos específicos por banco baseados no mapeamento real
-    if bank_type == "AVERBAI":
-        telefone_fields = ['CelularCliente']
-        endereco_fields = []  # AVERBAI não tem campos de endereço
-        cep_fields = []
-        cidade_fields = []
-        uf_fields = []
-        bairro_fields = []
+    # 📞 BUSCA INTELIGENTE DE TELEFONE
+    telefone = ""
+    telefone_patterns = [
+        # Nomes específicos
+        'telefone', 'tel', 'fone', 'phone', 'celular', 'cel', 'contato',
+        # Para DIGIO - testar colunas específicas que podem ter telefone
+        'unnamed: 42', 'unnamed: 43', 'unnamed: 20', 'unnamed: 29',
+        # Para QUERO_MAIS
+        'fone cel.', 'unnamed: 29'
+    ]
     
-    elif bank_type == "DIGIO":
-        # ✅ DIGIO: Mapeamento correto baseado no arquivo real
-        # TEL_CLIENTE = Unnamed: 42, CEL_CLIENTE = Unnamed: 43
-        telefone_fields = ['TEL_CLIENTE', 'CEL_CLIENTE', 'Unnamed: 42', 'Unnamed: 43']
-        # END_CLIENTE = Unnamed: 35
-        endereco_fields = ['END_CLIENTE', 'Unnamed: 35']
-        # CEP_CLIENTE = Unnamed: 41
-        cep_fields = ['CEP_CLIENTE', 'Unnamed: 41']
-        # CIDADE = Unnamed: 39
-        cidade_fields = ['CIDADE', 'Unnamed: 39']
-        # UF_CLIENTE = Unnamed: 40
-        uf_fields = ['UF_CLIENTE', 'Unnamed: 40']
-        # BAIRRO = Unnamed: 38
-        bairro_fields = ['BAIRRO', 'Unnamed: 38']
+    for col_name, valor in row.items():
+        col_lower = str(col_name).lower().strip()
+        valor_str = str(valor).strip()
+        
+        # Se o nome da coluna contém padrão de telefone
+        if any(pattern in col_lower for pattern in telefone_patterns):
+            if valor_str and valor_str not in ['nan', '', '0']:
+                # Verificar se parece com telefone (só números e tem tamanho certo)
+                digits_only = ''.join(filter(str.isdigit, valor_str))
+                if len(digits_only) >= 8:  # Pelo menos 8 dígitos para ser telefone
+                    telefone = valor_str
+                    logging.info(f"📞 {bank_type} TELEFONE encontrado na coluna '{col_name}': {telefone}")
+                    break
     
-    elif bank_type == "CREFAZ":
-        telefone_fields = ['Telefone', 'Telefone Fixo']
-        endereco_fields = []  # CREFAZ não tem endereço completo
-        cep_fields = []
-        cidade_fields = ['Cidade']
-        uf_fields = ['UF']
-        bairro_fields = []
+    # 🏠 BUSCA INTELIGENTE DE ENDEREÇO
+    endereco = ""
+    endereco_patterns = [
+        'endereco', 'endereço', 'end', 'address', 'rua', 'avenida', 'av', 'logradouro',
+        # Para DIGIO
+        'unnamed: 35', 'unnamed: 26', 'unnamed: 34',
+        # Para QUERO_MAIS
+        'endereco cliente', 'unnamed: 26'
+    ]
     
-    elif bank_type == "SANTANDER":
-        # ❌ SANTANDER: Campo TELEFONE existe mas está sempre vazio
-        telefone_fields = []  # Campo TELEFONE vazio (0 valores únicos)
-        endereco_fields = []  # Não tem campos de endereço
-        cep_fields = []
-        cidade_fields = []
-        uf_fields = []
-        bairro_fields = []
+    for col_name, valor in row.items():
+        col_lower = str(col_name).lower().strip()
+        valor_str = str(valor).strip()
+        
+        if any(pattern in col_lower for pattern in endereco_patterns):
+            if valor_str and valor_str not in ['nan', '', '0']:
+                # Verificar se parece com endereço (tem letras e é relativamente longo)
+                if len(valor_str) > 5 and any(c.isalpha() for c in valor_str):
+                    endereco = valor_str
+                    logging.info(f"🏠 {bank_type} ENDERECO encontrado na coluna '{col_name}': {endereco[:30]}...")
+                    break
     
-    elif bank_type == "QUERO_MAIS":
-        # ✅ QUERO MAIS: Mapeamento correto dos campos disponíveis
-        telefone_fields = ['Fone Cel.', 'Unnamed: 29']  # Fone Cel. = coluna 29
-        endereco_fields = ['Endereco Cliente', 'Unnamed: 26']  # Endereco Cliente = coluna 26
-        cep_fields = ['Cep', 'Unnamed: 12']  # Cep = coluna 12
-        cidade_fields = ['Cidade', 'Unnamed: 13']  # Cidade = coluna 13
-        uf_fields = ['Estado', 'Unnamed: 27']  # Estado = coluna 27
-        bairro_fields = ['Bairro', 'Unnamed: 2']  # Bairro = coluna 2
+    # 📍 BUSCA INTELIGENTE DE CEP
+    cep = ""
+    cep_patterns = ['cep', 'codigo postal', 'postal', 'unnamed: 12', 'unnamed: 41']
     
-    elif bank_type == "DAYCOVAL":
-        # DAYCOVAL: Tentar diferentes colunas baseado na estrutura de arquivo
-        telefone_fields = ['Unnamed: 7', 'Unnamed: 15', 'Unnamed: 20', 'Unnamed: 25']
-        endereco_fields = ['Unnamed: 8', 'Unnamed: 17', 'Unnamed: 21', 'Unnamed: 28']
-        cep_fields = ['Unnamed: 10', 'Unnamed: 19', 'Unnamed: 24', 'Unnamed: 30']
-        cidade_fields = ['Unnamed: 9', 'Unnamed: 22', 'Unnamed: 29'] 
-        uf_fields = ['Unnamed: 14', 'Unnamed: 26', 'Unnamed: 31']
-        bairro_fields = ['Unnamed: 9', 'Unnamed: 18', 'Unnamed: 23']
+    for col_name, valor in row.items():
+        col_lower = str(col_name).lower().strip()
+        valor_str = str(valor).strip()
+        
+        if any(pattern in col_lower for pattern in cep_patterns):
+            if valor_str and valor_str not in ['nan', '', '0']:
+                # Verificar se parece com CEP (8 dígitos ou formato XX.XXX-XXX)
+                digits_only = ''.join(filter(str.isdigit, valor_str))
+                if len(digits_only) == 8:
+                    cep = valor_str
+                    logging.info(f"📍 {bank_type} CEP encontrado na coluna '{col_name}': {cep}")
+                    break
     
-    elif bank_type == "VCTEX":
-        telefone_fields = ['Telefone Cliente']
-        endereco_fields = []  # VCTEX não tem campos de endereço detalhados
-        cep_fields = []
-        cidade_fields = []
-        uf_fields = []
-        bairro_fields = []
+    # 🌎 BUSCA INTELIGENTE DE UF
+    uf = ""
+    uf_patterns = ['uf', 'estado', 'state', 'unnamed: 27', 'unnamed: 40']
     
-    elif bank_type == "PAN":
-        # ✅ PAN: Dados completos disponíveis
-        telefone_fields = ['Telefone', 'Celular']
-        endereco_fields = ['Endereço do Cliente']
-        cep_fields = ['CEP']
-        cidade_fields = ['Cidade']
-        uf_fields = ['UF']
-        bairro_fields = ['Bairro']
+    for col_name, valor in row.items():
+        col_lower = str(col_name).lower().strip()
+        valor_str = str(valor).strip().upper()
+        
+        if any(pattern in col_lower for pattern in uf_patterns):
+            if valor_str and valor_str not in ['NAN', '', '0']:
+                # Verificar se parece com UF (2 letras)
+                if len(valor_str) == 2 and valor_str.isalpha():
+                    uf = valor_str
+                    logging.info(f"🌎 {bank_type} UF encontrado na coluna '{col_name}': {uf}")
+                    break
     
-    elif bank_type == "PRATA":
-        telefone_fields = ['Telefone', 'Tel', 'Celular', 'Fone']  # PRATA campos típicos
-        endereco_fields = ['Endereco', 'Endereço', 'End']
-        cep_fields = ['CEP', 'Cep']
-        cidade_fields = ['Cidade', 'City']
-        uf_fields = ['UF', 'Estado']
-        bairro_fields = ['Bairro', 'Neighborhood']
+    # 🏘️ BUSCA INTELIGENTE DE BAIRRO
+    bairro = ""
+    bairro_patterns = ['bairro', 'neighborhood', 'distrito', 'unnamed: 2', 'unnamed: 38']
     
-    elif bank_type == "FACTA92":
-        telefone_fields = []  # FACTA92 não tem campos de telefone
-        endereco_fields = []  # FACTA92 não tem campos de endereço
-        cep_fields = []
-        cidade_fields = []
-        uf_fields = ['ESTADO']  # FACTA92 tem só ESTADO
-        bairro_fields = []
+    for col_name, valor in row.items():
+        col_lower = str(col_name).lower().strip()
+        valor_str = str(valor).strip()
+        
+        if any(pattern in col_lower for pattern in bairro_patterns):
+            if valor_str and valor_str not in ['nan', '', '0']:
+                if len(valor_str) > 2 and any(c.isalpha() for c in valor_str):
+                    bairro = valor_str
+                    logging.info(f"🏘️ {bank_type} BAIRRO encontrado na coluna '{col_name}': {bairro}")
+                    break
     
-    elif bank_type == "BRB":
-        telefone_fields = []  # BRB não tem campos de telefone no mapeamento
-        endereco_fields = []  # BRB não tem campos de endereço
-        cep_fields = []
-        cidade_fields = []
-        uf_fields = []
-        bairro_fields = []
+    # 📊 RESULTADO FINAL
+    campos_encontrados = []
+    if telefone: campos_encontrados.append("TEL")
+    if endereco: campos_encontrados.append("END")
+    if cep: campos_encontrados.append("CEP")
+    if uf: campos_encontrados.append("UF")
+    if bairro: campos_encontrados.append("BAI")
     
+    if campos_encontrados:
+        logging.info(f"✅ {bank_type} CONTATO SUCESSO: {' + '.join(campos_encontrados)}")
     else:
-        # Campos genéricos para bancos não mapeados (fallback)
-        telefone_fields = [
-            'TELEFONE', 'TEL_CLIENTE', 'CEL_CLIENTE', 'Telefone', 'Tel', 'Fone', 'Celular', 
-            'CelularCliente', 'Telefone Cliente', 'DddCelular', 'NumeroCelular', 'Telefone Fixo',
-            'Telefone Proposta', 'Fone Cel.', 'Fone Res.', 'Telefone do Cliente', 'Tel Cliente',
-            'Unnamed: 20', 'Unnamed: 29', 'Unnamed: 31', 'Unnamed: 42', 'Unnamed: 43',
-            'Tel.', 'Fone', 'Cell', 'Phone', 'Contact', 'Contato'
-        ]
-        
-        endereco_fields = [
-            'ENDERECO', 'ENDEREÇO', 'END_CLIENTE', 'Endereco', 'Endereço', 'End', 
-            'Endereço do Cliente', 'Nº Endereço', 'NUM_END_CLIENTE', 'Endereco Cliente',
-            'Numero Endereco', 'Logradouro', 'Rua', 'Avenida', 'Praça',
-            'Unnamed: 21', 'Unnamed: 26', 'Unnamed: 34', 'Unnamed: 37',
-            'Address', 'Addr', 'Street', 'Logr', 'End Cliente'
-        ]
-        
-        cep_fields = [
-            'CEP', 'CEP_CLIENTE', 'Cep', 'CEP Cliente', 'Codigo Postal', 'Postal',
-            'Unnamed: 12', 'Unnamed: 42',
-            'PostalCode', 'ZIP', 'Postal Code'
-        ]
-        
-        cidade_fields = [
-            'CIDADE', 'Cidade', 'CIDADE_CLIENTE', 'Município', 'Municipio',
-            'City', 'Localidade', 'Municipio Cliente'
-        ]
-        
-        uf_fields = [
-            'UF', 'UF_CLIENTE', 'Estado', 'ESTADO', 'Estado Cliente', 'Uf',
-            'Unnamed: 27', 'Unnamed: 41',
-            'State', 'Est', 'UF Cliente'
-        ]
-        
-        bairro_fields = [
-            'BAIRRO', 'Bairro', 'BAIRRO_CLIENTE', 'Bairro Cliente', 'District',
-            'Unnamed: 2', 'Unnamed: 40',
-            'Neighborhood', 'Distrito', 'Bairro Cliente'
-        ]
-    
-    # Função helper para buscar em múltiplos campos
-    def find_value(fields_list):
-        for field in fields_list:
-            raw_value = row.get(field, '')
-            cleaned_value = clean_contact_field(raw_value, field)
-            if cleaned_value:  # Se não está vazio após limpeza
-                return cleaned_value
-        return ""
-    
-    # Extrair telefone (priorizar celular)
-    telefone = find_value(telefone_fields)
-    
-    # Extrair endereço (pode combinar múltiplos campos)
-    endereco_base = find_value(endereco_fields)
-    num_endereco = find_value(['NUM_END_CLIENTE', 'Nº Endereço', 'Numero', 'Número'])
-    complemento = find_value(['COMPLEMENTO', 'Complemento'])
-    
-    endereco_completo = endereco_base
-    if num_endereco and num_endereco != endereco_base:
-        endereco_completo = f"{endereco_base}, {num_endereco}".strip(", ")
-    if complemento and complemento not in [endereco_base, num_endereco]:
-        endereco_completo += f", {complemento}".strip(", ")
-    
-    # Extrair outros campos
-    cep = find_value(cep_fields)
-    cidade = find_value(cidade_fields) 
-    uf = find_value(uf_fields)
-    bairro = find_value(bairro_fields)
-    
-    # Log para debug se encontrou dados
-    found_data = []
-    missing_data = []
-    
-    if telefone: 
-        found_data.append(f"TEL:{telefone[:10]}")
-    else:
-        missing_data.append("TEL")
-    
-    if endereco_completo: 
-        found_data.append(f"END:{endereco_completo[:15]}")
-    else:
-        missing_data.append("END")
-        
-    if cep: 
-        found_data.append(f"CEP:{cep}")
-    else:
-        missing_data.append("CEP")
-        
-    if cidade: 
-        found_data.append(f"CID:{cidade}")
-        
-    if uf: 
-        found_data.append(f"UF:{uf}")
-    else:
-        missing_data.append("UF")
-        
-    if bairro:
-        found_data.append(f"BAI:{bairro}")
-    else:
-        missing_data.append("BAI")
-
-    if found_data:
-        logging.info(f"{bank_type} contato encontrado: {' | '.join(found_data)}")
-    
-    if missing_data:
-        # Log dos campos disponíveis para debug quando dados estão faltando
-        available_columns = list(row.keys())[:10]  # Primeiras 10 colunas
-        logging.warning(f"{bank_type} campos faltando: {', '.join(missing_data)} | Colunas disponíveis: {available_columns}")
-        
-        # DEBUG EXTRA: Para bancos que deveriam ter dados, mostrar mais detalhes
-        if bank_type in ["DIGIO", "QUERO_MAIS", "PAN"]:
-            logging.error(f"{bank_type} DEBUG - CAMPOS PROCURADOS vs VALORES REAIS:")
-            logging.error(f"   TELEFONE buscado em: {telefone_fields}")
-            for field in telefone_fields[:3]:  # Primeiros 3 campos
-                valor = str(row.get(field, 'N/A'))[:20]
-                logging.error(f"     {field} = '{valor}'")
-            
-            logging.error(f"   ENDERECO buscado em: {endereco_fields}")
-            for field in endereco_fields[:3]:  # Primeiros 3 campos  
-                valor = str(row.get(field, 'N/A'))[:30]
-                logging.error(f"     {field} = '{valor}'")
-            
-            logging.error(f"   COLUNAS TOTAIS: {len(list(row.keys()))} | PRIMEIRAS 15: {list(row.keys())[:15]}")
+        logging.warning(f"❌ {bank_type} CONTATO VAZIO: Nenhum campo encontrado")
     
     return {
         'TELEFONE': telefone,
-        'ENDERECO': endereco_completo.strip(", "),
+        'ENDERECO': endereco,
         'BAIRRO': bairro,
         'CEP': cep,
         'UF': uf,
-        'CIDADE': cidade  # Campo adicional que pode ser útil
+        'CIDADE': ""  # Deixar vazio por enquanto
     }
 
 def apply_character_cleaning_to_dataframe(df: pd.DataFrame, filename: str = "") -> pd.DataFrame:
