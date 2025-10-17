@@ -191,15 +191,16 @@ OPERATION_TYPES = {
     "MARGEM LIVRE (NOVO)": "MARGEM LIVRE (NOVO)",
     "MARGEM LIVRE": "MARGEM LIVRE (NOVO)", 
     "margem livre (novo)": "MARGEM LIVRE (NOVO)",
-    "PORTABILIDADE": "PORTABILIDADE",
-    "PORTABILIDADE + REFIN": "PORTABILIDADE + REFIN",
+    "PORTABILIDADE": "PORTABILIDADE",  # 🚨 CORREÇÃO: Mapeamento simples
+    "PORTABILIDADE + REFIN": "PORTABILIDADE",  # 🚨 CORREÇÃO: + Refin vira simples Portabilidade
     "REFINANCIAMENTO": "REFINANCIAMENTO",
     "REFINANCIAMENTO DA PORTABILIDADE": "REFINANCIAMENTO DA PORTABILIDADE",
     "EMPRÉSTIMO COMPLEMENTAR": "EMPRÉSTIMO COMPLEMENTAR",
     "Saque FGTS": "MARGEM LIVRE (NOVO)",
     "Consignado FGTS": "MARGEM LIVRE (NOVO)",
     "Consignado INSS": "MARGEM LIVRE (NOVO)",
-    "Portabilidade + Refin": "PORTABILIDADE + REFIN",
+    "Portabilidade + Refin": "PORTABILIDADE",  # 🚨 CORREÇÃO: + Refin vira simples Portabilidade
+    "Portabilidade": "PORTABILIDADE",  # 🚨 ADICIONADO: Mapeamento direto
     "Refinanciamento": "REFINANCIAMENTO",
     "Cartão c/ saque": "CARTÃO C/ SAQUE",
     "Cartão c/ saque complementar à vista": "CARTÃO C/ SAQUE COMPLEMENTAR À VISTA"
@@ -3417,7 +3418,7 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 if 'PORTABILIDADE' in tipo_upper and 'REFINANCIAMENTO' in tipo_upper:
                     return "Refinanciamento da Portabilidade"
                 elif 'PORTABILIDADE' in tipo_upper:
-                    return "Portabilidade + Refin"
+                    return "Portabilidade"  # 🚨 CORREÇÃO: Sem "+ Refin"
                 elif 'REFINANCIAMENTO' in tipo_upper:
                     return "Refinanciamento"
                 elif 'NOVA' in tipo_upper:
@@ -4008,23 +4009,25 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # Unnamed: 48 = Vlr.da parcela (53.13, 194.36)
             # Unnamed: 49 = Valor liberacao 1 (1829.79, 1717.23)
             
-            # Detecção de órgão pela descrição correta
+            # Detecção de órgão pela descrição correta - CORRIGIDA
             descr_orgao = str(row.get('Unnamed: 25', '')).strip().upper()  # Descr. Orgao
             descr_empregador = str(row.get('Unnamed: 24', '')).strip().upper()  # Descr. Empregador
             
             orgao_text = f"{descr_orgao} {descr_empregador}".strip()
             logging.info(f"🏛️ QUERO MAIS órgão - descr_orgao: '{descr_orgao}', descr_empregador: '{descr_empregador}'")
             
-            if 'INSS' in orgao_text or 'BENEFICIO' in orgao_text or 'BENEFÍCIO' in orgao_text:
+            # 🚨 CORREÇÃO: Priorizar SIAPE/FEDERAL antes de INSS
+            if 'GOV' in orgao_text or 'SÃO PAULO' in orgao_text or 'SP' in orgao_text or 'ESTADO' in orgao_text or 'GOVERNO' in orgao_text or 'FEDERAL' in orgao_text or 'SIAPE' in orgao_text:
+                orgao = 'SIAPE FEDERAL'  # 🚨 CORREÇÃO: Usar SIAPE FEDERAL
+            elif 'PREFEITURA' in orgao_text or 'MUNICIPAL' in orgao_text:
+                orgao = 'SIAPE CONSIG'  # 🚨 CORREÇÃO: Prefeituras = SIAPE CONSIG
+            elif 'INSS' in orgao_text or 'BENEFICIO' in orgao_text or 'BENEFÍCIO' in orgao_text:
                 orgao = 'INSS'
-            elif 'GOV' in orgao_text or 'SÃO PAULO' in orgao_text or 'SP' in orgao_text or 'ESTADO' in orgao_text or 'GOVERNO' in orgao_text:
-                orgao = 'SIAPE'
             elif 'FGTS' in orgao_text:
                 orgao = 'FGTS'
-            elif 'PREFEITURA' in orgao_text or 'MUNICIPAL' in orgao_text:
-                orgao = 'SIAPE'  # Prefeituras geralmente usam SIAPE
             else:
-                orgao = 'INSS'  # Default para QUERO MAIS
+                # 🚨 CORREÇÃO: Default para SIAPE em vez de INSS para QUERO MAIS
+                orgao = 'SIAPE FEDERAL'  
                 
             logging.info(f"✅ QUERO MAIS órgão determinado: '{orgao}' (de '{orgao_text}')")
             
@@ -4050,10 +4053,8 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"🔍 QUERO MAIS tipo operação - descr_tabela: '{descr_tabela}' -> '{descr_upper}'")
                 
                 if "CARTAO" in descr_upper or "CARTÃO" in descr_upper or "CCC" in descr_upper:
-                    if "SAQUE" in descr_upper:
-                        tipo_operacao = "Cartão c/ Saque"
-                    else:
-                        tipo_operacao = "Cartão s/ Saque"
+                    # 🚨 CORREÇÃO: Sempre "c/ Saque" para cartão
+                    tipo_operacao = "Cartao C/ Saque"
                 elif "RMC" in descr_upper:
                     tipo_operacao = "Margem Livre (Novo)"  # RMC = Margem Livre
                 elif "LOAS" in descr_upper:
