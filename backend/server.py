@@ -348,6 +348,39 @@ def clean_special_characters(text):
             'Ã³': 'ó',
             'Ãº': 'ú',
             'Ã§': 'ç',
+            # 🚨 CORREÇÃO ESPECÍFICA: Typos e normalização 
+            'Portabilidae': 'Portabilidade',
+            'PORTABILIDAE': 'PORTABILIDADE',
+            'portabilidae': 'portabilidade',
+            # Remoção de acentos para evitar caracteres quebrados
+            'Cartão': 'Cartao',
+            'CARTÃO': 'CARTAO', 
+            'cartão': 'cartao',
+            'Crédito': 'Credito',
+            'CRÉDITO': 'CREDITO',
+            'crédito': 'credito',
+            'Saque': 'Saque',  # mantém
+            'Trabalhador': 'Trabalhador',  # mantém
+            'ç': 'c',
+            'ã': 'a',
+            'á': 'a',
+            'é': 'e',
+            'í': 'i',
+            'ó': 'o',
+            'ú': 'u',
+            'ô': 'o',
+            'â': 'a',
+            'ê': 'e',
+            'Ç': 'C',
+            'Ã': 'A',
+            'Á': 'A',
+            'É': 'E',
+            'Í': 'I', 
+            'Ó': 'O',
+            'Ú': 'U',
+            'Ô': 'O',
+            'Â': 'A',
+            'Ê': 'E',
             'Ã£': 'ã',
             'Ãµ': 'õ',
             'Ãª': 'ê',
@@ -361,8 +394,8 @@ def clean_special_characters(text):
             '\u00A0': ' ',  # non-breaking space
             '\t': ' ',
             '\r': '',
-            '\n': ' ',
-    }
+            '\n': ' '
+        }
     
     # Aplicar correções
     result = text_str
@@ -374,6 +407,51 @@ def clean_special_characters(text):
     result = result.replace('\ufffd', '')  # Remove replacement chars
     
     return result
+
+def fix_daycoval_date(date_str, field_name=""):
+    """
+    🚨 CORREÇÃO ESPECÍFICA DAYCOVAL: 
+    Converte MM/DD/YYYY → DD/MM/YYYY (formato brasileiro)
+    Exemplo: 10/02/2025 → 02/10/2025
+    """
+    if not date_str or pd.isna(date_str) or str(date_str).strip() == "":
+        return ""
+    
+    import re
+    from datetime import datetime
+    
+    date_clean = str(date_str).strip()
+    logging.info(f"🔧 DAYCOVAL {field_name}: Corrigindo data '{date_clean}'")
+    
+    # Padrão MM/DD/YYYY → DD/MM/YYYY
+    us_date_pattern = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', date_clean)
+    if us_date_pattern:
+        month, day, year = us_date_pattern.groups()
+        
+        # Verificar se faz sentido inverter (mês > 12 ou dia > 12)
+        month_int = int(month)
+        day_int = int(day)
+        
+        # Se mês > 12, definitivamente está trocado
+        if month_int > 12:
+            fixed_date = f"{month}/{day}/{year}"  # troca diretamente
+            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (mês > 12)")
+            return fixed_date
+        
+        # Se dia > 12 e mês <= 12, provavelmente está correto (DD/MM/YYYY)
+        elif day_int > 12 and month_int <= 12:
+            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' mantido (já DD/MM/YYYY)")
+            return date_clean
+        
+        # Caso ambíguo (ambos <= 12): assumir que está no formato americano e inverter
+        elif month_int <= 12 and day_int <= 12:
+            fixed_date = f"{day}/{month}/{year}"
+            logging.info(f"✅ DAYCOVAL {field_name}: '{date_clean}' → '{fixed_date}' (formato americano convertido)")
+            return fixed_date
+    
+    # Se não corresponder ao padrão, retornar como está
+    logging.warning(f"⚠️ DAYCOVAL {field_name}: Formato não reconhecido: '{date_clean}'")
+    return date_clean
 
 def extract_contact_data(row, bank_type: str = "") -> dict:
     """Extrai dados de contato de forma universal tentando múltiplos campos possíveis"""
@@ -3221,16 +3299,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 normalized_row = {
                     "PROPOSTA": str(row.get('PROPOSTA', '')).strip(),
                     "ADE": str(row.get('PROPOSTA', '')).strip(),  # ADE = mesma proposta
-                    "DATA_CADASTRO": str(row.get('DATA CADASTRO', '')).strip(),
+                    "DATA_CADASTRO": fix_daycoval_date(str(row.get('DATA CADASTRO', '')).strip(), "DATA_CADASTRO"),
                     "BANCO": "BANCO DAYCOVAL",
-                    "ORGAO": str(row.get('ORGAO', '')).strip(),
-                    "TIPO_OPERACAO": str(row.get('TIPO DE OPERACAO', '')).strip(),
+                    "ORGAO": clean_special_characters(str(row.get('ORGAO', '')).strip()),
+                    "TIPO_OPERACAO": clean_special_characters(str(row.get('TIPO DE OPERACAO', '')).strip()),
                     "NUMERO_PARCELAS": str(row.get('NUMERO PARCELAS', '')).strip(),
                     "VALOR_OPERACAO": str(row.get('VALOR OPERACAO', '')).strip(),
                     "VALOR_LIBERADO": str(row.get('VALOR LIBERADO', '')).strip(),
                     "USUARIO_BANCO": str(row.get('USUARIO BANCO', '')).strip(),
                     "SITUACAO": str(row.get('SITUACAO', '')).strip(),
-                    "DATA_PAGAMENTO": str(row.get('DATA DE PAGAMENTO', '')).strip(),
+                    "DATA_PAGAMENTO": fix_daycoval_date(str(row.get('DATA DE PAGAMENTO', '')).strip(), "DATA_PAGAMENTO"),
                     "CPF": str(row.get('CPF', '')).strip(),
                     "NOME": str(row.get('NOME', '')).strip().upper(),
                     "DATA_NASCIMENTO": str(row.get('DATA DE NASCIMENTO', '')).strip(),
@@ -3388,16 +3466,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 normalized_row = {
                     "PROPOSTA": proposta_final,  # Unnamed: 0
                     "ADE": proposta_final,  # Campo ADE = mesma proposta
-                    "DATA_CADASTRO": str(data_cadastro_raw) if data_cadastro_raw else "",  # Unnamed: 5 - DT.CAD.
+                    "DATA_CADASTRO": fix_daycoval_date(str(data_cadastro_raw) if data_cadastro_raw else "", "DATA_CADASTRO"),  # Unnamed: 5 - DT.CAD.
                     "BANCO": "BANCO DAYCOVAL",
-                    "ORGAO": orgao_detectado,  # ✅ Detectado do arquivo
-                    "TIPO_OPERACAO": operacao_detectada,  # ✅ Detectado do arquivo  
+                    "ORGAO": clean_special_characters(orgao_detectado),  # ✅ Detectado do arquivo + limpo
+                    "TIPO_OPERACAO": clean_special_characters(operacao_detectada),  # ✅ Detectado do arquivo + limpo
                     "NUMERO_PARCELAS": str(prazo_meses_raw) if prazo_meses_raw else "0",  # Unnamed: 11 - Prz. em Meses
                     "VALOR_OPERACAO": valor_operacao_formatted,  # ✅ Formatado brasileiro
                     "VALOR_LIBERADO": valor_liberado_formatted,  # ✅ Formatado brasileiro
                     "USUARIO_BANCO": str(row.get('Unnamed: 40', '')).strip(),  # Usuário_Digitador
                     "SITUACAO": str(situacao_raw) if situacao_raw else "",  # Unnamed: 27 - Situação_Atual_da_Proposta
-                    "DATA_PAGAMENTO": str(data_liberacao_raw) if data_liberacao_raw else "",  # Unnamed: 36 - Data da liberação
+                    "DATA_PAGAMENTO": fix_daycoval_date(str(data_liberacao_raw) if data_liberacao_raw else "", "DATA_PAGAMENTO"),  # Unnamed: 36 - Data da liberação
                     "CPF": cpf_final,  # ✅ Formatado brasileiro (XXX.XXX.XXX-XX)
                     "NOME": nome_final,  # ✅ Maiúsculas
                     "DATA_NASCIMENTO": "",  # Não disponível no DAYCOVAL
