@@ -673,28 +673,28 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         cep_fields = []
     
     elif bank_type == "AVERBAI":
-        # ✅ AVERBAI (Relatório.csv): Headers corretos na primeira linha
-        # Campo confirmado: CelularCliente (coluna 9)
-        telefone_fields = ['CelularCliente']
-        endereco_fields = []
+        # ✅ AVERBAI: RESTAURAR busca genérica que funcionava antes
+        # Busca por padrões genéricos de telefone/celular
+        telefone_fields = ['celular', 'telefone', 'cel', 'fone', 'phone', 'CelularCliente']
+        endereco_fields = ['endereco', 'endereço', 'address', 'end']
         num_endereco_fields = []
         complemento_fields = []
-        bairro_fields = []
-        cidade_fields = []
-        uf_fields = []
-        cep_fields = []
+        bairro_fields = ['bairro']
+        cidade_fields = ['cidade']
+        uf_fields = ['uf', 'estado']
+        cep_fields = ['cep']
     
     elif bank_type == "C6":
-        # ✅ C6 (Repositório de Dados - Operacional.csv): Headers corretos na primeira linha  
-        # Campos confirmados: Telefone Proposta, Endereço Cliente, Bairro Cliente, Cidade Cliente, UF Cliente
-        telefone_fields = ['Telefone Proposta']
-        endereco_fields = ['Endereço Cliente']
-        num_endereco_fields = []
-        complemento_fields = ['Complemento Endereço Cliente']
-        bairro_fields = ['Bairro Cliente']
-        cidade_fields = ['Cidade Cliente'] 
-        uf_fields = ['UF Cliente']
-        cep_fields = []  # Não encontrado na análise
+        # ✅ C6: RESTAURAR busca genérica + nomes específicos como fallback
+        # Priorizar padrões genéricos que funcionavam antes
+        telefone_fields = ['telefone', 'tel', 'fone', 'celular', 'phone', 'Telefone Proposta']
+        endereco_fields = ['endereco', 'endereço', 'address', 'end', 'Endereço Cliente']
+        num_endereco_fields = ['numero', 'num']
+        complemento_fields = ['complemento', 'Complemento Endereço Cliente']
+        bairro_fields = ['bairro', 'Bairro Cliente']
+        cidade_fields = ['cidade', 'Cidade Cliente'] 
+        uf_fields = ['uf', 'estado', 'UF Cliente']
+        cep_fields = ['cep', 'CEP']
     
     elif bank_type == "PRATA":
         # ⚠️ PRATA: Mapeamento original (não analisado nos arquivos)
@@ -735,13 +735,23 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         logging.info(f"🔍 {bank_type} DEBUG - Colunas disponíveis: {available_columns[:20]}")
         logging.info(f"🎯 {bank_type} DEBUG - Procurando telefone em: {telefone_fields}")
     
-    # 🔍 FUNÇÃO HELPER: Buscar valor em lista de campos
+    # 🔍 FUNÇÃO HELPER: Buscar valor em lista de campos (case-insensitive + partial match)
     def buscar_campo(field_list):
+        # Primeiro: Busca exata
         for field in field_list:
             valor = row.get(field, '')
             if valor and str(valor).strip() not in ['nan', 'NaN', '', '0', '0.0']:
-                logging.info(f"✅ {bank_type} ENCONTROU {field} = {valor}")
+                logging.info(f"✅ {bank_type} ENCONTROU EXATO {field} = {valor}")
                 return str(valor).strip()
+        
+        # Segundo: Busca case-insensitive e partial match
+        for field_pattern in field_list:
+            for col_name in row.keys():
+                if field_pattern.lower() in col_name.lower():
+                    valor = row.get(col_name, '')
+                    if valor and str(valor).strip() not in ['nan', 'NaN', '', '0', '0.0']:
+                        logging.info(f"✅ {bank_type} ENCONTROU PARCIAL '{field_pattern}' em '{col_name}' = {valor}")
+                        return str(valor).strip()
         return ""
     
     # 📱 EXTRAIR DADOS USANDO NOMES EXATOS
