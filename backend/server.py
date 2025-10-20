@@ -4344,6 +4344,17 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 logging.info(f"🚫 QUERO MAIS - Pulando linha de cabeçalho: '{primeira_coluna[:50]}...'")
                 continue
             
+            # 🚨 CRÍTICO: Verificar se tem dados básicos obrigatórios
+            proposta_check = str(row.get('Unnamed: 33', '')).strip()
+            cpf_check = str(row.get('Unnamed: 11', '')).strip()
+            nome_check = str(row.get('Unnamed: 38', '')).strip()
+            
+            logging.info(f"🔍 QUERO MAIS check básico: proposta='{proposta_check}', cpf='{cpf_check[:8]}...', nome='{nome_check[:15]}...'")
+            
+            if not proposta_check and not cpf_check and not nome_check:
+                logging.warning(f"🚫 QUERO MAIS - Linha sem dados básicos, pulando")
+                continue
+            
             # Log para debug das colunas disponíveis
             logging.info(f"🏦 QUERO MAIS - Colunas disponíveis: {list(row.keys())[:15]}...")
             
