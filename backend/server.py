@@ -4355,9 +4355,17 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
         
         elif bank_type == "QUERO_MAIS":
             # Mapeamento BANCO QUERO MAIS CREDITO - ESTRUTURA REAL IDENTIFICADA
+            logging.info(f"🏆 QUERO MAIS - Iniciando processamento da linha {len(normalized_data) + 1}")
             
             # ⚠️ VALIDAÇÃO: Pular linhas de cabeçalho  
-            primeira_coluna = str(list(row.values())[0] if row.values() else "").strip()
+            try:
+                # 🔧 FIX: Conversão segura de row.values() para evitar erro numpy.ndarray
+                row_values_list = list(row.values()) if hasattr(row, 'values') and len(row) > 0 else []
+                primeira_coluna = str(row_values_list[0] if row_values_list else "").strip()
+            except (IndexError, TypeError, AttributeError) as e:
+                logging.warning(f"⚠️ QUERO MAIS - Erro ao extrair primeira coluna: {e}")
+                primeira_coluna = ""
+                
             if any(header in primeira_coluna.upper() for header in [
                 'RELATÓRIO DE PRODUÇÃO', 'CAPITAL CONSIG', 'COMISSIONADO', 'AGENCIA', 'CNPJ', 
                 'CODIGO PROMOTORA', 'PG.', 'PROC.', 'SIST.', 'VERSÃO'
