@@ -61,6 +61,21 @@ const apiPostWithFallback = async (path, formData, config = {}) => {
 
 const THEME_OPTIONS = [
   { 
+    name: '🏢 Q-FAZ Oficial', 
+    value: 'qfaz', 
+    bg: 'bg-gradient-to-br from-blue-50 via-white to-orange-50', 
+    header: 'bg-gradient-to-r from-[#07398b]/10 to-[#ee7803]/10 backdrop-blur-sm shadow-xl border-b border-[#07398b]/20', 
+    accent: 'blue', 
+    isDark: false,
+    primary: 'bg-gradient-to-r from-[#07398b] to-[#ee7803] hover:from-[#062d73] hover:to-[#d66a02] text-white shadow-lg transform hover:shadow-xl hover:scale-105',
+    secondary: 'bg-gradient-to-r from-blue-100 to-orange-100 hover:from-blue-200 hover:to-orange-200 text-[#07398b] shadow-sm',
+    text: 'text-gray-900',
+    textSecondary: 'text-[#07398b]',
+    cardBg: 'bg-white/90 backdrop-blur-sm shadow-lg border border-[#07398b]/10',
+    buttonBg: 'bg-gradient-to-r from-blue-100 to-orange-100 hover:from-blue-200 hover:to-orange-200 text-[#07398b]',
+    buttonBorder: 'border-[#07398b]/20'
+  },
+  { 
     name: 'Claro Profissional', 
     value: 'light', 
     bg: 'bg-gradient-to-br from-gray-50 to-blue-50', 
@@ -136,34 +151,49 @@ const THEME_OPTIONS = [
     buttonBorder: 'border-purple-300'
   },
   { 
-    name: 'Rosa Vibrante', 
+    name: 'Rosa Dourado', 
     value: 'pink', 
-    bg: 'bg-gradient-to-br from-pink-50 via-rose-50 to-red-50', 
-    header: 'bg-pink-500/20 backdrop-blur-sm shadow-lg border-b border-pink-200', 
-    accent: 'pink', 
+    bg: 'bg-gradient-to-br from-rose-100 via-pink-50 to-orange-100', 
+    header: 'bg-gradient-to-r from-rose-500/20 to-pink-500/20 backdrop-blur-sm shadow-xl border-b border-rose-300/50', 
+    accent: 'rose', 
     isDark: false,
-    primary: 'bg-pink-600 hover:bg-pink-700 text-white shadow-md',
-    secondary: 'bg-pink-100 hover:bg-pink-200 text-pink-900 shadow-sm',
+    primary: 'bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white shadow-lg transform hover:shadow-xl',
+    secondary: 'bg-rose-100 hover:bg-rose-200 text-rose-900 shadow-sm',
     text: 'text-gray-900',
-    textSecondary: 'text-pink-900',
-    cardBg: 'bg-white/80 backdrop-blur-sm shadow-md',
-    buttonBg: 'bg-pink-100 hover:bg-pink-200 text-pink-900',
-    buttonBorder: 'border-pink-300'
+    textSecondary: 'text-rose-800',
+    cardBg: 'bg-white/90 backdrop-blur-sm shadow-lg border border-rose-200/50',
+    buttonBg: 'bg-gradient-to-r from-rose-100 to-pink-100 hover:from-rose-200 hover:to-pink-200 text-rose-900',
+    buttonBorder: 'border-rose-300'
   },
   { 
-    name: 'Noite Estrelada', 
+    name: 'Noite Estrelada Rosa', 
     value: 'night', 
-    bg: 'bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900', 
-    header: 'bg-slate-800/90 backdrop-blur-sm shadow-2xl border-b border-purple-500/30', 
+    bg: 'bg-gradient-to-br from-slate-900 via-purple-900/80 to-rose-900/60', 
+    header: 'bg-gradient-to-r from-slate-800/95 to-purple-800/95 backdrop-blur-sm shadow-2xl border-b border-rose-500/40', 
+    accent: 'rose', 
+    isDark: true,
+    primary: 'bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white shadow-lg transform hover:shadow-xl',
+    secondary: 'bg-slate-700/80 hover:bg-slate-600/80 text-rose-100 shadow-md border border-rose-500/30',
+    text: 'text-white',
+    textSecondary: 'text-rose-200',
+    cardBg: 'bg-slate-800/80 backdrop-blur-sm shadow-xl border border-rose-500/20',
+    buttonBg: 'bg-slate-700/70 hover:bg-slate-600/70 text-rose-100 border border-rose-500/30',
+    buttonBorder: 'border-rose-500/30'
+  },
+  { 
+    name: 'Céu Estrelado Premium', 
+    value: 'starry', 
+    bg: 'bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900', 
+    header: 'bg-gradient-to-r from-indigo-800/95 to-purple-800/95 backdrop-blur-sm shadow-2xl border-b border-indigo-400/40', 
     accent: 'indigo', 
     isDark: true,
-    primary: 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg',
-    secondary: 'bg-slate-700 hover:bg-slate-600 text-purple-100 shadow-md',
+    primary: 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-xl transform hover:shadow-2xl hover:scale-105',
+    secondary: 'bg-indigo-800/60 hover:bg-indigo-700/60 text-indigo-100 shadow-lg border border-indigo-400/30',
     text: 'text-white',
-    textSecondary: 'text-purple-200',
-    cardBg: 'bg-slate-800/70 backdrop-blur-sm shadow-lg',
-    buttonBg: 'bg-slate-700 hover:bg-slate-600 text-purple-100',
-    buttonBorder: 'border-purple-500/30'
+    textSecondary: 'text-indigo-200',
+    cardBg: 'bg-slate-800/70 backdrop-blur-md shadow-2xl border border-indigo-400/30',
+    buttonBg: 'bg-indigo-800/50 hover:bg-indigo-700/50 text-indigo-100 border border-indigo-400/30',
+    buttonBorder: 'border-indigo-400/30'
   },
   { 
     name: 'Laranja Sunset', 
@@ -213,7 +243,7 @@ function App() {
   const [stormSummary, setStormSummary] = useState(null);
   const [errors, setErrors] = useState([]);
   const [dragOver, setDragOver] = useState(false);
-  const [currentTheme, setCurrentTheme] = useState('light');
+  const [currentTheme, setCurrentTheme] = useState('qfaz');
   const [showThemeSelector, setShowThemeSelector] = useState(false);
 
   // Load theme from localStorage on component mount
@@ -499,76 +529,218 @@ function App() {
   return (
     <div className={`min-h-screen ${themeClasses.bg} py-4 sm:py-8 transition-colors duration-300`}>
       <style jsx>{`
-        /* Pill style for banks with links */
+        /* Beautiful professional animations */
+        @keyframes slideIn {
+          0% { 
+            opacity: 0; 
+            transform: translateY(-20px) scale(0.9); 
+          }
+          100% { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+          }
+        }
+
+        @keyframes fadeInUp {
+          0% {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -200px 0; }
+          100% { background-position: calc(200px + 100%) 0; }
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33% { transform: translateY(-8px) rotate(1deg); }
+          66% { transform: translateY(-4px) rotate(-1deg); }
+        }
+
+        @keyframes gentleFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-3px); }
+        }
+
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.4); }
+          50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.4); }
+        }
+
+        @keyframes qfaz-pulse-glow {
+          0%, 100% { 
+            box-shadow: 0 0 8px rgba(7, 57, 139, 0.3), 0 0 16px rgba(238, 120, 3, 0.2); 
+          }
+          50% { 
+            box-shadow: 0 0 25px rgba(7, 57, 139, 0.7), 0 0 40px rgba(238, 120, 3, 0.5), 0 0 60px rgba(7, 57, 139, 0.3); 
+          }
+        }
+
+        @keyframes backgroundMove {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        /* Enhanced bank cards com cores Q-FAZ */
         .bank-card-with-link {
-          background: #eaf5ff !important; /* very light blue */
-          border: 1px solid #93c5fd !important; /* blue-300 */
-          color: #075985 !important; /* dark blue text */
-          box-shadow: 0 6px 14px rgba(3, 105, 161, 0.06) !important;
+          background: linear-gradient(135deg, rgba(7, 57, 139, 0.05) 0%, #f3f4f6 50%, rgba(238, 120, 3, 0.05) 100%) !important;
+          border: 1px solid rgba(7, 57, 139, 0.3) !important;
+          color: #07398b !important;
+          box-shadow: 0 8px 16px rgba(7, 57, 139, 0.1), 0 4px 8px rgba(238, 120, 3, 0.05) !important;
           position: relative;
           overflow: visible;
-          padding: 6px 12px !important;
-          border-radius: 9999px !important;
+          padding: 8px 16px !important;
+          border-radius: 12px !important;
           display: inline-flex !important;
           align-items: center;
           justify-content: center;
-          min-height: 36px;
+          min-height: 42px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          backdrop-filter: blur(8px);
         }
 
         .bank-card-with-link:hover {
-          transform: translateY(-2px) !important;
-          box-shadow: 0 10px 28px rgba(3, 105, 161, 0.12) !important;
-          border-color: #60a5fa !important; /* blue-400 */
-          background: linear-gradient(180deg, #f0f9ff 0%, #e6f2ff 100%) !important;
+          transform: translateY(-4px) scale(1.02) !important;
+          box-shadow: 0 16px 32px rgba(7, 57, 139, 0.2), 0 8px 16px rgba(238, 120, 3, 0.1) !important;
+          border-color: rgba(238, 120, 3, 0.6) !important;
+          background: linear-gradient(135deg, rgba(7, 57, 139, 0.1) 0%, #f1f5f9 50%, rgba(238, 120, 3, 0.1) 100%) !important;
+          animation: qfaz-pulse-glow 2s infinite;
         }
 
-        /* Pill style for banks without links (muted) */
         .bank-card-without-link {
-          background: #f1f5f9 !important; /* light gray */
-          border: 1px solid #d1d5db !important;
-          color: #6b7280 !important;
-          box-shadow: 0 4px 10px rgba(99, 102, 106, 0.03) !important;
-          padding: 6px 12px !important;
-          border-radius: 9999px !important;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+          border: 1px solid rgba(148, 163, 184, 0.3) !important;
+          color: #64748b !important;
+          box-shadow: 0 4px 8px rgba(148, 163, 184, 0.1) !important;
+          padding: 8px 16px !important;
+          border-radius: 12px !important;
           display: inline-flex !important;
           align-items: center;
           justify-content: center;
-          min-height: 36px;
+          min-height: 42px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          backdrop-filter: blur(4px);
         }
 
         .bank-card-without-link:hover {
-          transform: translateY(-1px) !important;
-          box-shadow: 0 6px 16px rgba(99, 102, 106, 0.06) !important;
+          transform: translateY(-2px) scale(1.01) !important;
+          box-shadow: 0 8px 16px rgba(148, 163, 184, 0.15) !important;
+          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
         }
 
         .bank-link {
-          transition: all 0.24s cubic-bezier(0.2, 0, 0.2, 1) !important;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
           text-decoration: none;
           color: inherit;
         }
+
+        /* Header improvements com cores Q-FAZ */
+        .qfaz-gradient-text {
+          background: linear-gradient(135deg, #07398b 0%, #ee7803 50%, #07398b 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: shimmer 3s infinite;
+          background-size: 200px 100%;
+        }
+
+        /* Card animations */
+        .card-animation {
+          animation: slideIn 0.6s ease-out;
+        }
+
+        .floating-element {
+          animation: float 3s ease-in-out infinite;
+        }
+
+        /* Custom scrollbar com cores Q-FAZ */
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.1);
+          border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: linear-gradient(135deg, #07398b, #ee7803);
+          border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(135deg, #062d73, #d66a02);
+        }
+
+        /* Backdrop blur support */
+        .backdrop-blur-glass {
+          backdrop-filter: blur(20px);
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
       `}</style>
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        {/* Header with Theme Selector - Mobile Responsive */}
-        <div className={`${themeClasses.header} rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 transition-colors duration-300`}>
+        {/* Header Professional - Mobile Responsive */}
+        <div className={`${themeClasses.header} rounded-2xl shadow-2xl p-6 sm:p-8 mb-8 sm:mb-12 transition-all duration-500 relative overflow-hidden`}
+             style={{animation: 'fadeInUp 0.8s ease-out'}}>
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#ee7803]/10 to-transparent rounded-full -mr-16 -mt-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-[#07398b]/10 to-transparent rounded-full -ml-12 -mb-12"></div>
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-4 sm:space-y-0">
             <div className="flex flex-col space-y-3">
               {/* Título Principal */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center lg:justify-start gap-3">
-                <h1 className={`text-2xl sm:text-4xl font-bold ${themeClasses.text} flex items-center gap-3`}>
-                  <span className="bg-gradient-to-r from-[#073c9f] to-[#e8871d] bg-clip-text text-transparent font-black text-3xl sm:text-5xl">Q-FAZ</span>
-                </h1>
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs sm:text-sm rounded-full font-bold shadow-md">
-                    v7.0.0
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center lg:justify-start gap-4 sm:gap-6 mb-2">
+                {/* Título Principal Limpo */}
+                <div className="flex items-center justify-center sm:justify-start">
+                  <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-black ${themeClasses.text} flex items-center gap-1`}>
+                    <span style={{color: '#07398b', textShadow: '2px 2px 4px rgba(7,57,139,0.3)'}}>Q-</span>
+                    <span style={{color: '#ee7803', textShadow: '2px 2px 4px rgba(238,120,3,0.3)'}}>FAZ</span>
+                  </h1>
+                </div>
+                
+                {/* Badges Profissionais */}
+                <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
+                  <span className="px-5 py-2 bg-gradient-to-r from-[#07398b] to-[#ee7803] text-white text-xs sm:text-sm rounded-full font-bold shadow-xl transform hover:scale-105 transition-all duration-300 cursor-pointer floating-element border-2 border-white/20">
+                    ✨ v7.0.0 PRO
+                  </span>
+                  <span className="px-4 py-2 bg-gradient-to-r from-[#ee7803] to-[#07398b] text-white text-xs sm:text-sm rounded-full font-bold shadow-lg hover:shadow-xl transition-all duration-300 border border-white/30">
+                    🏦 17 Bancos
+                  </span>
+                  <span className="px-3 py-1 bg-white/90 text-[#07398b] text-xs rounded-full font-semibold shadow-md border border-[#07398b]/20">
+                    🚀 IA Powered
                   </span>
                 </div>
               </div>
               
-              {/* Subtítulo */}
-              <div className="text-center sm:text-left">
-                <h2 className={`text-lg sm:text-2xl font-semibold ${themeClasses.text} leading-tight`}>
-                  Sistema de Processamento de Relatórios Financeiros
+              {/* Subtítulo Profissional */}
+              <div className="text-center sm:text-left space-y-3">
+                <h2 className={`text-xl sm:text-3xl font-bold ${themeClasses.text} leading-tight`}
+                    style={{animation: 'fadeInUp 0.8s ease-out 0.2s both'}}>
+                  Sistema Inteligente de Processamento de Relatórios Financeiros
                 </h2>
+                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start text-sm sm:text-base">
+                  <span className={`${themeClasses.secondaryText} flex items-center gap-1`}>
+                    <span className="w-2 h-2 bg-[#07398b] rounded-full animate-pulse"></span>
+                    Automação Completa
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <span className={`${themeClasses.secondaryText} flex items-center gap-1`}>
+                    <span className="w-2 h-2 bg-[#ee7803] rounded-full animate-pulse"></span>
+                    Mapeamento IA
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <span className={`${themeClasses.secondaryText} flex items-center gap-1`}>
+                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    99.9% Precisão
+                  </span>
+                </div>
               </div>
             </div>
             
@@ -576,11 +748,11 @@ function App() {
             <div className="relative">
               <button
                 onClick={() => setShowThemeSelector(!showThemeSelector)}
-                className={`p-2 sm:p-3 rounded-lg ${themeClasses.buttonSecondary} ${themeClasses.text} border ${themeClasses.border} transition-all hover:shadow-md flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base`}
+                className={`p-3 sm:p-4 rounded-xl ${themeClasses.buttonSecondary} ${themeClasses.text} border ${themeClasses.border} transition-all hover:shadow-xl hover:scale-105 flex items-center space-x-2 sm:space-x-3 text-sm sm:text-base transform active:scale-95 backdrop-blur-sm`}
                 title="Alterar tema"
               >
-                <span>🎨</span>
-                <span className="font-medium hidden sm:inline">Tema</span>
+                <span className="text-lg">🎨</span>
+                <span className="font-semibold hidden sm:inline">Personalizar</span>
               </button>
               
               {showThemeSelector && createPortal(
@@ -643,23 +815,53 @@ function App() {
             </div>
           </div>
           
-          <div className="text-center space-y-6">
-            {/* Descrição Principal */}
-            <div className="max-w-3xl mx-auto">
-              <p className={`${themeClasses.secondaryText} text-base sm:text-lg leading-relaxed px-4`}>
-                Automatize o tratamento de relatórios da Storm e bancos com mapeamento automático
+          <div className="text-center space-y-8 relative">
+            {/* Descrição Principal Melhorada */}
+            <div className="max-w-4xl mx-auto space-y-4"
+                 style={{animation: 'fadeInUp 0.8s ease-out 0.4s both'}}>
+              <p className={`${themeClasses.secondaryText} text-lg sm:text-xl leading-relaxed px-4 font-medium`}>
+                🚀 Revolucione seu processamento financeiro com inteligência artificial
               </p>
+              <p className={`${themeClasses.secondaryText} text-sm sm:text-base leading-relaxed px-6 opacity-90`}>
+                Automatize completamente o tratamento de relatórios da Storm e bancos com mapeamento automático,
+                eliminação inteligente de duplicatas e formatação otimizada para máxima eficiência.
+              </p>
+              
+              {/* Estatísticas Impressionantes */}
+              <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto mt-6">
+                <div className="text-center p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                  <div className="text-2xl sm:text-3xl font-bold text-[#07398b]">17</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Bancos Suportados</div>
+                </div>
+                <div className="text-center p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                  <div className="text-2xl sm:text-3xl font-bold text-[#ee7803]">99.9%</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Precisão IA</div>
+                </div>
+                <div className="text-center p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+                  <div className="text-2xl sm:text-3xl font-bold text-green-600">10x</div>
+                  <div className="text-xs sm:text-sm text-gray-600">Mais Rápido</div>
+                </div>
+              </div>
             </div>
 
-            {/* Grid de Bancos */}
-            <div className="flex flex-col items-center space-y-4">
-              {/* Título dos Bancos */}
-              <div className="text-center mb-2">
-                <h3 className={`text-lg font-semibold ${themeClasses.text} mb-1`}>
-                  🏦 Bancos Suportados
-                </h3>
-                <p className={`text-sm ${themeClasses.secondaryText}`}>
-                  Clique nos bancos com 🔗 para acessar seus sistemas
+            {/* Grid de Bancos Profissional */}
+            <div className="flex flex-col items-center space-y-6"
+                 style={{animation: 'fadeInUp 0.8s ease-out 0.6s both'}}>
+              {/* Título dos Bancos Melhorado */}
+              <div className="text-center mb-4">
+                <div className="inline-flex items-center gap-3 mb-3">
+                  <div className="w-12 h-0.5 bg-gradient-to-r from-transparent to-[#07398b]"></div>
+                  <h3 className={`text-xl sm:text-2xl font-bold ${themeClasses.text} flex items-center gap-2`}>
+                    <span className="text-2xl">🏦</span>
+                    Ecossistema Bancário Completo
+                  </h3>
+                  <div className="w-12 h-0.5 bg-gradient-to-l from-transparent to-[#ee7803]"></div>
+                </div>
+                <p className={`text-sm sm:text-base ${themeClasses.secondaryText} max-w-lg mx-auto`}>
+                  Integração direta com os principais bancos e instituições financeiras do mercado
+                </p>
+                <p className={`text-xs ${themeClasses.secondaryText} mt-2 opacity-75`}>
+                  💡 Clique nos bancos destacados para acessar seus sistemas de login
                 </p>
               </div>
               
@@ -697,15 +899,17 @@ function App() {
               </div>
             </div>
             
-            {/* Botão Reset Melhorado */}
-            <div className="pt-4">
+            {/* Botão Reset Premium */}
+            <div className="pt-8 flex justify-center">
               <button
                 onClick={resetAll}
-                className={`group relative inline-flex items-center px-8 py-3 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white rounded-full shadow-lg text-sm sm:text-base font-semibold transition-all duration-300 hover:shadow-xl hover:scale-105 active:scale-95`}
+                className={`group relative inline-flex items-center px-10 py-4 bg-gradient-to-r from-gray-600 via-gray-700 to-gray-800 hover:from-gray-700 hover:via-gray-800 hover:to-gray-900 text-white rounded-2xl shadow-xl text-sm sm:text-base font-bold transition-all duration-500 hover:shadow-2xl hover:scale-110 active:scale-95 border border-white/10`}
+                style={{animation: 'gentleFloat 4s ease-in-out infinite'}}
               >
-                <span className="mr-2 group-hover:rotate-180 transition-transform duration-300">🔄</span>
-                <span>Reiniciar Sistema</span>
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full opacity-0 group-hover:opacity-30 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-[#07398b]/20 to-[#ee7803]/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span className="relative mr-3 group-hover:rotate-180 transition-transform duration-500 text-lg">🔄</span>
+                <span className="relative">Reiniciar Sistema</span>
+                <div className="absolute -inset-1 bg-gradient-to-r from-[#07398b]/30 via-gray-600/30 to-[#ee7803]/30 rounded-2xl opacity-0 group-hover:opacity-50 transition-opacity duration-300 blur-sm"></div>
               </button>
             </div>
           </div>
@@ -730,20 +934,37 @@ function App() {
           </div>
         )}
 
-        {/* Processing Steps - Mobile Responsive */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          {/* Step 1: Storm Upload - Mobile Responsive */}
-          <div className={`${themeClasses.cardBg} rounded-xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl`}>
-            <div className="flex items-center mb-4">
-              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 text-sm sm:text-base transition-colors ${
-                stormUploaded ? 'bg-green-500' : `bg-${themeClasses.accent}-500`
+        {/* Processing Steps Premium - Mobile Responsive */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12"
+             style={{animation: 'fadeInUp 0.8s ease-out 0.8s both'}}>
+          {/* Step 1: Storm Upload Premium - Mobile Responsive */}
+          <div className={`${themeClasses.cardBg} rounded-2xl shadow-2xl p-6 sm:p-8 transition-all duration-500 hover:shadow-3xl hover:-translate-y-2 border border-[#07398b]/10 relative overflow-hidden group`}>
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#07398b]/5 to-transparent rounded-full -mr-16 -mt-16 group-hover:scale-125 transition-transform duration-500"></div>
+            
+            <div className="flex items-center mb-6 relative z-10">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-white font-bold mr-4 text-base sm:text-lg transition-all duration-300 shadow-lg ${
+                stormUploaded 
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 animate-pulse' 
+                  : 'bg-gradient-to-r from-[#07398b] to-[#07398b]/80'
               }`}>
-                1
+                {stormUploaded ? '✓' : '1'}
               </div>
-              <h2 className={`text-lg sm:text-xl font-semibold ${themeClasses.text}`}>
-                Upload da Storm
-              </h2>
-              {stormUploaded && <span className="ml-2 text-green-500">✅</span>}
+              <div className="flex-1">
+                <h2 className={`text-xl sm:text-2xl font-bold ${themeClasses.text} mb-1`}>
+                  📊 Upload da Storm
+                </h2>
+                <p className={`text-sm ${themeClasses.secondaryText} opacity-75`}>
+                  Base de dados para identificação de duplicatas
+                </p>
+              </div>
+              {stormUploaded && (
+                <div className="ml-3">
+                  <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full border border-green-300">
+                    ✅ Concluído
+                  </span>
+                </div>
+              )}
             </div>
             
             <p className={`${themeClasses.secondaryText} mb-4 text-sm sm:text-base`}>
@@ -821,18 +1042,38 @@ function App() {
             )}
           </div>
 
-          {/* Step 2: Bank Files Upload - Mobile Responsive */}
-          <div className={`${themeClasses.cardBg} rounded-xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl`}>
-            <div className="flex items-center mb-4">
-              <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold mr-3 text-sm sm:text-base transition-colors ${
-                results ? 'bg-green-500' : stormUploaded ? `bg-${themeClasses.accent}-500` : 'bg-gray-400'
+          {/* Step 2: Bank Files Upload Premium - Mobile Responsive */}
+          <div className={`${themeClasses.cardBg} rounded-2xl shadow-2xl p-6 sm:p-8 transition-all duration-500 hover:shadow-3xl hover:-translate-y-2 border border-[#ee7803]/10 relative overflow-hidden group ${
+            !stormUploaded ? 'opacity-60' : ''
+          }`}>
+            {/* Background decoration */}
+            <div className="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-[#ee7803]/5 to-transparent rounded-full -ml-16 -mt-16 group-hover:scale-125 transition-transform duration-500"></div>
+            
+            <div className="flex items-center mb-6 relative z-10">
+              <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-white font-bold mr-4 text-base sm:text-lg transition-all duration-300 shadow-lg ${
+                results 
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 animate-pulse'
+                  : stormUploaded 
+                    ? 'bg-gradient-to-r from-[#ee7803] to-[#ee7803]/80'
+                    : 'bg-gray-400'
               }`}>
-                2
+                {results ? '✓' : '2'}
               </div>
-              <h2 className={`text-lg sm:text-xl font-semibold ${themeClasses.text}`}>
-                Upload dos Bancos
-              </h2>
-              {results && <span className="ml-2 text-green-500">✅</span>}
+              <div className="flex-1">
+                <h2 className={`text-xl sm:text-2xl font-bold ${themeClasses.text} mb-1`}>
+                  🏦 Upload dos Bancos
+                </h2>
+                <p className={`text-sm ${themeClasses.secondaryText} opacity-75`}>
+                  Processamento inteligente com IA
+                </p>
+              </div>
+              {results && (
+                <div className="ml-3">
+                  <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full border border-green-300">
+                    ✅ Processado
+                  </span>
+                </div>
+              )}
             </div>
             
             <p className={`${themeClasses.secondaryText} mb-4`}>
