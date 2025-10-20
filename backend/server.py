@@ -1448,19 +1448,33 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
             logging.info(f"✅ SANTANDER detectado por conteúdo da coluna BANCO")
             return "SANTANDER"
     
-    # Verificar se é CREFAZ (PRIORIDADE ALTA - antes do MERCANTIL)
+    # 🚨 VERIFICAR MERCANTIL PRIMEIRO (PRIORIDADE ALTA - colunas exclusivas)
+    # Indicadores específicos únicos do Mercantil (baseado no arquivo real)
+    mercantil_exclusive_columns = ['codigocorrespondente', 'nomecorrespondente', 'cnpjcorrespondente', 'codigosubstabelecido', 'nomesubstabelecido', 'cpfagentecertificado']
+    mercantil_exclusive_matches = sum(1 for indicator in mercantil_exclusive_columns if any(indicator in col for col in df_columns))
+    
+    # Debug: Mostrar quais colunas exclusivas MERCANTIL foram encontradas
+    found_mercantil_cols = [col for col in df_columns if any(indicator in col.lower() for indicator in mercantil_exclusive_columns)]
+    logging.info(f"🔍 MERCANTIL colunas exclusivas encontradas: {found_mercantil_cols[:3]} ({mercantil_exclusive_matches}/6 matches)")
+    
+    if mercantil_exclusive_matches >= 3:
+        logging.warning(f"✅ MERCANTIL detectado PRIMEIRO por colunas exclusivas ({mercantil_exclusive_matches}/6 matches)")
+        return "MERCANTIL"
+    
+    # Verificar se é CREFAZ (após verificação MERCANTIL)
     # 1. Por nome do arquivo
     if 'crefaz' in filename_lower:
         logging.info(f"✅ CREFAZ detectado por nome do arquivo: {filename}")
         return "CREFAZ"
-    
-    # 2. Por colunas específicas do CREFAZ
-    crefaz_column_indicators = ['data cadastro', 'número da proposta', 'cpf', 'cliente', 'cidade', 'valor liberado', 'prazo', 'status', 'agente', 'cod operação', 'produto']
+
+    # 2. Por colunas específicas do CREFAZ (MAIS RESTRITIVAS)
+    crefaz_column_indicators = ['data cadastro', 'número da proposta', 'cod operação', 'agente']
     crefaz_col_matches = sum(1 for indicator in crefaz_column_indicators if any(indicator in col for col in df_columns))
-    if crefaz_col_matches >= 5:
-        logging.info(f"✅ CREFAZ detectado por colunas ({crefaz_col_matches} matches)")
-        return "CREFAZ"
     
+    if crefaz_col_matches >= 3 and mercantil_exclusive_matches == 0:
+        logging.info(f"✅ CREFAZ detectado por colunas específicas ({crefaz_col_matches} matches, sem colunas MERCANTIL)")
+        return "CREFAZ"
+
     # 3. Por conteúdo específico (indicadores únicos de energia/boleto)
     if not df.empty:
         # Verificar nas primeiras 3 linhas para indicadores específicos do CREFAZ
@@ -1474,40 +1488,24 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
         found_crefaz_indicators = [ind for ind in crefaz_unique_indicators if ind in all_data]
         
         # Verificar se NÃO tem indicadores exclusivos do MERCANTIL
-        mercantil_exclusive_indicators = ['banco mercantil do brasil', 'credfranco', 'bmb', 'codigocorrespondente', 'nomecorrespondente']
+        mercantil_exclusive_indicators = ['banco mercantil do brasil', 'credfranco', 'bmb']
         found_mercantil_indicators = [ind for ind in mercantil_exclusive_indicators if ind in all_data]
         
-        if found_crefaz_indicators and not found_mercantil_indicators:
+        if found_crefaz_indicators and not found_mercantil_indicators and mercantil_exclusive_matches == 0:
             logging.info(f"✅ CREFAZ detectado por conteúdo único: {found_crefaz_indicators}")
             return "CREFAZ"
 
-    # Verificar se é MERCANTIL (Banco Mercantil do Brasil) - APÓS CREFAZ
-    # 1. Por nome do arquivo
+    # Verificar MERCANTIL por nome do arquivo (detecção secundária)
     if 'mercantil' in filename_lower or 'bmb' in filename_lower or 'credfranco' in filename_lower:
         logging.info(f"✅ MERCANTIL detectado por nome do arquivo: {filename}")
         return "MERCANTIL"
     
-    # 2. Por estrutura de colunas específicas (FORMATO REAL DO MERCANTIL)
-    # Indicadores principais do formato real
+    # Verificar MERCANTIL por colunas principais (caso não tenha as exclusivas)
     mercantil_indicators = ['numeroproposta', 'codigoconvenio', 'nomeconvenio', 'codigoproduto', 'nomeproduto', 'modalidadecredito', 'situacaoproposta']
     mercantil_matches = sum(1 for indicator in mercantil_indicators if any(indicator in col for col in df_columns))
     
-    # Indicadores específicos únicos do Mercantil (baseado no arquivo real)
-    mercantil_unique = ['codigocorrespondente', 'nomecorrespondente', 'cnpjcorrespondente', 'codigosubstabelecido', 'nomesubstabelecido', 'cpfagentecertificado']
-    mercantil_unique_matches = sum(1 for indicator in mercantil_unique if any(indicator in col for col in df_columns))
-    
-    # Indicadores de campos extensos típicos do Mercantil
-    mercantil_extended = ['valorliberacaosimulado', 'bancoliberacaocliente', 'agencialiberacaocliente', 'contaliberacaocliente', 'digitacontaliberacaocliente']
-    mercantil_extended_matches = sum(1 for indicator in mercantil_extended if any(indicator in col for col in df_columns))
-    
-    if mercantil_matches >= 4:
+    if mercantil_matches >= 5:
         logging.info(f"✅ MERCANTIL detectado por colunas principais ({mercantil_matches}/7 matches)")
-        return "MERCANTIL"
-    elif mercantil_unique_matches >= 3:
-        logging.info(f"✅ MERCANTIL detectado por colunas únicas ({mercantil_unique_matches}/6 matches)")
-        return "MERCANTIL"
-    elif mercantil_extended_matches >= 2:
-        logging.info(f"✅ MERCANTIL detectado por colunas extensas ({mercantil_extended_matches}/5 matches)")
         return "MERCANTIL"
     
     # 3. Por conteúdo específico do MERCANTIL (mais restrito)
