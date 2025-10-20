@@ -1042,6 +1042,14 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
     """Leitura otimizada de arquivos com múltiplas tentativas e melhor detecção de separadores"""
     file_ext = filename.lower().split('.')[-1]
     
+    # Log para debug de QUERO MAIS
+    filename_lower = filename.lower()
+    is_potentially_quero_mais = any(indicator in filename_lower for indicator in 
+                                   ['quero', 'promotora', 'producao', 'produção', 'capital', 'consig', 'qfz'])
+    
+    if is_potentially_quero_mais:
+        logging.warning(f"🔍 QUERO MAIS POTENCIAL detectado: {filename} (formato: {file_ext})")
+    
     try:
         if file_ext == 'csv':
             # Tentar diferentes encodings e separadores com tratamento robusto
@@ -1105,8 +1113,13 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
             # Verificar se é arquivo PAULISTA - precisa pular primeiras linhas
             filename_lower = filename.lower()
             is_paulista = any(indicator in filename_lower for indicator in ['paulista', 'af5eebb7'])
+            is_potentially_quero_mais = any(indicator in filename_lower for indicator in 
+                                           ['quero', 'promotora', 'producao', 'produção', 'capital', 'consig', 'qfz'])
             
-            logging.info(f"🔍 Arquivo: {filename_lower}, É PAULISTA? {is_paulista}")
+            logging.info(f"🔍 Arquivo: {filename_lower}, É PAULISTA? {is_paulista}, É QUERO MAIS? {is_potentially_quero_mais}")
+            
+            if is_potentially_quero_mais:
+                logging.warning(f"🏦 QUERO MAIS Excel detectado: {filename}")
             
             if is_paulista:
                 logging.info(f"🏦 Detectado arquivo PAULISTA: {filename}, aplicando leitura especial...")
@@ -1216,6 +1229,13 @@ def read_file_optimized(file_content: bytes, filename: str) -> pd.DataFrame:
                 raise ValueError(f"Não foi possível ler o arquivo Excel: {str(e)}")
         elif file_ext in ['txt']:
             # TXT pode ser CSV com separadores variados
+            filename_lower = filename.lower()
+            is_potentially_quero_mais = any(indicator in filename_lower for indicator in 
+                                           ['quero', 'promotora', 'producao', 'produção', 'capital', 'consig', 'qfz'])
+            
+            if is_potentially_quero_mais:
+                logging.warning(f"🏦 QUERO MAIS TXT detectado: {filename}")
+            
             try:
                 # Tentar como CSV primeiro
                 content_str = file_content.decode('utf-8')
@@ -1527,9 +1547,9 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
     unnamed_cols = sum(1 for col in df_columns if 'unnamed:' in col)
     logging.warning(f"🔍 QUERO MAIS check estrutura: {total_cols} colunas totais, {unnamed_cols} Unnamed, arquivo: {filename}")
     
-    # 🔧 CRITÉRIO MELHORADO: Se tem 40+ colunas e 30+ Unnamed (ou ratio > 80%)
+    # 🔧 CRITÉRIO MELHORADO: Se tem 40+ colunas e 30+ Unnamed (ou ratio > 60%)
     unnamed_ratio = (unnamed_cols / total_cols * 100) if total_cols > 0 else 0
-    structure_matches = (total_cols > 40 and unnamed_cols > 30) or unnamed_ratio > 80
+    structure_matches = (total_cols > 40 and unnamed_cols > 30) or unnamed_ratio > 60
     
     logging.warning(f"🔍 QUERO MAIS estrutura - ratio Unnamed: {unnamed_ratio:.1f}%, match: {structure_matches}")
     
@@ -5909,7 +5929,14 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
         
         if not files or len(files) == 0:
             raise HTTPException(status_code=400, detail="Nenhum arquivo de banco foi enviado")
-        
+
+        # 🔍 LOG INICIAL DETALHADO
+        logging.error(f"🚀 INICIANDO PROCESSAMENTO DE {len(files)} ARQUIVOS")
+        for i, file in enumerate(files):
+            if file.filename:
+                file_ext = file.filename.lower().split('.')[-1] if '.' in file.filename else 'unknown'
+                logging.error(f"   📁 Arquivo {i+1}: '{file.filename}' (formato: {file_ext})")
+
         job_id = str(uuid.uuid4())
         job = ProcessingJob(id=job_id, total_records=0, processed_records=0)
         processing_jobs[job_id] = job
@@ -5928,9 +5955,25 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
                 
                 logging.info(f"Processando arquivo: {file.filename}")
                 
+                # 🔍 LOG DETALHADO PARA DEBUG - CAPTURAR TODOS OS ARQUIVOS
+                file_ext = file.filename.lower().split('.')[-1] if file.filename else 'unknown'
+                file_size = len(content)
+                logging.warning(f"🔍 ARQUIVO RECEBIDO: '{file.filename}' | Formato: {file_ext} | Tamanho: {file_size} bytes")
+                
+                # Verificar se pode ser QUERO MAIS
+                filename_lower = file.filename.lower() if file.filename else ""
+                quero_mais_indicators = ['quero', 'promotora', 'producao', 'produção', 'capital', 'consig', 'qfz', 'grupo']
+                has_quero_mais_indicator = any(indicator in filename_lower for indicator in quero_mais_indicators)
+                
+                if has_quero_mais_indicator:
+                    logging.error(f"🎯 POSSÍVEL QUERO MAIS DETECTADO: {file.filename}")
+                else:
+                    logging.warning(f"📋 Arquivo sem indicadores QUERO MAIS: {file.filename}")
+                
                 # Ler arquivo com tratamento de erros melhorado
                 try:
                     df = read_file_optimized(content, file.filename)
+                    logging.warning(f"✅ Arquivo lido com sucesso: {file.filename} → {len(df.columns)} colunas, {len(df)} linhas")
                 except Exception as read_error:
                     logging.error(f"❌ Erro ao ler arquivo {file.filename}: {str(read_error)}")
                     continue
@@ -5949,13 +5992,19 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
                 
                 # Detectar tipo de banco
                 try:
+                    logging.warning(f"🔍 INICIANDO DETECÇÃO DE BANCO para: {file.filename}")
                     bank_type = detect_bank_type_enhanced(df, file.filename)
+                    logging.warning(f"✅ BANCO DETECTADO: {file.filename} → {bank_type}")
                 except Exception as detect_error:
                     logging.error(f"❌ Erro ao detectar banco em {file.filename}: {str(detect_error)}")
                     continue
                 
                 if bank_type == "STORM":
                     continue  # Pular arquivos da Storm
+                
+                # Log especial para QUERO MAIS
+                if bank_type == "QUERO_MAIS":
+                    logging.error(f"🎉 QUERO MAIS CONFIRMADO: {file.filename} → Processando...")
                 
                 logging.info(f"✅ Banco detectado: {bank_type}, Registros originais: {len(df)}, Colunas: {len(df.columns)}")
                 
