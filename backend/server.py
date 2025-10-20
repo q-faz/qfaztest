@@ -1282,6 +1282,10 @@ def detect_bank_type_enhanced(df: pd.DataFrame, filename: str) -> str:
     elif 'daycoval' in filename_lower:
         logging.warning(f"🎯 DAYCOVAL detectado por nome: {filename}")
         return "DAYCOVAL"
+    # 🚨 CORREÇÃO: Adicionar detecção QUERO MAIS por nome
+    elif any(indicator in filename_lower for indicator in ['quero', 'promotora', 'producao', 'produção', 'capital consig']):
+        logging.warning(f"🎯 QUERO MAIS detectado por nome: {filename}")
+        return "QUERO_MAIS"
     
     # Detecção por estrutura de colunas específica
     
