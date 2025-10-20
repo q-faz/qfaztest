@@ -17,6 +17,7 @@ import tempfile
 import json
 import io
 import re
+import traceback
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -5972,31 +5973,48 @@ async def process_bank_reports(files: List[UploadFile] = File(...)):
                 
                 # Ler arquivo com tratamento de erros melhorado
                 try:
+                    logging.error(f"🔄 TENTANDO LER ARQUIVO: '{file.filename}'")
                     df = read_file_optimized(content, file.filename)
-                    logging.warning(f"✅ Arquivo lido com sucesso: {file.filename} → {len(df.columns)} colunas, {len(df)} linhas")
+                    logging.error(f"✅ ARQUIVO LIDO COM SUCESSO: '{file.filename}' → {len(df.columns)} colunas, {len(df)} linhas")
                 except Exception as read_error:
-                    logging.error(f"❌ Erro ao ler arquivo {file.filename}: {str(read_error)}")
+                    logging.error(f"❌ ERRO AO LER ARQUIVO '{file.filename}': {str(read_error)}")
+                    logging.error(f"❌ Stack trace da leitura: {traceback.format_exc()}")
                     continue
                 
                 # Validar DataFrame
+                logging.error(f"🔍 VALIDANDO DATAFRAME: '{file.filename}'")
                 if df is None or df.empty:
-                    logging.warning(f"⚠️ Arquivo {file.filename} resultou em DataFrame vazio")
+                    logging.error(f"❌ DATAFRAME VAZIO: '{file.filename}' (None: {df is None}, Empty: {df.empty if df is not None else 'N/A'})")
                     continue
                 
                 # Limpar DataFrame - remover linhas completamente vazias
+                original_rows = len(df)
                 df = df.dropna(how='all')
+                cleaned_rows = len(df)
+                logging.error(f"🧹 LIMPEZA CONCLUÍDA: '{file.filename}' ({original_rows} → {cleaned_rows} linhas)")
                 
                 if df.empty:
-                    logging.warning(f"⚠️ Arquivo {file.filename} não contém dados válidos após limpeza")
+                    logging.error(f"❌ ARQUIVO SEM DADOS APÓS LIMPEZA: '{file.filename}'")
                     continue
+                    
+                logging.error(f"✅ ARQUIVO VÁLIDO PRONTO PARA DETECÇÃO: '{file.filename}'")
                 
                 # Detectar tipo de banco
                 try:
-                    logging.warning(f"🔍 INICIANDO DETECÇÃO DE BANCO para: {file.filename}")
+                    logging.error(f"🔍 INICIANDO DETECÇÃO DE BANCO para: '{file.filename}'")
+                    logging.error(f"🔍 DataFrame info: {len(df)} linhas x {len(df.columns)} colunas")
+                    logging.error(f"🔍 Primeiras 3 colunas: {list(df.columns[:3])}")
+                    
                     bank_type = detect_bank_type_enhanced(df, file.filename)
-                    logging.warning(f"✅ BANCO DETECTADO: {file.filename} → {bank_type}")
+                    
+                    logging.error(f"✅ BANCO DETECTADO: '{file.filename}' → {bank_type}")
+                    
+                    if bank_type == "QUERO_MAIS":
+                        logging.error(f"🎯 SUCESSO! QUERO MAIS DETECTADO: {file.filename}")
+                    
                 except Exception as detect_error:
-                    logging.error(f"❌ Erro ao detectar banco em {file.filename}: {str(detect_error)}")
+                    logging.error(f"❌ Erro ao detectar banco em '{file.filename}': {str(detect_error)}")
+                    logging.error(f"❌ Stack trace: {traceback.format_exc()}")
                     continue
                 
                 if bank_type == "STORM":
