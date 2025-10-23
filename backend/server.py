@@ -748,6 +748,33 @@ def extract_contact_data(row, bank_type: str = "") -> dict:
         uf_fields = []
         bairro_fields = []
     
+    elif bank_type == "PAULISTA":
+        # PAULISTA: Estrutura com Unnamed, sem dados de contato específicos
+        telefone_fields = []  # PAULISTA não tem campos de telefone conhecidos
+        endereco_fields = []  # PAULISTA não tem campos de endereço conhecidos
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
+    
+    elif bank_type == "MERCANTIL":
+        # MERCANTIL: Verificar se tem campos de contato no mapeamento
+        telefone_fields = []  # MERCANTIL não tem campos de telefone conhecidos
+        endereco_fields = []  # MERCANTIL não tem campos de endereço conhecidos
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
+    
+    elif bank_type == "QUALIBANKING":
+        # QUALIBANKING: Verificar se tem campos de contato no mapeamento
+        telefone_fields = []  # QUALIBANKING não tem campos de telefone conhecidos
+        endereco_fields = []  # QUALIBANKING não tem campos de endereço conhecidos
+        cep_fields = []
+        cidade_fields = []
+        uf_fields = []
+        bairro_fields = []
+    
     else:
         # Campos genéricos para bancos não mapeados (fallback)
         telefone_fields = [
@@ -4913,6 +4940,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                     "OBSERVACOES": f"Contrato: {str(row.get('Unnamed: 1', '')).strip()} | Banco: {str(row.get('Unnamed: 8', '')).strip()} | Agência: {str(row.get('Unnamed: 9', '')).strip()}"
                 }
                 
+                # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+                contact_data = extract_contact_data(row, "PAULISTA")
+                normalized_row.update({
+                    "TELEFONE": contact_data["TELEFONE"],
+                    "ENDERECO": contact_data["ENDERECO"],
+                    "BAIRRO": contact_data["BAIRRO"],
+                    "CEP": contact_data["CEP"],
+                    "UF": contact_data["UF"]
+                })
+                
                 logging.info(f"✅✅✅ PAULISTA normalized_row criado com sucesso!")
                 logging.info(f"✅✅✅ PAULISTA normalized_row final: {normalized_row}")
         
@@ -5097,6 +5134,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "TAXA": str(row.get('Taxa', '')).strip(),
                 "OBSERVACOES": str(row.get('Motivo do Status', '')).strip()
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "QUALIBANKING")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"],
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
         
         elif bank_type == "MERCANTIL":
             # Mapeamento BANCO MERCANTIL - Baseado em map_relat_atualizados.txt
@@ -5138,6 +5185,16 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "TAXA": str(row.get('TaxaJurosMes', '')).strip(),
                 "OBSERVACOES": ""
             }
+            
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "MERCANTIL")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"],
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
         
         elif bank_type == "AMIGOZ":
             # Mapeamento BANCO AMIGOZ - Baseado em map_relat_atualizados.txt
@@ -5161,6 +5218,15 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
                 "TAXA": str(row.get('Taxa da Operação', '')).strip(),
                 "OBSERVACOES": str(row.get('Restricoes', '')).strip()
             }
+            # ✅ ADICIONAR DADOS DE CONTATO usando função universal
+            contact_data = extract_contact_data(row, "AMIGOZ")
+            normalized_row.update({
+                "TELEFONE": contact_data["TELEFONE"],
+                "ENDERECO": contact_data["ENDERECO"],
+                "BAIRRO": contact_data["BAIRRO"],
+                "CEP": contact_data["CEP"],
+                "UF": contact_data["UF"]
+            })
         
         elif bank_type == "TOTALCASH":
             # Mapeamento BANCO TOTALCASH - Colunas corretas
