@@ -2703,6 +2703,13 @@ def normalize_bank_data(df: pd.DataFrame, bank_type: str) -> pd.DataFrame:
             # 🎯 SOLUÇÃO DEFINITIVA: Usar código direto do arquivo AVERBAI!
             # Campo IdTableComissao já tem o código correto (1005, 1016, 994, 992, etc)
             codigo_tabela_direto = str(row.get('IdTableComissao', '')).strip()
+            
+            # 🚨 CORREÇÃO ESPECÍFICA: Códigos 1011 e 1005 são REFINANCIAMENTO DA PORTABILIDADE
+            if codigo_tabela_direto in ['1011', '1005']:
+                tipo_operacao_averbai = "REFINANCIAMENTO DA PORTABILIDADE"
+                orgao_averbai = 'INSS'  # Sempre INSS para refinanciamento da portabilidade
+                logging.info(f"✅ AVERBAI: Código {codigo_tabela_direto} identificado como REFINANCIAMENTO DA PORTABILIDADE")
+            
             cpf_cliente = str(row.get('CpfCliente', '')).strip()
             
             # � FUNÇÃO para formatar CPF no padrão brasileiro
